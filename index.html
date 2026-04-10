@@ -26,7 +26,6 @@ body {
   padding: 20px;
 }
 
-/* DASHBOARD */
 .dashboard {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
@@ -41,13 +40,24 @@ body {
   text-align: center;
 }
 
-/* FORM */
+.search-box, .filters {
+  margin-bottom: 10px;
+}
+
+.search-box input, .filters select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+}
+
 .form {
   background: #1e293b;
   padding: 20px;
   border-radius: 12px;
   display: grid;
   gap: 10px;
+  margin-bottom: 20px;
 }
 
 input, select, textarea {
@@ -64,19 +74,10 @@ button {
   font-weight: bold;
 }
 
-.btn {
-  background: #22c55e;
-}
+.btn { background: #22c55e; }
+.btn-edit { background: #facc15; }
+.btn-danger { background: #ef4444; }
 
-.btn-edit {
-  background: #facc15;
-}
-
-.btn-danger {
-  background: #ef4444;
-}
-
-/* JOGADORES */
 .card {
   background: #1e293b;
   margin-top: 15px;
@@ -91,10 +92,6 @@ img {
   height: 100px;
   border-radius: 10px;
   object-fit: cover;
-}
-
-.ranking {
-  margin-top: 20px;
 }
 </style>
 </head>
@@ -112,10 +109,28 @@ img {
     <div class="card-dashboard" id="melhor"></div>
   </div>
 
+  <!-- BUSCA -->
+  <div class="search-box">
+    <input type="text" id="busca" placeholder="🔍 Buscar jogador...">
+  </div>
+
+  <!-- FILTRO POR NÍVEL -->
+  <div class="filters">
+    <select id="filtroNivel">
+      <option value="">Todos os níveis</option>
+      <option>Iniciante</option>
+      <option>Intermediário</option>
+      <option>Avançado</option>
+    </select>
+  </div>
+
   <!-- FORM -->
   <form id="formJogador" class="form">
     <input type="text" id="nome" placeholder="Nome" required>
-    <input type="text" id="time" placeholder="Time" required>
+    <input type="text" id="time" placeholder="Time atual" required>
+
+    <!-- NOVO: CATEGORIA -->
+    <input type="text" id="categoria" placeholder="Categoria do time (Amador, Profissional...)">
 
     <select id="nivel">
       <option>Iniciante</option>
@@ -123,14 +138,14 @@ img {
       <option>Avançado</option>
     </select>
 
-    <textarea id="historico" placeholder="Histórico"></textarea>
+    <textarea id="historico" placeholder="Histórico (times que jogou)"></textarea>
     <input type="file" id="foto">
 
     <button class="btn" id="btnSalvar">Cadastrar Jogador</button>
   </form>
 
   <!-- RANKING -->
-  <div class="ranking" id="ranking"></div>
+  <div id="ranking"></div>
 
   <!-- LISTA -->
   <div id="listaJogadores"></div>
@@ -142,15 +157,18 @@ let jogadores = JSON.parse(localStorage.getItem("jogadores")) || [];
 let editIndex = null;
 
 const form = document.getElementById("formJogador");
+const busca = document.getElementById("busca");
+const filtroNivel = document.getElementById("filtroNivel");
 const btnSalvar = document.getElementById("btnSalvar");
 
 form.addEventListener("submit", function(e) {
   e.preventDefault();
 
-  const nome = document.getElementById("nome").value;
-  const time = document.getElementById("time").value;
-  const nivel = document.getElementById("nivel").value;
-  const historico = document.getElementById("historico").value;
+  const nome = nomeInput.value;
+  const time = timeInput.value;
+  const categoria = document.getElementById("categoria").value;
+  const nivel = nivelInput.value;
+  const historico = historicoInput.value;
   const fotoInput = document.getElementById("foto");
 
   const salvarJogador = (fotoBase64="") => {
@@ -158,14 +176,14 @@ form.addEventListener("submit", function(e) {
     if (editIndex !== null) {
       jogadores[editIndex] = {
         ...jogadores[editIndex],
-        nome, time, nivel, historico,
+        nome, time, categoria, nivel, historico,
         foto: fotoBase64 || jogadores[editIndex].foto
       };
       editIndex = null;
       btnSalvar.textContent = "Cadastrar Jogador";
     } else {
       jogadores.push({
-        nome, time, nivel, historico,
+        nome, time, categoria, nivel, historico,
         foto: fotoBase64,
         avaliacoes: []
       });
@@ -198,30 +216,42 @@ function renderizar() {
   const lista = document.getElementById("listaJogadores");
   lista.innerHTML = "";
 
-  jogadores.forEach((j, i) => {
-    lista.innerHTML += `
-      <div class="card">
-        <img src="${j.foto || 'https://via.placeholder.com/100'}">
-        <div>
-          <h3>${j.nome}</h3>
-          <p>🏐 ${j.time}</p>
-          <p>${j.nivel}</p>
+  const termo = busca.value.toLowerCase();
+  const nivelFiltro = filtroNivel.value;
 
-          <input type="number" min="1" max="5" id="nota${i}">
-          <button class="btn" onclick="avaliar(${i})">Avaliar</button>
+  jogadores
+    .filter(j => j.nome.toLowerCase().includes(termo))
+    .filter(j => !nivelFiltro || j.nivel === nivelFiltro)
+    .forEach((j, i) => {
 
-          <p>Média: ${media(j.avaliacoes).toFixed(1)}</p>
+      lista.innerHTML += `
+        <div class="card">
+          <img src="${j.foto || 'https://via.placeholder.com/100'}">
+          <div>
+            <h3>${j.nome}</h3>
+            <p><b>Time:</b> ${j.time}</p>
+            <p><b>Categoria:</b> ${j.categoria || "Não informado"}</p>
+            <p><b>Nível:</b> ${j.nivel}</p>
+            <p><b>Histórico:</b> ${j.historico}</p>
 
-          <button class="btn-edit" onclick="editar(${i})">Editar</button>
-          <button class="btn-danger" onclick="excluir(${i})">Excluir</button>
+            <input type="number" min="1" max="5" id="nota${i}">
+            <button onclick="avaliar(${i})">Avaliar</button>
+
+            <p><b>Média:</b> ${media(j.avaliacoes).toFixed(1)}</p>
+
+            <button class="btn-edit" onclick="editar(${i})">Editar</button>
+            <button class="btn-danger" onclick="excluir(${i})">Excluir</button>
+          </div>
         </div>
-      </div>
-    `;
-  });
+      `;
+    });
 
   atualizarDashboard();
   atualizarRanking();
 }
+
+busca.addEventListener("input", renderizar);
+filtroNivel.addEventListener("change", renderizar);
 
 function avaliar(i) {
   const nota = document.getElementById(`nota${i}`).value;
@@ -235,10 +265,11 @@ function avaliar(i) {
 function editar(i) {
   const j = jogadores[i];
 
-  document.getElementById("nome").value = j.nome;
-  document.getElementById("time").value = j.time;
-  document.getElementById("nivel").value = j.nivel;
-  document.getElementById("historico").value = j.historico;
+  nomeInput.value = j.nome;
+  timeInput.value = j.time;
+  nivelInput.value = j.nivel;
+  historicoInput.value = j.historico;
+  document.getElementById("categoria").value = j.categoria || "";
 
   editIndex = i;
   btnSalvar.textContent = "Atualizar Jogador";
