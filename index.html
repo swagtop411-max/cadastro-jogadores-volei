@@ -1,1 +1,35 @@
 
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Cadastro de Jogadores</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>🏐 Cadastro de Jogadores</h1>
+
+<form id="formJogador">
+  <input type="text" id="nome" placeholder="Nome do jogador" required>
+
+  <select id="nivel">
+    <option>Iniciante</option>
+    <option>Intermediário</option>
+    <option>Avançado</option>
+  </select>
+
+  <textarea id="historico" placeholder="Times que já jogou"></textarea>
+
+  <input type="file" id="foto">
+
+  <button type="submit">Cadastrar</button>
+</form>
+
+<hr>
+
+<div id="listaJogadores"></div>
+
+<script src="script.js"></script>
+</body>
+</html>
