@@ -1,1 +1,19 @@
 
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin: 10px 0;
+  display: flex;
+  gap: 10px;
+}
+
+img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+}
