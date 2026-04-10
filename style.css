@@ -1,19 +1,77 @@
-
 body {
-  font-family: Arial;
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #fff;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
   padding: 20px;
 }
 
-.card {
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin: 10px 0;
+h1 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form {
+  background: rgba(255,255,255,0.1);
+  padding: 20px;
+  border-radius: 12px;
   display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-img {
+.form input,
+.form select,
+.form textarea {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
+
+.form button {
+  background: #00c6ff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.form button:hover {
+  background: #0072ff;
+  color: #fff;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 12px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.card img {
   width: 100px;
   height: 100px;
+  border-radius: 10px;
   object-fit: cover;
+}
+
+.card button {
+  margin-top: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #00c6ff;
+  cursor: pointer;
 }
