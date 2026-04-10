@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard Vôlei</title>
-
 <link rel="stylesheet" href="style.css">
 </head>
 
@@ -60,7 +59,9 @@
 
     <button type="button" onclick="adicionarTime()">+ Adicionar outro time</button>
 
-    <input type="file" id="foto">
+    <!-- FOTO -->
+    <input type="file" id="foto" accept="image/*">
+    <img id="preview" style="width:100px; display:none; margin-top:10px;">
 
     <button id="btnSalvar">Cadastrar Jogador</button>
   </form>
