@@ -2,28 +2,48 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Gestão de Jogadores de Vôlei</title>
+<title>Dashboard Vôlei</title>
 
 <style>
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #141e30, #243b55);
+  background: #0f172a;
   color: #fff;
 }
 
+.header {
+  background: #020617;
+  padding: 15px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+}
+
 .container {
-  max-width: 1000px;
+  max-width: 1100px;
   margin: auto;
   padding: 20px;
 }
 
-h1, h2 {
+/* DASHBOARD */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.card-dashboard {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
   text-align: center;
 }
 
+/* FORM */
 .form {
-  background: rgba(255,255,255,0.1);
+  background: #1e293b;
   padding: 20px;
   border-radius: 12px;
   display: grid;
@@ -45,20 +65,20 @@ button {
 }
 
 .btn {
-  background: #00c6ff;
-}
-
-.btn-danger {
-  background: #ff4d4d;
-  color: #fff;
+  background: #22c55e;
 }
 
 .btn-edit {
-  background: #ffc107;
+  background: #facc15;
 }
 
+.btn-danger {
+  background: #ef4444;
+}
+
+/* JOGADORES */
 .card {
-  background: rgba(255,255,255,0.1);
+  background: #1e293b;
   margin-top: 15px;
   padding: 15px;
   border-radius: 12px;
@@ -73,13 +93,6 @@ img {
   object-fit: cover;
 }
 
-.stats {
-  margin-top: 20px;
-  padding: 15px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 12px;
-}
-
 .ranking {
   margin-top: 20px;
 }
@@ -88,9 +101,18 @@ img {
 
 <body>
 
-<div class="container">
-  <h1>🏐 Gestão de Jogadores</h1>
+<div class="header">🏐 Dashboard de Jogadores</div>
 
+<div class="container">
+
+  <!-- DASHBOARD -->
+  <div class="dashboard">
+    <div class="card-dashboard" id="total"></div>
+    <div class="card-dashboard" id="media"></div>
+    <div class="card-dashboard" id="melhor"></div>
+  </div>
+
+  <!-- FORM -->
   <form id="formJogador" class="form">
     <input type="text" id="nome" placeholder="Nome" required>
     <input type="text" id="time" placeholder="Time" required>
@@ -101,15 +123,18 @@ img {
       <option>Avançado</option>
     </select>
 
-    <textarea id="historico" placeholder="Histórico de times"></textarea>
+    <textarea id="historico" placeholder="Histórico"></textarea>
     <input type="file" id="foto">
 
-    <button class="btn" type="submit">Salvar Jogador</button>
+    <button class="btn" id="btnSalvar">Cadastrar Jogador</button>
   </form>
 
-  <div class="stats" id="estatisticas"></div>
+  <!-- RANKING -->
   <div class="ranking" id="ranking"></div>
+
+  <!-- LISTA -->
   <div id="listaJogadores"></div>
+
 </div>
 
 <script>
@@ -117,6 +142,7 @@ let jogadores = JSON.parse(localStorage.getItem("jogadores")) || [];
 let editIndex = null;
 
 const form = document.getElementById("formJogador");
+const btnSalvar = document.getElementById("btnSalvar");
 
 form.addEventListener("submit", function(e) {
   e.preventDefault();
@@ -128,20 +154,21 @@ form.addEventListener("submit", function(e) {
   const fotoInput = document.getElementById("foto");
 
   const salvarJogador = (fotoBase64="") => {
-    const jogador = {
-      nome,
-      time,
-      nivel,
-      historico,
-      foto: fotoBase64,
-      avaliacoes: editIndex !== null ? jogadores[editIndex].avaliacoes : []
-    };
 
     if (editIndex !== null) {
-      jogadores[editIndex] = jogador;
+      jogadores[editIndex] = {
+        ...jogadores[editIndex],
+        nome, time, nivel, historico,
+        foto: fotoBase64 || jogadores[editIndex].foto
+      };
       editIndex = null;
+      btnSalvar.textContent = "Cadastrar Jogador";
     } else {
-      jogadores.push(jogador);
+      jogadores.push({
+        nome, time, nivel, historico,
+        foto: fotoBase64,
+        avaliacoes: []
+      });
     }
 
     salvar();
@@ -163,7 +190,7 @@ function salvar() {
 }
 
 function media(avaliacoes) {
-  if (avaliacoes.length === 0) return 0;
+  if (!avaliacoes.length) return 0;
   return (avaliacoes.reduce((a,b)=>a+b,0)/avaliacoes.length);
 }
 
@@ -171,79 +198,87 @@ function renderizar() {
   const lista = document.getElementById("listaJogadores");
   lista.innerHTML = "";
 
-  jogadores.forEach((j, index) => {
+  jogadores.forEach((j, i) => {
     lista.innerHTML += `
       <div class="card">
         <img src="${j.foto || 'https://via.placeholder.com/100'}">
         <div>
           <h3>${j.nome}</h3>
-          <p><b>Time:</b> ${j.time}</p>
-          <p><b>Nível:</b> ${j.nivel}</p>
-          <p><b>Histórico:</b> ${j.historico}</p>
+          <p>🏐 ${j.time}</p>
+          <p>${j.nivel}</p>
 
-          <input type="number" min="1" max="5" id="nota${index}">
-          <button class="btn" onclick="avaliar(${index})">Avaliar</button>
+          <input type="number" min="1" max="5" id="nota${i}">
+          <button class="btn" onclick="avaliar(${i})">Avaliar</button>
 
-          <p><b>Média:</b> ${media(j.avaliacoes).toFixed(1)}</p>
+          <p>Média: ${media(j.avaliacoes).toFixed(1)}</p>
 
-          <button class="btn-edit" onclick="editar(${index})">Editar</button>
-          <button class="btn-danger" onclick="excluir(${index})">Excluir</button>
+          <button class="btn-edit" onclick="editar(${i})">Editar</button>
+          <button class="btn-danger" onclick="excluir(${i})">Excluir</button>
         </div>
       </div>
     `;
   });
 
-  atualizarStats();
+  atualizarDashboard();
   atualizarRanking();
 }
 
-function avaliar(index) {
-  const nota = document.getElementById(`nota${index}`).value;
+function avaliar(i) {
+  const nota = document.getElementById(`nota${i}`).value;
   if (nota) {
-    jogadores[index].avaliacoes.push(Number(nota));
+    jogadores[i].avaliacoes.push(Number(nota));
     salvar();
     renderizar();
   }
 }
 
-function excluir(index) {
-  if (confirm("Excluir jogador?")) {
-    jogadores.splice(index,1);
-    salvar();
-    renderizar();
-  }
-}
+function editar(i) {
+  const j = jogadores[i];
 
-function editar(index) {
-  const j = jogadores[index];
   document.getElementById("nome").value = j.nome;
   document.getElementById("time").value = j.time;
   document.getElementById("nivel").value = j.nivel;
   document.getElementById("historico").value = j.historico;
-  editIndex = index;
+
+  editIndex = i;
+  btnSalvar.textContent = "Atualizar Jogador";
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function atualizarStats() {
-  const total = jogadores.length;
+function excluir(i) {
+  if (confirm("Excluir jogador?")) {
+    jogadores.splice(i,1);
+    salvar();
+    renderizar();
+  }
+}
+
+function atualizarDashboard() {
+  document.getElementById("total").innerHTML =
+    `<h2>${jogadores.length}</h2><p>Jogadores</p>`;
+
   const medias = jogadores.map(j => media(j.avaliacoes));
   const mediaGeral = medias.length ? (medias.reduce((a,b)=>a+b,0)/medias.length).toFixed(1) : 0;
 
-  document.getElementById("estatisticas").innerHTML = `
-    <h2>📊 Estatísticas</h2>
-    <p>Total de jogadores: ${total}</p>
-    <p>Média geral: ${mediaGeral}</p>
-  `;
+  document.getElementById("media").innerHTML =
+    `<h2>${mediaGeral}</h2><p>Média Geral</p>`;
+
+  const melhor = [...jogadores].sort((a,b)=>media(b.avaliacoes)-media(a.avaliacoes))[0];
+
+  document.getElementById("melhor").innerHTML =
+    melhor ? `<h2>${melhor.nome}</h2><p>Melhor Jogador</p>` : `<p>Sem dados</p>`;
 }
 
 function atualizarRanking() {
-  const rankingDiv = document.getElementById("ranking");
+  const ranking = document.getElementById("ranking");
 
-  const ordenado = [...jogadores].sort((a,b)=> media(b.avaliacoes) - media(a.avaliacoes));
+  const ordenado = [...jogadores].sort((a,b)=>media(b.avaliacoes)-media(a.avaliacoes));
 
-  rankingDiv.innerHTML = "<h2>🏆 Ranking</h2>";
+  ranking.innerHTML = "<h2>🏆 Ranking</h2>";
 
   ordenado.forEach((j,i)=>{
-    rankingDiv.innerHTML += `<p>${i+1}º - ${j.nome} (${media(j.avaliacoes).toFixed(1)})</p>`;
+    ranking.innerHTML += `<p>${i+1}º - ${j.nome} (${media(j.avaliacoes).toFixed(1)})</p>`;
   });
 }
 
