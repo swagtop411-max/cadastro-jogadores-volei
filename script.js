@@ -1,8 +1,8 @@
-
 const form = document.getElementById("formJogador");
 const lista = document.getElementById("listaJogadores");
 
-let jogadores = [];
+// 🔹 Carregar do "banco"
+let jogadores = JSON.parse(localStorage.getItem("jogadores")) || [];
 
 form.addEventListener("submit", function(e) {
   e.preventDefault();
@@ -24,7 +24,10 @@ form.addEventListener("submit", function(e) {
     };
 
     jogadores.push(jogador);
+
+    salvar();
     renderizar();
+    form.reset();
   };
 
   if (fotoInput.files[0]) {
@@ -32,13 +35,17 @@ form.addEventListener("submit", function(e) {
   }
 });
 
+function salvar() {
+  localStorage.setItem("jogadores", JSON.stringify(jogadores));
+}
+
 function renderizar() {
   lista.innerHTML = "";
 
   jogadores.forEach((j, index) => {
     lista.innerHTML += `
       <div class="card">
-        <img src="${j.foto}" />
+        <img src="${j.foto || ''}" />
         <div>
           <h3>${j.nome}</h3>
           <p><strong>Nível:</strong> ${j.nivel}</p>
@@ -56,14 +63,20 @@ function renderizar() {
 
 function avaliar(index) {
   const nota = document.getElementById(`nota${index}`).value;
+
   if (nota) {
     jogadores[index].avaliacoes.push(Number(nota));
+    salvar();
     renderizar();
   }
 }
 
 function media(avaliacoes) {
   if (avaliacoes.length === 0) return "Sem avaliação";
+
   const soma = avaliacoes.reduce((a, b) => a + b, 0);
   return (soma / avaliacoes.length).toFixed(1);
 }
+
+// 🔹 Carregar ao iniciar
+renderizar();
