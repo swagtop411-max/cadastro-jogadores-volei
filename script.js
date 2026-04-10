@@ -4,7 +4,8 @@ let editIndex = null;
 const form = document.getElementById("formJogador");
 const busca = document.getElementById("busca");
 const filtroNivel = document.getElementById("filtroNivel");
-const btnSalvar = document.getElementById("btnSalvar");
+const fotoInput = document.getElementById("foto");
+const preview = document.getElementById("preview");
 
 function adicionarTime() {
   const div = document.createElement("div");
@@ -23,6 +24,21 @@ function adicionarTime() {
   document.getElementById("timesContainer").appendChild(div);
 }
 
+/* PREVIEW DA FOTO */
+fotoInput.addEventListener("change", function() {
+  const file = this.files[0];
+
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+/* SALVAR */
 form.addEventListener("submit", function(e) {
   e.preventDefault();
 
@@ -32,7 +48,6 @@ form.addEventListener("submit", function(e) {
   const nivel = document.getElementById("nivel").value;
 
   const timesInputs = document.querySelectorAll(".time-item");
-
   let listaTimes = [];
 
   timesInputs.forEach(item => {
@@ -44,23 +59,38 @@ form.addEventListener("submit", function(e) {
     }
   });
 
-  const jogador = {
-    nome, time, categoria, nivel,
-    times: listaTimes,
-    foto: "",
-    avaliacoes: []
+  const salvarJogador = (fotoBase64="") => {
+
+    const jogador = {
+      nome,
+      time,
+      categoria,
+      nivel,
+      times: listaTimes,
+      foto: fotoBase64 || (editIndex !== null ? jogadores[editIndex].foto : ""),
+      avaliacoes: editIndex !== null ? jogadores[editIndex].avaliacoes : []
+    };
+
+    if (editIndex !== null) {
+      jogadores[editIndex] = jogador;
+      editIndex = null;
+    } else {
+      jogadores.push(jogador);
+    }
+
+    salvar();
+    renderizar();
+    form.reset();
+    preview.style.display = "none";
   };
 
-  if (editIndex !== null) {
-    jogadores[editIndex] = jogador;
-    editIndex = null;
+  if (fotoInput.files[0]) {
+    const reader = new FileReader();
+    reader.onload = () => salvarJogador(reader.result);
+    reader.readAsDataURL(fotoInput.files[0]);
   } else {
-    jogadores.push(jogador);
+    salvarJogador();
   }
-
-  salvar();
-  renderizar();
-  form.reset();
 });
 
 function salvar() {
@@ -83,6 +113,7 @@ function renderizar() {
 
       lista.innerHTML += `
         <div class="card">
+          <img src="${j.foto || 'https://via.placeholder.com/100'}">
           <div>
             <h3>${j.nome}</h3>
             <p>${j.time} (${j.categoria})</p>
@@ -129,6 +160,11 @@ function editar(i) {
 
     container.appendChild(div);
   });
+
+  if (j.foto) {
+    preview.src = j.foto;
+    preview.style.display = "block";
+  }
 
   editIndex = i;
 }
