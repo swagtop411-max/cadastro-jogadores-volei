@@ -1,78 +1,1131 @@
-body {
+```css
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+  box-sizing: border-box;
   margin: 0;
-  font-family: Arial;
-  background: #0f172a;
-  color: #fff;
+  padding: 0;
 }
+
+
+/* =========================================================
+   VARIÁVEIS
+   ========================================================= */
+
+:root {
+  --bg-principal: #0f172a;
+  --bg-secundario: #1e293b;
+  --bg-card: #334155;
+
+  --borda: #475569;
+
+  --texto: #f8fafc;
+  --texto-secundario: #cbd5e1;
+
+  --azul: #2563eb;
+  --azul-hover: #1d4ed8;
+
+  --verde: #16a34a;
+  --verde-hover: #15803d;
+
+  --vermelho: #dc2626;
+  --vermelho-hover: #b91c1c;
+
+  --laranja: #f59e0b;
+  --laranja-hover: #d97706;
+
+  --sombra:
+    0 10px 30px rgba(0, 0, 0, 0.25);
+
+  --raio: 12px;
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+body {
+  min-height: 100vh;
+
+  font-family:
+    Arial,
+    Helvetica,
+    sans-serif;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0f172a 0%,
+      #111827 50%,
+      #020617 100%
+    );
+
+  color: var(--texto);
+
+  line-height: 1.5;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
 
 .header {
-  background: #020617;
-  padding: 15px;
+  width: 100%;
+
+  background:
+    linear-gradient(
+      135deg,
+      #020617,
+      #172554
+    );
+
+  color: #ffffff;
+
+  padding: 20px;
+
   text-align: center;
-  font-weight: bold;
+
+  font-size: 24px;
+
+  font-weight: 800;
+
+  letter-spacing: 0.3px;
+
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3);
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 100;
 }
 
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
 .container {
+  width: 100%;
+
   max-width: 1100px;
-  margin: auto;
-  padding: 20px;
+
+  margin: 0 auto;
+
+  padding: 25px 20px 50px;
 }
+
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
 
 .dashboard {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
-  gap: 10px;
+
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(0, 1fr)
+    );
+
+  gap: 15px;
+
+  margin-bottom: 20px;
 }
+
 
 .card-dashboard {
-  background: #1e293b;
+  background:
+    linear-gradient(
+      145deg,
+      #1e293b,
+      #172033
+    );
+
+  border: 1px solid var(--borda);
+
+  border-radius: var(--raio);
+
   padding: 20px;
-  border-radius: 10px;
+
+  min-height: 110px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
   text-align: center;
+
+  box-shadow: var(--sombra);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
 }
+
+
+.card-dashboard:hover {
+  transform: translateY(-3px);
+
+  border-color: #64748b;
+}
+
+
+.dashboard-label {
+  color: var(--texto-secundario);
+
+  font-size: 14px;
+
+  margin-bottom: 7px;
+}
+
+
+.card-dashboard strong {
+  color: #ffffff;
+
+  font-size: 20px;
+
+  font-weight: 800;
+}
+
+
+/* =========================================================
+   FILTROS
+   ========================================================= */
+
+.filtros {
+  display: grid;
+
+  grid-template-columns:
+    1fr 220px;
+
+  gap: 12px;
+
+  margin-bottom: 20px;
+}
+
+
+/* =========================================================
+   INPUTS E SELECTS
+   ========================================================= */
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+
+
+input,
+select {
+  width: 100%;
+
+  min-height: 44px;
+
+  padding: 11px 13px;
+
+  border-radius: 8px;
+
+  border: 1px solid var(--borda);
+
+  background: #0f172a;
+
+  color: #ffffff;
+
+  outline: none;
+
+  font-size: 15px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+
+input::placeholder {
+  color: #94a3b8;
+}
+
+
+input:focus,
+select:focus {
+  border-color: var(--azul);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(37, 99, 235, 0.18);
+}
+
+
+select option {
+  background: #0f172a;
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   SEÇÃO DO FORMULÁRIO
+   ========================================================= */
+
+.form-section {
+  width: 100%;
+
+  margin-bottom: 25px;
+}
+
+
+/* =========================================================
+   FORMULÁRIO
+   ========================================================= */
 
 .form {
-  background: #1e293b;
-  padding: 20px;
-  margin-top: 20px;
-  border-radius: 10px;
-  display: grid;
-  gap: 10px;
+  width: 100%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #1e293b,
+      #172033
+    );
+
+  border: 1px solid var(--borda);
+
+  border-radius: var(--raio);
+
+  padding: 25px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 15px;
+
+  box-shadow: var(--sombra);
 }
 
-input, select {
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
+
+/* =========================================================
+   TÍTULO DO FORMULÁRIO
+   ========================================================= */
+
+.form h2 {
+  font-size: 21px;
+
+  margin-bottom: 5px;
+
+  color: #ffffff;
 }
+
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+.campo {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.campo label,
+.times-header label {
+  color: var(--texto-secundario);
+
+  font-size: 14px;
+
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   TIMES
+   ========================================================= */
+
+.times-container {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+  padding: 15px;
+
+  background: rgba(15, 23, 42, 0.55);
+
+  border: 1px solid var(--borda);
+
+  border-radius: 10px;
+}
+
+
+.times-header {
+  margin-bottom: 2px;
+}
+
+
+.time-item {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    180px
+    45px;
+
+  gap: 8px;
+
+  align-items: center;
+}
+
+
+.time-item input,
+.time-item select {
+  min-width: 0;
+}
+
+
+.btn-remover-time {
+  width: 45px;
+
+  min-height: 44px;
+
+  padding: 0;
+
+  background: #450a0a;
+
+  border: 1px solid #7f1d1d;
+
+  color: #ffffff;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.15s ease;
+}
+
+
+.btn-remover-time:hover {
+  background: var(--vermelho);
+
+  transform: scale(1.03);
+}
+
+
+/* =========================================================
+   BOTÕES
+   ========================================================= */
 
 button {
-  padding: 10px;
-  border-radius: 6px;
+  min-height: 44px;
+
+  padding: 10px 16px;
+
   border: none;
+
+  border-radius: 8px;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+
+button:active {
+  transform: translateY(0);
+}
+
+
+button:focus-visible {
+  outline: 3px solid
+    rgba(96, 165, 250, 0.45);
+
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   BOTÃO ADICIONAR TIME
+   ========================================================= */
+
+#btnAdicionarTime {
+  background: #334155;
+
+  color: #ffffff;
+
+  border: 1px solid #475569;
+}
+
+
+#btnAdicionarTime:hover {
+  background: #475569;
+}
+
+
+/* =========================================================
+   BOTÕES DO FORMULÁRIO
+   ========================================================= */
+
+.form-buttons {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 5px;
+}
+
+
+#btnSalvar {
+  flex: 1;
+
+  background: var(--azul);
+
+  color: #ffffff;
+}
+
+
+#btnSalvar:hover {
+  background: var(--azul-hover);
+}
+
+
+#btnCancelarEdicao {
+  background: #475569;
+
+  color: #ffffff;
+}
+
+
+#btnCancelarEdicao:hover {
+  background: #64748b;
+}
+
+
+/* =========================================================
+   PREVIEW DA FOTO
+   ========================================================= */
+
+#preview {
+  width: 110px !important;
+
+  height: 110px !important;
+
+  object-fit: cover;
+
+  border-radius: 12px !important;
+
+  border: 2px solid var(--borda);
+
+  background: #020617;
+
+  box-shadow:
+    0 5px 15px
+    rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================================
+   RANKING
+   ========================================================= */
+
+.ranking {
+  width: 100%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #1e293b,
+      #172033
+    );
+
+  border: 1px solid var(--borda);
+
+  border-radius: var(--raio);
+
+  padding: 20px;
+
+  margin-bottom: 25px;
+
+  box-shadow: var(--sombra);
+}
+
+
+.ranking h2 {
+  margin-bottom: 15px;
+
+  font-size: 20px;
+}
+
+
+.ranking p {
+  padding: 11px 12px;
+
+  margin-bottom: 7px;
+
+  background: rgba(15, 23, 42, 0.7);
+
+  border-radius: 8px;
+
+  border: 1px solid
+    rgba(71, 85, 105, 0.5);
+
+  color: var(--texto-secundario);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.ranking p:hover {
+  background: #334155;
+
+  transform: translateX(3px);
+}
+
+
+/* =========================================================
+   LISTA DE JOGADORES
+   ========================================================= */
+
+.lista-jogadores {
+  width: 100%;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 15px;
+}
+
+
+/* =========================================================
+   CARD DO JOGADOR
+   ========================================================= */
+
+.card {
+  width: 100%;
+
+  background:
+    linear-gradient(
+      145deg,
+      #1e293b,
+      #172033
+    );
+
+  border: 1px solid var(--borda);
+
+  border-radius: var(--raio);
+
+  padding: 18px;
+
+  display: flex;
+
+  gap: 18px;
+
+  box-shadow: var(--sombra);
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+
+.card:hover {
+  transform: translateY(-2px);
+
+  border-color: #64748b;
+}
+
+
+/* =========================================================
+   FOTO DO CARD
+   ========================================================= */
+
+.card img {
+  width: 110px;
+
+  height: 110px;
+
+  flex: 0 0 110px;
+
+  border-radius: 12px;
+
+  object-fit: cover;
+
+  background: #020617;
+
+  border: 1px solid var(--borda);
+}
+
+
+/* =========================================================
+   CONTEÚDO DO CARD
+   ========================================================= */
+
+.card > div {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+
+.card h3 {
+  color: #ffffff;
+
+  font-size: 20px;
+
+  margin-bottom: 2px;
+
+  word-break: break-word;
+}
+
+
+.card p {
+  color: var(--texto-secundario);
+
+  font-size: 14px;
+}
+
+
+.card ul {
+  margin: 5px 0 5px 18px;
+
+  color: #cbd5e1;
+
+  font-size: 14px;
+}
+
+
+.card li {
+  margin-bottom: 4px;
+}
+
+
+/* =========================================================
+   BOTÃO EDITAR
+   ========================================================= */
+
+.btn-edit {
+  background: var(--laranja);
+
+  color: #111827;
+
+  margin-top: 5px;
+}
+
+
+.btn-edit:hover {
+  background: var(--laranja-hover);
+
+  color: #ffffff;
+}
+
+
+/* =========================================================
+   BOTÃO EXCLUIR
+   ========================================================= */
+
+.btn-danger {
+  background: var(--vermelho);
+
+  color: #ffffff;
+
+  margin-top: 5px;
+}
+
+
+.btn-danger:hover {
+  background: var(--vermelho-hover);
+}
+
+
+/* =========================================================
+   ESTADO VAZIO
+   ========================================================= */
+
+.lista-jogadores:empty::before {
+  content:
+    "Nenhum jogador encontrado.";
+
+  display: block;
+
+  width: 100%;
+
+  padding: 30px;
+
+  text-align: center;
+
+  background: var(--bg-secundario);
+
+  border: 1px dashed var(--borda);
+
+  border-radius: var(--raio);
+
+  color: var(--texto-secundario);
+}
+
+
+/* =========================================================
+   INPUT DE ARQUIVO
+   ========================================================= */
+
+input[type="file"] {
+  padding: 8px;
+
   cursor: pointer;
 }
 
-.time-item {
-  display: flex;
-  gap: 10px;
+
+input[type="file"]::file-selector-button {
+  padding: 8px 12px;
+
+  margin-right: 10px;
+
+  border: none;
+
+  border-radius: 6px;
+
+  background: #334155;
+
+  color: #ffffff;
+
+  cursor: pointer;
 }
 
-.card {
-  background: #1e293b;
-  margin-top: 15px;
-  padding: 15px;
-  border-radius: 10px;
-  display: flex;
-  gap: 10px;
+
+input[type="file"]::file-selector-button:hover {
+  background: #475569;
 }
 
-img {
-  width: 100px;
-  height: 100px;
-  border-radius: 8px;
-  object-fit: cover;
+
+/* =========================================================
+   RESPONSIVIDADE
+   TABLET
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+  .container {
+    padding:
+      20px 15px 40px;
+  }
+
+
+  .dashboard {
+    grid-template-columns:
+      repeat(3, 1fr);
+
+    gap: 10px;
+  }
+
+
+  .card-dashboard {
+    padding: 15px 10px;
+
+    min-height: 100px;
+  }
+
+
+  .dashboard-label {
+    font-size: 12px;
+  }
+
+
+  .card-dashboard strong {
+    font-size: 17px;
+  }
+
+
+  .time-item {
+    grid-template-columns:
+      1fr 150px 45px;
+  }
+
 }
 
-.btn-danger { background: red; color: #fff; }
-.btn-edit { background: orange; }
+
+/* =========================================================
+   RESPONSIVIDADE
+   CELULAR
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .header {
+    font-size: 20px;
+
+    padding: 16px 12px;
+  }
+
+
+  .container {
+    padding:
+      15px 12px 35px;
+  }
+
+
+  /* DASHBOARD */
+
+  .dashboard {
+    grid-template-columns:
+      1fr;
+
+    gap: 10px;
+  }
+
+
+  .card-dashboard {
+    min-height: 85px;
+  }
+
+
+  /* FILTROS */
+
+  .filtros {
+    grid-template-columns:
+      1fr;
+
+    gap: 10px;
+  }
+
+
+  /* FORM */
+
+  .form {
+    padding: 18px 15px;
+  }
+
+
+  .form h2 {
+    font-size: 19px;
+  }
+
+
+  /* TIMES */
+
+  .time-item {
+    grid-template-columns:
+      1fr;
+
+    gap: 8px;
+
+    padding: 10px;
+
+    background:
+      rgba(30, 41, 59, 0.7);
+
+    border-radius: 8px;
+
+    border: 1px solid
+      rgba(71, 85, 105, 0.5);
+  }
+
+
+  .btn-remover-time {
+    width: 100%;
+  }
+
+
+  /* BOTÕES */
+
+  .form-buttons {
+    flex-direction: column;
+  }
+
+
+  #btnSalvar,
+  #btnCancelarEdicao {
+    width: 100%;
+  }
+
+
+  /* CARD */
+
+  .card {
+    flex-direction: column;
+
+    padding: 15px;
+  }
+
+
+  .card img {
+    width: 100px;
+
+    height: 100px;
+
+    flex-basis: 100px;
+  }
+
+
+  .card h3 {
+    font-size: 18px;
+  }
+
+
+  .card button {
+    width: 100%;
+  }
+
+
+  /* RANKING */
+
+  .ranking {
+    padding: 15px;
+  }
+
+}
+
+
+/* =========================================================
+   CELULARES MUITO PEQUENOS
+   ========================================================= */
+
+@media (max-width: 380px) {
+
+  .header {
+    font-size: 18px;
+  }
+
+
+  .container {
+    padding-left: 10px;
+
+    padding-right: 10px;
+  }
+
+
+  .form {
+    padding: 15px 12px;
+  }
+
+
+  input,
+  select,
+  button {
+    font-size: 14px;
+  }
+
+}
+
+
+/* =========================================================
+   ACESSIBILIDADE
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+
+    scroll-behavior: auto !important;
+
+    transition: none !important;
+
+    animation: none !important;
+
+  }
+
+}
+
+
+/* =========================================================
+   IMPRESSÃO
+   ========================================================= */
+
+@media print {
+
+  body {
+    background: #ffffff;
+
+    color: #000000;
+  }
+
+
+  .header {
+    position: static;
+
+    background: #ffffff;
+
+    color: #000000;
+
+    box-shadow: none;
+
+    border-bottom: 1px solid #000000;
+  }
+
+
+  .filtros,
+  .form-section,
+  .ranking {
+    display: none;
+  }
+
+
+  .card {
+    background: #ffffff;
+
+    color: #000000;
+
+    border: 1px solid #cccccc;
+
+    box-shadow: none;
+
+    break-inside: avoid;
+  }
+
+
+  .card h3,
+  .card p,
+  .card li {
+    color: #000000;
+  }
+
+
+  .btn-edit,
+  .btn-danger {
+    display: none;
+  }
+
+}
+```
