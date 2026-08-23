@@ -1,297 +1,47 @@
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
-  >
-
-  <title>Dashboard Vôlei - Cadastro de Jogadores</title>
-
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogadores de Vôlei</title>
+  <link rel="stylesheet" href="estilo.css">
 </head>
-
 <body>
-
-  <!-- CABEÇALHO -->
-  <header class="header">
-    🏐 Dashboard de Jogadores
-  </header>
+  <header class="header">🏐 Cadastro de Jogadores de Vôlei</header>
 
   <main class="container">
-
-    <!-- DASHBOARD -->
     <section class="dashboard">
-
       <div class="card-dashboard">
         <span class="dashboard-label">Total de jogadores</span>
         <strong id="total">0 jogadores</strong>
       </div>
-
       <div class="card-dashboard">
         <span class="dashboard-label">Média geral</span>
         <strong id="media">0.0</strong>
       </div>
-
       <div class="card-dashboard">
         <span class="dashboard-label">Melhor jogador</span>
         <strong id="melhor">Nenhum</strong>
       </div>
-
     </section>
 
-
-    <!-- BUSCA -->
     <section class="filtros">
-
-      <input
-        type="search"
-        id="busca"
-        placeholder="🔍 Buscar jogador..."
-        autocomplete="off"
-      >
-
+      <input type="search" id="busca" placeholder="🔍 Buscar jogador..." autocomplete="off">
       <select id="filtroNivel">
         <option value="">Todos os níveis</option>
         <option value="Iniciante">Iniciante</option>
         <option value="Intermediário">Intermediário</option>
         <option value="Avançado">Avançado</option>
       </select>
-
     </section>
 
+    <section id="ranking" class="ranking"></section>
 
-    <!-- FORMULÁRIO -->
-    <section class="form-section">
-
-      <form id="formJogador" class="form">
-
-        <h2 id="tituloFormulario">
-          Cadastrar jogador
-        </h2>
-
-
-        <!-- NOME -->
-        <div class="campo">
-
-          <label for="nome">
-            Nome do jogador
-          </label>
-
-          <input
-            type="text"
-            id="nome"
-            placeholder="Digite o nome completo"
-            autocomplete="name"
-            required
-          >
-
-        </div>
-
-
-        <!-- TIME ATUAL -->
-        <div class="campo">
-
-          <label for="time">
-            Time atual
-          </label>
-
-          <input
-            type="text"
-            id="time"
-            placeholder="Digite o time atual"
-            required
-          >
-
-        </div>
-
-
-        <!-- CATEGORIA -->
-        <div class="campo">
-
-          <label for="categoria">
-            Categoria do time
-          </label>
-
-          <input
-            type="text"
-            id="categoria"
-            placeholder="Ex.: Livre, Intermediário 1..."
-          >
-
-        </div>
-
-
-        <!-- NÍVEL -->
-        <div class="campo">
-
-          <label for="nivel">
-            Nível do jogador
-          </label>
-
-          <select id="nivel">
-
-            <option value="Iniciante">
-              Iniciante
-            </option>
-
-            <option value="Intermediário">
-              Intermediário
-            </option>
-
-            <option value="Avançado">
-              Avançado
-            </option>
-
-          </select>
-
-        </div>
-
-
-        <!-- TIMES ANTERIORES -->
-        <div
-          id="timesContainer"
-          class="times-container"
-        >
-
-          <div class="times-header">
-
-            <label>
-              Times que já jogou
-            </label>
-
-          </div>
-
-
-          <div class="time-item">
-
-            <input
-              type="text"
-              class="timeNome"
-              placeholder="Nome do time"
-            >
-
-            <select class="timeNivel">
-
-              <option value="Iniciante">
-                Iniciante
-              </option>
-
-              <option value="Intermediário">
-                Intermediário
-              </option>
-
-              <option value="Livre">
-                Livre
-              </option>
-
-            </select>
-
-            <button
-              type="button"
-              class="btn-remover-time"
-              title="Remover time"
-              aria-label="Remover time"
-              onclick="this.parentElement.remove()"
-            >
-              ❌
-            </button>
-
-          </div>
-
-        </div>
-
-
-        <!-- ADICIONAR TIME -->
-        <button
-          type="button"
-          id="btnAdicionarTime"
-          onclick="adicionarTime()"
-        >
-          + Adicionar outro time
-        </button>
-
-
-        <!-- FOTO -->
-        <div class="campo">
-
-          <label for="foto">
-            Foto do jogador
-          </label>
-
-          <input
-            type="file"
-            id="foto"
-            accept="image/*"
-          >
-
-          <img
-            id="preview"
-            alt="Pré-visualização da foto do jogador"
-            style="
-              width: 100px;
-              height: 100px;
-              object-fit: cover;
-              display: none;
-              margin-top: 10px;
-              border-radius: 8px;
-            "
-          >
-
-        </div>
-
-
-        <!-- BOTÕES -->
-        <div class="form-buttons">
-
-          <button
-            type="submit"
-            id="btnSalvar"
-          >
-            Cadastrar Jogador
-          </button>
-
-          <button
-            type="button"
-            id="btnCancelarEdicao"
-            style="display: none;"
-          >
-            Cancelar edição
-          </button>
-
-        </div>
-
-      </form>
-
+    <section id="listaJogadores" class="lista-jogadores">
+      <p class="subtitulo">Carregando atletas...</p>
     </section>
-
-
-    <!-- RANKING -->
-    <section
-      id="ranking"
-      class="ranking"
-    >
-      <!-- Preenchido pelo JavaScript -->
-    </section>
-
-
-    <!-- LISTA DE JOGADORES -->
-    <section
-      id="listaJogadores"
-      class="lista-jogadores"
-    >
-      <!-- Preenchido pelo JavaScript -->
-    </section>
-
   </main>
 
-
-  <!-- JAVASCRIPT -->
-  <script src="script.js"></script>
-
+  <script type="module" src="script.js"></script>
 </body>
 </html>
-```
