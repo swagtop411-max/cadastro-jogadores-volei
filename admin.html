@@ -1,87 +1,26 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Administração | Cadastro de Jogadores</title>
-  <link rel="stylesheet" href="estilo.css">
-  <style>
-    .admin-page{max-width:1100px;margin:0 auto;padding:25px 20px 50px}.login-box,.admin-panel{background:#1e293b;border:1px solid #475569;border-radius:12px;padding:25px;box-shadow:0 10px 30px rgba(0,0,0,.25)}.login-box{max-width:460px;margin:50px auto}.login-box h1,.admin-panel h1{margin-bottom:8px}.subtitulo{color:#cbd5e1;margin-bottom:20px}.admin-form{display:grid;gap:14px}.admin-form label{font-weight:700;color:#cbd5e1;font-size:14px}.admin-form input,.admin-form select{margin-top:6px}.admin-actions{display:flex;gap:10px;flex-wrap:wrap}.btn-primary{background:#2563eb;color:#fff}.btn-secondary{background:#475569;color:#fff}.btn-danger{background:#dc2626;color:#fff}.status{margin:12px 0;padding:10px;border-radius:8px;display:none}.status.ok{display:block;background:#14532d;color:#dcfce7}.status.erro{display:block;background:#7f1d1d;color:#fee2e2}.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}.atletas-admin{display:grid;gap:12px;margin-top:25px}.atleta-admin{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px;background:#0f172a;border:1px solid #475569;border-radius:10px}.atleta-info strong{display:block}.atleta-info span{color:#cbd5e1;font-size:14px}.atleta-actions{display:flex;gap:8px}.foto-preview{width:100px;height:100px;object-fit:cover;border-radius:10px;border:1px solid #475569;display:none}.hidden{display:none!important}@media(max-width:600px){.admin-page{padding:15px 12px 35px}.login-box,.admin-panel{padding:18px 15px}.topbar{align-items:stretch;flex-direction:column}.atleta-admin{align-items:stretch;flex-direction:column}.atleta-actions button{width:100%}.admin-actions{flex-direction:column}.admin-actions button{width:100%}}
-  </style>
-</head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administração | Banco de Atletas</title><link rel="stylesheet" href="estilo.css">
+<style>
+.admin-page{max-width:1100px;margin:auto;padding:25px 20px 50px}.login-box,.admin-panel{background:#1e293b;border:1px solid #475569;border-radius:12px;padding:25px;box-shadow:0 10px 30px #0004}.login-box{max-width:460px;margin:50px auto}.admin-form{display:grid;gap:14px}.admin-form label{font-weight:700;color:#cbd5e1;font-size:14px}.admin-form input,.admin-form select,.admin-form textarea{margin-top:6px;width:100%;box-sizing:border-box}.admin-form textarea{min-height:90px;resize:vertical}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:20px}.admin-actions,.atleta-actions{display:flex;gap:10px;flex-wrap:wrap}.btn-primary{background:#2563eb;color:#fff}.btn-secondary{background:#475569;color:#fff}.btn-danger{background:#dc2626;color:#fff}.status{margin:12px 0;padding:10px;border-radius:8px;display:none}.status.ok{display:block;background:#14532d;color:#dcfce7}.status.erro{display:block;background:#7f1d1d;color:#fee2e2}.atletas-admin{display:grid;gap:12px;margin-top:25px}.atleta-admin{display:flex;justify-content:space-between;gap:15px;padding:15px;background:#0f172a;border:1px solid #475569;border-radius:10px}.atleta-info strong{display:block}.atleta-info span{color:#cbd5e1;font-size:14px}.foto-preview{width:120px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #475569;display:none}.historico-item{display:grid;grid-template-columns:1fr 1fr 100px 45px;gap:8px;margin-top:8px}.hidden{display:none!important}@media(max-width:650px){.grid2,.historico-item{grid-template-columns:1fr}.topbar,.atleta-admin{align-items:stretch;flex-direction:column}.admin-page{padding:15px}.admin-actions button,.atleta-actions button{width:100%}}
+</style></head>
 <body>
-  <header class="header">🏐 Área Administrativa</header>
-
-  <main class="admin-page">
-    <section id="loginSection" class="login-box">
-      <h1>🔐 Acesso administrativo</h1>
-      <p class="subtitulo">Entre para gerenciar os atletas cadastrados.</p>
-      <form id="loginForm" class="admin-form">
-        <label for="loginEmail">E-mail
-          <input id="loginEmail" type="email" autocomplete="username" required>
-        </label>
-        <label for="loginPassword">Senha
-          <input id="loginPassword" type="password" autocomplete="current-password" required>
-        </label>
-        <button class="btn-primary" type="submit">Entrar</button>
-      </form>
-      <div id="loginStatus" class="status"></div>
-    </section>
-
-    <section id="adminSection" class="admin-panel hidden">
-      <div class="topbar">
-        <div>
-          <h1>🏐 Gerenciar atletas</h1>
-          <p id="usuarioLogado" class="subtitulo"></p>
-        </div>
-        <button id="btnSair" class="btn-secondary" type="button">Sair</button>
-      </div>
-
-      <form id="atletaForm" class="admin-form">
-        <input id="atletaId" type="hidden">
-
-        <label for="nome">Nome do jogador
-          <input id="nome" type="text" required>
-        </label>
-
-        <label for="time">Time atual
-          <input id="time" type="text" required>
-        </label>
-
-        <label for="categoria">Categoria
-          <input id="categoria" type="text" placeholder="Ex.: Intermediário 1">
-        </label>
-
-        <label for="nivel">Nível
-          <select id="nivel">
-            <option value="Iniciante">Iniciante</option>
-            <option value="Intermediário">Intermediário</option>
-            <option value="Avançado">Avançado</option>
-          </select>
-        </label>
-
-        <label for="foto">Foto
-          <input id="foto" type="file" accept="image/*">
-        </label>
-        <img id="fotoPreview" class="foto-preview" alt="Pré-visualização da foto">
-
-        <div id="timesContainer" class="times-container">
-          <div class="times-header"><label>Times anteriores</label></div>
-        </div>
-
-        <button id="btnAdicionarTime" class="btn-secondary" type="button">+ Adicionar time</button>
-
-        <div class="admin-actions">
-          <button id="btnSalvar" class="btn-primary" type="submit">Cadastrar atleta</button>
-          <button id="btnCancelar" class="btn-secondary hidden" type="button">Cancelar edição</button>
-        </div>
-      </form>
-
-      <div id="adminStatus" class="status"></div>
-      <div id="atletasAdmin" class="atletas-admin"></div>
-    </section>
-  </main>
-
-  <script type="module" src="admin.js"></script>
-</body>
-</html>
+<header class="header">🏐 Área Administrativa</header>
+<main class="admin-page">
+<section id="loginSection" class="login-box"><h1>🔐 Acesso administrativo</h1><p class="subtitulo">Entre para gerenciar o banco de atletas.</p><form id="loginForm" class="admin-form"><label>E-mail<input id="loginEmail" type="email" autocomplete="username" required></label><label>Senha<input id="loginPassword" type="password" autocomplete="current-password" required></label><button class="btn-primary" type="submit">Entrar</button></form><div id="loginStatus" class="status"></div></section>
+<section id="adminSection" class="admin-panel hidden">
+<div class="topbar"><div><h1>🏐 Banco de Atletas</h1><p id="usuarioLogado" class="subtitulo"></p></div><button id="btnSair" class="btn-secondary" type="button">Sair</button></div>
+<form id="atletaForm" class="admin-form"><input id="atletaId" type="hidden">
+<label>Foto<input id="foto" type="file" accept="image/*"></label><img id="fotoPreview" class="foto-preview" alt="Pré-visualização">
+<label>Nome completo<input id="nome" type="text" required></label>
+<div class="grid2"><label>Data de nascimento<input id="nascimento" type="date"></label><label>Cidade<input id="cidade" type="text" placeholder="Sertãozinho - SP"></label></div>
+<div class="grid2"><label>Posição<select id="posicao"><option value="">Selecione</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select></label><label>Categoria<input id="categoria" type="text" placeholder="Ex.: Intermediário 1"></label></div>
+<div class="grid2"><label>Time atual<input id="time" type="text" required></label><label>Status<select id="status"><option value="ativo">🟢 Ativo</option><option value="inativo">🔴 Inativo</option></select></label></div>
+<label>Contato <span style="font-weight:400">🔒 restrito ao administrador</span><input id="contato" type="text" placeholder="Telefone, WhatsApp ou e-mail"></label>
+<div><label>Histórico de equipes</label><div id="historicoContainer"></div><button id="btnAdicionarHistorico" class="btn-secondary" type="button" style="margin-top:8px">+ Adicionar equipe</button></div>
+<label>Observações<textarea id="observacoes" placeholder="Informações relevantes sobre o atleta..."></textarea></label>
+<div class="admin-actions"><button id="btnSalvar" class="btn-primary" type="submit">Cadastrar atleta</button><button id="btnCancelar" class="btn-secondary hidden" type="button">Cancelar edição</button></div>
+</form><div id="adminStatus" class="status"></div><div id="atletasAdmin" class="atletas-admin"></div>
+</section></main><script type="module" src="admin.js"></script></body></html>
