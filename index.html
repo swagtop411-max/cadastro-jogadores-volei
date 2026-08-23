@@ -3,32 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jogadores de Vôlei</title>
+  <meta name="description" content="Banco de atletas de vôlei de praia">
+  <title>Banco de Atletas | Vôlei de Praia</title>
   <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
-  <header class="header">🏐 Cadastro de Jogadores de Vôlei</header>
+  <header class="header">🏐 BANCO DE ATLETAS</header>
 
   <main class="container">
-    <section class="dashboard">
-      <div class="card-dashboard">
-        <span class="dashboard-label">Total de jogadores</span>
-        <strong id="total">0 jogadores</strong>
+    <section class="hero-premium">
+      <div class="hero-copy">
+        <span class="hero-kicker">BEACH SPORTS • PERFORMANCE • TALENTO</span>
+        <h1>VÔLEI DE<br><em>PRAIA</em></h1>
+        <p>Conheça atletas, trajetórias e talentos que fazem a diferença na areia.</p>
+        <a class="hero-button" href="#atletas">EXPLORAR ATLETAS ↓</a>
       </div>
-      <div class="card-dashboard">
-        <span class="dashboard-label">Média geral</span>
-        <strong id="media">0.0</strong>
-      </div>
-      <div class="card-dashboard">
-        <span class="dashboard-label">Melhor jogador</span>
-        <strong id="melhor">Nenhum</strong>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div><div class="volley-mark">🏐</div><div class="sand-line"></div>
       </div>
     </section>
 
+    <section class="dashboard" aria-label="Resumo do banco">
+      <div class="card-dashboard"><span class="dashboard-label">Atletas cadastrados</span><strong id="total">0 jogadores</strong></div>
+      <div class="card-dashboard"><span class="dashboard-label">Média geral</span><strong id="media">0.0</strong></div>
+      <div class="card-dashboard"><span class="dashboard-label">Destaque atual</span><strong id="melhor">Nenhum</strong></div>
+    </section>
+
+    <section class="section-heading" id="atletas">
+      <div><span>O BANCO</span><h2>ATLETAS EM DESTAQUE</h2></div>
+      <p>Pesquise por nome, time ou categoria.</p>
+    </section>
+
     <section class="filtros">
-      <input type="search" id="busca" placeholder="🔍 Buscar jogador..." autocomplete="off">
+      <input type="search" id="busca" placeholder="🔎  Buscar atleta..." autocomplete="off">
       <select id="filtroNivel">
-        <option value="">Todos os níveis</option>
+        <option value="">Todas as categorias</option>
         <option value="Iniciante">Iniciante</option>
         <option value="Intermediário">Intermediário</option>
         <option value="Avançado">Avançado</option>
@@ -36,12 +45,10 @@
     </section>
 
     <section id="ranking" class="ranking"></section>
+    <section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section>
 
-    <section id="listaJogadores" class="lista-jogadores">
-      <p class="subtitulo">Carregando atletas...</p>
-    </section>
+    <footer class="site-footer"><strong>🏐 BANCO DE ATLETAS</strong><span>Vôlei de praia • Talento • Evolução</span></footer>
   </main>
-
   <script type="module" src="public.js"></script>
 </body>
 </html>
