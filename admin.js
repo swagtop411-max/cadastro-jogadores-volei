@@ -19,6 +19,7 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+// Configuração copiada do app Web do Firebase.
 const firebaseConfig = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
@@ -72,6 +73,8 @@ function limparStatus(elemento) {
 function mensagemErroLogin(erro) {
   const codigo = erro?.code || "";
   switch (codigo) {
+    case "auth/invalid-api-key":
+      return "A chave da API do Firebase foi rejeitada. O código do GitHub está correto, mas a chave precisa estar válida/ativa no Google Cloud Firebase.";
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
