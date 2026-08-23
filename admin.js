@@ -3,6 +3,7 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
@@ -68,6 +69,27 @@ function limparStatus(elemento) {
   elemento.className = "status";
 }
 
+function mensagemErroLogin(erro) {
+  const codigo = erro?.code || "";
+
+  switch (codigo) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "E-mail ou senha incorretos. Confira os dados no Firebase Authentication.";
+    case "auth/invalid-email":
+      return "O e-mail informado é inválido. Confira se termina com @gmail.com, por exemplo.";
+    case "auth/too-many-requests":
+      return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
+    case "auth/unauthorized-domain":
+      return "O domínio do GitHub Pages ainda não está autorizado no Firebase Authentication.";
+    case "auth/network-request-failed":
+      return "Falha de conexão com o Firebase. Verifique sua internet e tente novamente.";
+    default:
+      return `Erro no login (${codigo || "desconhecido"}). Abra o console do navegador para detalhes.`;
+  }
+}
+
 function escaparHTML(valor) {
   const div = document.createElement("div");
   div.textContent = valor ?? "";
@@ -83,7 +105,7 @@ function adicionarTime(nomeTime = "", nivelTime = "Iniciante") {
   div.style.marginTop = "8px";
 
   div.innerHTML = `
-    <input class="timeNome" type="text" placeholder="Nome do time" value="${escaparHTML(nomeTime)}">
+    <input class="timeNome" type="text" placeholder="Nome do time">
     <select class="timeNivel">
       <option value="Iniciante">Iniciante</option>
       <option value="Intermediário">Intermediário</option>
@@ -92,6 +114,7 @@ function adicionarTime(nomeTime = "", nivelTime = "Iniciante") {
     <button type="button" class="btn-danger" aria-label="Remover time">❌</button>
   `;
 
+  div.querySelector(".timeNome").value = nomeTime;
   div.querySelector(".timeNivel").value = nivelTime;
   div.querySelector("button").addEventListener("click", () => div.remove());
   timesContainer.appendChild(div);
@@ -153,7 +176,6 @@ function editarAtleta(id) {
 async function excluirAtleta(id) {
   const atleta = atletas.find(item => item.id === id);
   if (!atleta) return;
-
   if (!confirm(`Tem certeza que deseja excluir "${atleta.nome}"?`)) return;
 
   try {
@@ -162,13 +184,12 @@ async function excluirAtleta(id) {
     await carregarAtletas();
   } catch (erro) {
     console.error(erro);
-    mostrarStatus(adminStatus, "Não foi possível excluir o atleta.", "erro");
+    mostrarStatus(adminStatus, `Não foi possível excluir (${erro.code || "erro"}).`, "erro");
   }
 }
 
 function renderizarAtletas() {
   atletasAdmin.innerHTML = "";
-
   if (!atletas.length) {
     atletasAdmin.innerHTML = "<p class='subtitulo'>Nenhum atleta cadastrado ainda.</p>";
     return;
@@ -177,7 +198,6 @@ function renderizarAtletas() {
   atletas.forEach(atleta => {
     const item = document.createElement("div");
     item.className = "atleta-admin";
-
     item.innerHTML = `
       <div class="atleta-info">
         <strong>${escaparHTML(atleta.nome)}</strong>
@@ -188,7 +208,6 @@ function renderizarAtletas() {
         <button type="button" class="btn-danger btn-excluir">Excluir</button>
       </div>
     `;
-
     item.querySelector(".btn-editar").addEventListener("click", () => editarAtleta(atleta.id));
     item.querySelector(".btn-excluir").addEventListener("click", () => excluirAtleta(atleta.id));
     atletasAdmin.appendChild(item);
@@ -203,25 +222,20 @@ async function carregarAtletas() {
     renderizarAtletas();
   } catch (erro) {
     console.error(erro);
-    // Funciona também se ainda não houver campo criadoEm nos documentos antigos.
     try {
       const snapshot = await getDocs(collection(db, "atletas"));
       atletas = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
       renderizarAtletas();
     } catch (erroFinal) {
       console.error(erroFinal);
-      mostrarStatus(adminStatus, "Não foi possível carregar os atletas. Verifique as regras do Firestore.", "erro");
+      mostrarStatus(adminStatus, `Não foi possível carregar os atletas (${erroFinal.code || "erro"}).`, "erro");
     }
   }
 }
 
 function comprimirImagem(arquivo, maxLado = 900, qualidade = 0.82) {
   return new Promise((resolve, reject) => {
-    if (!arquivo) {
-      resolve("");
-      return;
-    }
-
+    if (!arquivo) return resolve("");
     const reader = new FileReader();
     reader.onload = evento => {
       const imagem = new Image();
@@ -245,7 +259,6 @@ function comprimirImagem(arquivo, maxLado = 900, qualidade = 0.82) {
 foto.addEventListener("change", async () => {
   const arquivo = foto.files[0];
   if (!arquivo) return;
-
   try {
     const imagem = await comprimirImagem(arquivo);
     fotoPreview.src = imagem;
@@ -260,17 +273,48 @@ loginForm.addEventListener("submit", async evento => {
   evento.preventDefault();
   limparStatus(loginStatus);
 
+  const email = loginEmail.value.trim().toLowerCase();
+  const senha = loginPassword.value;
+
+  if (!email || !senha) {
+    mostrarStatus(loginStatus, "Informe e-mail e senha.", "erro");
+    return;
+  }
+
   try {
-    await signInWithEmailAndPassword(auth, loginEmail.value.trim(), loginPassword.value);
+    await signInWithEmailAndPassword(auth, email, senha);
     loginForm.reset();
   } catch (erro) {
-    console.error(erro);
-    mostrarStatus(loginStatus, "E-mail ou senha incorretos.", "erro");
+    console.error("Erro Firebase no login:", erro);
+    mostrarStatus(loginStatus, mensagemErroLogin(erro), "erro");
   }
 });
 
 btnSair.addEventListener("click", async () => {
   await signOut(auth);
+});
+
+const btnEsqueciSenha = document.createElement("button");
+btnEsqueciSenha.type = "button";
+btnEsqueciSenha.textContent = "Esqueci minha senha";
+btnEsqueciSenha.style.cssText = "background:none;border:0;color:#93c5fd;cursor:pointer;text-decoration:underline;padding:8px 0;font:inherit";
+loginForm.appendChild(btnEsqueciSenha);
+
+btnEsqueciSenha.addEventListener("click", async () => {
+  const email = loginEmail.value.trim().toLowerCase();
+  limparStatus(loginStatus);
+  if (!email) {
+    mostrarStatus(loginStatus, "Digite seu e-mail primeiro para receber o link de recuperação.", "erro");
+    loginEmail.focus();
+    return;
+  }
+  try {
+    await sendPasswordResetEmail(auth, email);
+    mostrarStatus(loginStatus, "Link de redefinição enviado. Verifique o e-mail informado.");
+  } catch (erro) {
+    console.error("Erro ao redefinir senha:", erro);
+    mostrarStatus(loginStatus, mensagemErroLogin(erro), "erro");
+  }
 });
 
 btnAdicionarTime.addEventListener("click", () => adicionarTime());
@@ -294,9 +338,7 @@ atletaForm.addEventListener("submit", async evento => {
 
   try {
     let fotoBase64 = fotoAtual;
-    if (foto.files[0]) {
-      fotoBase64 = await comprimirImagem(foto.files[0]);
-    }
+    if (foto.files[0]) fotoBase64 = await comprimirImagem(foto.files[0]);
 
     const dados = {
       nome: nomeValor,
@@ -305,9 +347,7 @@ atletaForm.addEventListener("submit", async evento => {
       nivel: nivel.value,
       times: obterTimes(),
       foto: fotoBase64,
-      avaliacoes: atletaId.value
-        ? (atletas.find(item => item.id === atletaId.value)?.avaliacoes || [])
-        : [],
+      avaliacoes: atletaId.value ? (atletas.find(item => item.id === atletaId.value)?.avaliacoes || []) : [],
       atualizadoEm: serverTimestamp()
     };
 
@@ -315,18 +355,15 @@ atletaForm.addEventListener("submit", async evento => {
       await updateDoc(doc(db, "atletas", atletaId.value), dados);
       mostrarStatus(adminStatus, "Atleta atualizado com sucesso.");
     } else {
-      await addDoc(collection(db, "atletas"), {
-        ...dados,
-        criadoEm: serverTimestamp()
-      });
+      await addDoc(collection(db, "atletas"), { ...dados, criadoEm: serverTimestamp() });
       mostrarStatus(adminStatus, "Atleta cadastrado com sucesso.");
     }
 
     resetarFormulario();
     await carregarAtletas();
   } catch (erro) {
-    console.error(erro);
-    mostrarStatus(adminStatus, "Não foi possível salvar. Verifique o login e as regras do Firestore.", "erro");
+    console.error("Erro ao salvar atleta:", erro);
+    mostrarStatus(adminStatus, `Não foi possível salvar (${erro.code || "erro"}). Verifique as regras do Firestore.`, "erro");
   } finally {
     btnSalvar.disabled = false;
     btnSalvar.textContent = atletaId.value ? "Salvar alterações" : "Cadastrar atleta";
