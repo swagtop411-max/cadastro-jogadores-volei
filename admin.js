@@ -20,7 +20,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBMsUR0320Nz3aSVRj5axXFVkJ5Ftz9CQ",
+  apiKey: "AIzaSyBMsUR0320Nz3asVRj5axXFvKJ5Ftz9C0Q",
   authDomain: "jogadores-de-volei.firebaseapp.com",
   projectId: "jogadores-de-volei",
   storageBucket: "jogadores-de-volei.firebasestorage.app",
@@ -78,7 +78,7 @@ function mensagemErroLogin(erro) {
     case "auth/user-not-found":
       return "E-mail ou senha incorretos. Confira os dados no Firebase Authentication.";
     case "auth/invalid-email":
-      return "O e-mail informado é inválido. Confira se termina com @gmail.com, por exemplo.";
+      return "O e-mail informado é inválido. Confira se está correto.";
     case "auth/too-many-requests":
       return "Muitas tentativas. Aguarde alguns minutos e tente novamente.";
     case "auth/unauthorized-domain":
@@ -366,7 +366,7 @@ atletaForm.addEventListener("submit", async evento => {
     mostrarStatus(adminStatus, `Não foi possível salvar (${erro.code || "erro"}). Verifique as regras do Firestore.`, "erro");
   } finally {
     btnSalvar.disabled = false;
-    btnSalvar.textContent = atletaId.value ? "Salvar alterações" : "Cadastrar atleta";
+    btnSalvar.textContent = "Cadastrar atleta";
   }
 });
 
