@@ -2,31 +2,31 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /atletas/{atletaId} {
-      allow read: if true;
-      allow write: if request.auth != null
+    function isAdmin() {
+      return request.auth != null
         && request.auth.token.email == 'swagtop411@gmail.com';
     }
 
+    match /atletas/{atletaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /atletas/{atletaId}/privado/{documento} {
-      allow read, write: if request.auth != null
-        && request.auth.token.email == 'swagtop411@gmail.com';
+      allow read, write: if isAdmin();
     }
 
     match /apoiadores/{apoiadorId} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.token.email == 'swagtop411@gmail.com';
+      allow write: if isAdmin();
     }
 
-    // Comentários enviados pelos visitantes.
-    // Qualquer visitante pode criar um comentário, mas ele nasce pendente.
-    // Somente o administrador pode ler os pendentes e aprovar, recusar ou excluir.
     match /comentarios/{comentarioId} {
-      allow read: if resource.data.aprovado == true
-        || (request.auth != null
-          && request.auth.token.email == 'swagtop411@gmail.com');
+      // Visitantes só podem ler comentários já aprovados.
+      // O administrador pode ler todos os comentários.
+      allow read: if isAdmin() || resource.data.aprovado == true;
 
+      // Visitantes podem enviar comentários, sempre começando como pendentes.
       allow create: if request.resource.data.keys().hasAll([
           'atletaId', 'nome', 'texto', 'aprovado', 'status', 'criadoEm'
         ])
@@ -45,8 +45,8 @@ service cloud.firestore {
         && request.resource.data.criadoEm is timestamp
         && exists(/databases/$(database)/documents/atletas/$(request.resource.data.atletaId));
 
-      allow update, delete: if request.auth != null
-        && request.auth.token.email == 'swagtop411@gmail.com';
+      // Apenas o administrador pode aprovar, recusar ou excluir.
+      allow update, delete: if isAdmin();
     }
   }
 }
