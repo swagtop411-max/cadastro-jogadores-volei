@@ -20,13 +20,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBMsUR0320Nz3asVRj5axXFvKJ5Ftz9C0Q",
+  apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
   projectId: "jogadores-de-volei",
   storageBucket: "jogadores-de-volei.firebasestorage.app",
   messagingSenderId: "48728914064",
   appId: "1:48728914064:web:1dd7aeb705319886f74015",
-  measurementId: "G-KQ33D1K41Y"
+  measurementId: "G-K033D1K41Y"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -71,7 +71,6 @@ function limparStatus(elemento) {
 
 function mensagemErroLogin(erro) {
   const codigo = erro?.code || "";
-
   switch (codigo) {
     case "auth/invalid-credential":
     case "auth/wrong-password":
@@ -103,7 +102,6 @@ function adicionarTime(nomeTime = "", nivelTime = "Iniciante") {
   div.style.gridTemplateColumns = "minmax(0,1fr) 180px 45px";
   div.style.gap = "8px";
   div.style.marginTop = "8px";
-
   div.innerHTML = `
     <input class="timeNome" type="text" placeholder="Nome do time">
     <select class="timeNivel">
@@ -113,7 +111,6 @@ function adicionarTime(nomeTime = "", nivelTime = "Iniciante") {
     </select>
     <button type="button" class="btn-danger" aria-label="Remover time">❌</button>
   `;
-
   div.querySelector(".timeNome").value = nomeTime;
   div.querySelector(".timeNivel").value = nivelTime;
   div.querySelector("button").addEventListener("click", () => div.remove());
@@ -145,20 +142,17 @@ function resetarFormulario() {
 function editarAtleta(id) {
   const atleta = atletas.find(item => item.id === id);
   if (!atleta) return;
-
   atletaId.value = atleta.id;
   nome.value = atleta.nome || "";
   time.value = atleta.time || "";
   categoria.value = atleta.categoria || "";
   nivel.value = atleta.nivel || "Iniciante";
-
   timesContainer.innerHTML = '<div class="times-header"><label>Times anteriores</label></div>';
   if (Array.isArray(atleta.times) && atleta.times.length) {
     atleta.times.forEach(item => adicionarTime(item.nome, item.nivel));
   } else {
     adicionarTime();
   }
-
   fotoAtual = atleta.foto || "";
   if (fotoAtual) {
     fotoPreview.src = fotoAtual;
@@ -167,7 +161,6 @@ function editarAtleta(id) {
     fotoPreview.src = "";
     fotoPreview.style.display = "none";
   }
-
   btnSalvar.textContent = "Salvar alterações";
   btnCancelar.classList.remove("hidden");
   atletaForm.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -177,7 +170,6 @@ async function excluirAtleta(id) {
   const atleta = atletas.find(item => item.id === id);
   if (!atleta) return;
   if (!confirm(`Tem certeza que deseja excluir "${atleta.nome}"?`)) return;
-
   try {
     await deleteDoc(doc(db, "atletas", id));
     mostrarStatus(adminStatus, "Atleta excluído com sucesso.");
@@ -194,7 +186,6 @@ function renderizarAtletas() {
     atletasAdmin.innerHTML = "<p class='subtitulo'>Nenhum atleta cadastrado ainda.</p>";
     return;
   }
-
   atletas.forEach(atleta => {
     const item = document.createElement("div");
     item.className = "atleta-admin";
@@ -272,15 +263,12 @@ foto.addEventListener("change", async () => {
 loginForm.addEventListener("submit", async evento => {
   evento.preventDefault();
   limparStatus(loginStatus);
-
   const email = loginEmail.value.trim().toLowerCase();
   const senha = loginPassword.value;
-
   if (!email || !senha) {
     mostrarStatus(loginStatus, "Informe e-mail e senha.", "erro");
     return;
   }
-
   try {
     await signInWithEmailAndPassword(auth, email, senha);
     loginForm.reset();
@@ -323,23 +311,18 @@ btnCancelar.addEventListener("click", resetarFormulario);
 atletaForm.addEventListener("submit", async evento => {
   evento.preventDefault();
   limparStatus(adminStatus);
-
   const nomeValor = nome.value.trim();
   const timeValor = time.value.trim();
   const categoriaValor = categoria.value.trim();
-
   if (!nomeValor || !timeValor) {
     mostrarStatus(adminStatus, "Preencha nome e time atual.", "erro");
     return;
   }
-
   btnSalvar.disabled = true;
   btnSalvar.textContent = "Salvando...";
-
   try {
     let fotoBase64 = fotoAtual;
     if (foto.files[0]) fotoBase64 = await comprimirImagem(foto.files[0]);
-
     const dados = {
       nome: nomeValor,
       time: timeValor,
@@ -350,7 +333,6 @@ atletaForm.addEventListener("submit", async evento => {
       avaliacoes: atletaId.value ? (atletas.find(item => item.id === atletaId.value)?.avaliacoes || []) : [],
       atualizadoEm: serverTimestamp()
     };
-
     if (atletaId.value) {
       await updateDoc(doc(db, "atletas", atletaId.value), dados);
       mostrarStatus(adminStatus, "Atleta atualizado com sucesso.");
@@ -358,7 +340,6 @@ atletaForm.addEventListener("submit", async evento => {
       await addDoc(collection(db, "atletas"), { ...dados, criadoEm: serverTimestamp() });
       mostrarStatus(adminStatus, "Atleta cadastrado com sucesso.");
     }
-
     resetarFormulario();
     await carregarAtletas();
   } catch (erro) {
