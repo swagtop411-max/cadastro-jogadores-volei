@@ -7,14 +7,15 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+// Configuração EXATA do app Web cadastrado no Firebase.
 const firebaseConfig = {
-  apiKey: "AIzaSyBMsUR0320Nz3aSVRj5axXFVkJ5Ftz9CQ",
+  apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
   projectId: "jogadores-de-volei",
   storageBucket: "jogadores-de-volei.firebasestorage.app",
   messagingSenderId: "48728914064",
   appId: "1:48728914064:web:1dd7aeb705319886f74015",
-  measurementId: "G-KQ33D1K41Y"
+  measurementId: "G-K033D1K41Y"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -73,9 +74,11 @@ async function carregarJogadores() {
 
   try {
     let snapshot;
+
     try {
       snapshot = await getDocs(query(collection(db, "atletas"), orderBy("nome")));
-    } catch {
+    } catch (erroOrdenacao) {
+      console.warn("Não foi possível ordenar por nome. Tentando consulta simples.", erroOrdenacao);
       snapshot = await getDocs(collection(db, "atletas"));
     }
 
@@ -85,12 +88,23 @@ async function carregarJogadores() {
 
     renderizar();
   } catch (erro) {
-    console.error("Erro ao carregar atletas:", erro);
+    console.error("Erro ao carregar atletas do Firestore:", erro);
+
+    let mensagem = "Não foi possível carregar os atletas.";
+
+    if (erro?.code === "permission-denied") {
+      mensagem = "A leitura do Firestore foi bloqueada pelas regras de segurança.";
+    } else if (erro?.code === "unavailable") {
+      mensagem = "O Firebase está temporariamente indisponível. Tente novamente.";
+    } else if (erro?.code === "auth/invalid-api-key") {
+      mensagem = "A chave da API do Firebase está inválida.";
+    }
+
     listaJogadores.innerHTML = `
       <div class="card">
         <div>
-          <h3>Não foi possível carregar os atletas</h3>
-          <p>Verifique a conexão com o Firebase e as regras do Firestore.</p>
+          <h3>${escaparHTML(mensagem)}</h3>
+          <p>Abra o console do navegador (F12) para ver o erro técnico.</p>
         </div>
       </div>`;
   }
@@ -108,7 +122,7 @@ function atualizarDashboard() {
     .filter(item => item.nota > 0)
     .sort((a, b) => b.nota - a.nota)[0];
 
-  melhorElement.textContent = melhor ? melhor.jogador.nome : "Nenhum";
+  melhorElement.textContent = melhor ? `${melhor.jogador.nome} ⭐ ${melhor.nota.toFixed(1)}` : "Nenhum";
 }
 
 function renderizarRanking() {
@@ -125,7 +139,7 @@ function renderizarRanking() {
   ranking.innerHTML = `
     <h2>🏆 Ranking dos atletas</h2>
     ${ordenados.map((item, index) => `
-      <p><strong>${index + 1}º</strong> ${escaparHTML(item.jogador.nome)}${item.nota ? ` · ⭐ ${item.nota.toFixed(1)}` : ""}</p>
+      <p><strong>${index + 1}º</strong> ${escaparHTML(item.jogador.nome)}${item.nota ? ` · ⭐ ${item.nota.toFixed(1)}` : " · Sem avaliação"}</p>
     `).join("")}
   `;
 }
@@ -156,7 +170,7 @@ function renderizarCards(lista) {
           <p><strong>Time atual:</strong> ${escaparHTML(jogador.time)}</p>
           <p><strong>Categoria:</strong> ${escaparHTML(jogador.categoria || "Não informada")}</p>
           <p><strong>Nível:</strong> ${escaparHTML(jogador.nivel)}</p>
-          ${nota ? `<p><strong>Avaliação:</strong> ⭐ ${nota.toFixed(1)}</p>` : ""}
+          ${nota ? `<p><strong>Avaliação:</strong> ⭐ ${nota.toFixed(1)}</p>` : "<p><strong>Avaliação:</strong> Sem avaliações</p>"}
           <p><strong>Times anteriores:</strong></p>
           ${times}
         </div>
