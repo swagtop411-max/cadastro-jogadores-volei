@@ -1,20 +1,29 @@
-/* Banner enviado pelo projeto, usado como arte principal do hero */
+/* HERO BANNER DESATIVADO
+   O projeto voltou ao hero original em CSS para preservar a nitidez e a funcionalidade.
+   A arte enviada anteriormente não é usada como fundo do hero.
+*/
 .hero-premium{
-  background-image:url('assets/hero-banner.webp') !important;
-  background-size:cover !important;
-  background-position:center !important;
-  background-repeat:no-repeat !important;
+  background-image:none !important;
+}
+.hero-art{
   position:relative !important;
+  inset:auto !important;
+  width:auto !important;
+  height:auto !important;
+  min-height:430px !important;
+  pointer-events:auto !important;
 }
-.hero-premium:before{
-  background:linear-gradient(90deg,rgba(0,0,0,.22),rgba(0,0,0,.02) 58%,rgba(0,0,0,.08)) !important;
-  z-index:1 !important;
+.hero-art:before,.hero-art:after{
+  display:block !important;
 }
-.hero-copy{position:relative;z-index:3 !important}
-.hero-art{position:absolute !important;inset:0 !important;width:100% !important;height:100% !important;min-height:0 !important;z-index:2 !important;pointer-events:none}
-.hero-art:before,.hero-art:after,.hero-glow,.sun,.volley-mark,.sand-line{display:none !important}
-.hero-badge{display:none !important}
+.hero-glow,.sun,.volley-mark,.sand-line{
+  display:block !important;
+}
+.hero-badge{
+  display:flex !important;
+}
 @media(max-width:850px){
-  .hero-premium{min-height:520px !important;background-position:center !important}
-  .hero-art{display:block !important;min-height:0 !important}
+  .hero-art{
+    min-height:300px !important;
+  }
 }
