@@ -7,7 +7,7 @@
 <title>Banco de Dados de Atletas | Vôlei de Praia</title>
 <link rel="stylesheet" href="estilo.css">
 <link rel="stylesheet" href="apoiadores.css">
-<link rel="stylesheet" href="layout-dashboard.css?v=20260824-6">
+<link rel="stylesheet" href="layout-dashboard.css?v=20260824-7">
 <link rel="stylesheet" href="hero-banner.css?v=20260824-6">
 </head>
 <body>
@@ -31,10 +31,11 @@
     <div class="athletes-content">
       <section class="section-heading" id="atletas"><div><span>O BANCO DE DADOS</span><h2>ATLETAS</h2></div><p>Encontre jogadores por nome, cidade, posição, categoria ou equipe.</p></section>
       <section class="filtros">
-        <div class="search-wrap"><input type="search" id="busca" placeholder="🔎  Buscar atleta, equipe ou cidade..." autocomplete="off"><button type="button" id="btnPesquisar">PESQUISAR</button></div>
+        <input type="search" id="busca" placeholder="🔎  Buscar atleta, equipe ou cidade..." autocomplete="off">
         <select id="filtroNivel"><option value="">Todas as categorias</option><option>Iniciante</option><option>Intermediário 1</option><option>Intermediário 2</option><option>Intermediário</option><option>Livre</option><option>Avançado</option></select>
         <select id="filtroPosicao"><option value="">Todas as posições</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select>
         <select id="filtroCidade"><option value="">Todas as cidades</option></select>
+        <button type="button" id="btnPesquisar" class="search-button">PESQUISAR</button>
       </section>
       <div class="results-bar"><span>PERFIS DISPONÍVEIS</span><strong id="resultadoTexto">Selecione um atleta para conhecer o perfil completo</strong></div>
       <section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section>
