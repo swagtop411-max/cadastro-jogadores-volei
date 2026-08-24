@@ -7,56 +7,27 @@
 <title>Banco de Dados de Atletas | Vôlei de Praia</title>
 <link rel="stylesheet" href="estilo.css">
 <link rel="stylesheet" href="apoiadores.css">
-<link rel="stylesheet" href="layout-dashboard.css?v=20260824-8">
+<link rel="stylesheet" href="layout-dashboard.css?v=20260824-9">
 <link rel="stylesheet" href="hero-banner.css?v=20260824-6">
 <style>
-/* FILTROS: todos na mesma fileira no desktop */
-.filtros{display:flex!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:9px!important;width:100%!important}
-.filtros input{flex:1 1 0!important;min-width:220px!important;width:auto!important;box-sizing:border-box!important}
-.filtros select{flex:1 1 0!important;min-width:160px!important;width:auto!important;box-sizing:border-box!important}
-.filtros .search-button{flex:0 0 120px!important;width:120px!important;min-width:120px!important;min-height:48px!important;height:48px!important;border:1px solid #d9a93f!important;border-radius:11px!important;background:linear-gradient(135deg,#f2cc72,#bd8425)!important;color:#15130e!important;font-size:10px!important;font-weight:900!important;letter-spacing:1px!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:0 8px 20px rgba(217,169,63,.12)!important;transition:.2s!important}
-.filtros .search-button:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(217,169,63,.2)!important}
-/* BOTÃO DO PAINEL ADMINISTRATIVO */
-.admin-cta{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px!important;border:1px solid rgba(217,169,63,.55)!important;border-radius:10px!important;background:#111614!important;color:#f2cc72!important;text-decoration:none!important;font-size:9px!important;font-weight:900!important;letter-spacing:1px!important;white-space:nowrap!important;transition:.2s!important}
-.admin-cta:hover{background:#d9a93f!important;color:#15130e!important;transform:translateY(-2px)}
-.header-actions{display:flex;align-items:center;gap:9px}
-@media(max-width:900px){.filtros{flex-wrap:wrap!important}.filtros input{flex:1 1 45%!important}.filtros select{flex:1 1 45%!important}.filtros .search-button{flex:0 0 120px!important}.header-actions{gap:6px}.admin-cta{padding:9px 10px!important;font-size:8px!important}}
-@media(max-width:650px){.filtros{display:grid!important;grid-template-columns:1fr!important}.filtros input,.filtros select,.filtros .search-button{width:100%!important;min-width:0!important;flex:none!important}.header-actions{gap:5px}.header-cta{padding:9px 9px!important;font-size:8px!important}.admin-cta{padding:9px 8px!important;font-size:7px!important}.header-brand strong{font-size:20px!important}}
+.filtros{display:flex!important;flex-wrap:nowrap!important;align-items:stretch!important;gap:9px!important;width:100%!important}.filtros input{flex:1 1 0!important;min-width:220px!important;width:auto!important;box-sizing:border-box!important}.filtros select{flex:1 1 0!important;min-width:160px!important;width:auto!important;box-sizing:border-box!important}.filtros .search-button{flex:0 0 120px!important;width:120px!important;min-width:120px!important;min-height:48px!important;height:48px!important;border:1px solid #d9a93f!important;border-radius:11px!important;background:linear-gradient(135deg,#f2cc72,#bd8425)!important;color:#15130e!important;font-size:10px!important;font-weight:900!important;letter-spacing:1px!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:0 8px 20px rgba(217,169,63,.12)!important;transition:.2s!important}.filtros .search-button:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(217,169,63,.2)!important}.admin-cta{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px!important;border:1px solid rgba(217,169,63,.55)!important;border-radius:10px!important;background:#111614!important;color:#f2cc72!important;text-decoration:none!important;font-size:9px!important;font-weight:900!important;letter-spacing:1px!important;white-space:nowrap!important;transition:.2s!important}.admin-cta:hover{background:#d9a93f!important;color:#15130e!important;transform:translateY(-2px)}.header-actions{display:flex;align-items:center;gap:9px}@media(max-width:900px){.filtros{flex-wrap:wrap!important}.filtros input{flex:1 1 45%!important}.filtros select{flex:1 1 45%!important}.filtros .search-button{flex:0 0 120px!important}.header-actions{gap:6px}.admin-cta{padding:9px 10px!important;font-size:8px!important}}@media(max-width:650px){.filtros{display:grid!important;grid-template-columns:1fr!important}.filtros input,.filtros select,.filtros .search-button{width:100%!important;min-width:0!important;flex:none!important}.header-actions{gap:5px}.header-cta{padding:9px 9px!important;font-size:8px!important}.admin-cta{padding:9px 8px!important;font-size:7px!important}.header-brand strong{font-size:20px!important}}
 </style>
 </head>
 <body>
 <header class="header">
   <div class="header-brand"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></div>
   <div class="header-center">🔎 &nbsp; Buscar atletas, cidades, posições ou equipes...</div>
-  <div class="header-actions">
-    <a class="header-cta" href="#atletas">EXPLORAR ATLETAS</a>
-    <a class="admin-cta" href="admin.html" aria-label="Acessar painel administrativo">🔐 PAINEL ADM</a>
-  </div>
+  <div class="header-actions"><a class="header-cta" href="#atletas">EXPLORAR ATLETAS</a><a class="admin-cta" href="admin.html" aria-label="Acessar painel administrativo">🔐 PAINEL ADM</a></div>
 </header>
 <main class="container">
   <section class="hero-premium">
     <div class="hero-copy"><span class="hero-kicker">BANCO PROFISSIONAL • VÔLEI DE PRAIA</span><h1>BANCO DE DADOS<br><em>DE ATLETAS</em></h1><p>Um espaço para dar visibilidade ao talento, conectar atletas e aproximar equipes, treinadores e organizadores.</p><div class="hero-points"><span>◉ Mais visibilidade</span><span>★ Mais oportunidades</span><span>✓ Credibilidade</span></div><a class="hero-button" href="#atletas">VER ATLETAS →</a></div>
-    <div class="hero-art" aria-hidden="true"><div class="hero-glow"></div><div class="sun"></div><div class="volley-mark">🏐</div><div class="sand-line"></div><div class="hero-badge">M&amp;M<br><small>ORGANIZAÇÃO</small></div></div>
+    <div class="hero-art" aria-hidden="true"><div class="hero-glow"></div><div class="sun"></div><div class="volley-mark">🏐</div><div class="sand-line"></div><div class="hero-badge" aria-label="M&M Organização"><span class="badge-stars">★ ★ ★</span><strong>M&amp;M</strong><span class="badge-name">ORGANIZAÇÃO</span><span class="badge-line"></span><small>ORGANIZADORA OFICIAL</small></div></div>
   </section>
-  <section class="dashboard" aria-label="Resumo do banco">
-    <div class="card-dashboard"><span class="dashboard-icon">♙</span><div><span class="dashboard-label">Atletas cadastrados</span><strong id="total">0 jogadores</strong></div></div>
-    <div class="card-dashboard"><span class="dashboard-icon">✓</span><div><span class="dashboard-label">Atletas ativos</span><strong id="ativos">0</strong></div></div>
-    <div class="card-dashboard"><span class="dashboard-icon">⌖</span><div><span class="dashboard-label">Cidades representadas</span><strong id="cidades">0</strong></div></div>
-  </section>
+  <section class="dashboard" aria-label="Resumo do banco"><div class="card-dashboard"><span class="dashboard-icon">♙</span><div><span class="dashboard-label">Atletas cadastrados</span><strong id="total">0 jogadores</strong></div></div><div class="card-dashboard"><span class="dashboard-icon">✓</span><div><span class="dashboard-label">Atletas ativos</span><strong id="ativos">0</strong></div></div><div class="card-dashboard"><span class="dashboard-icon">⌖</span><div><span class="dashboard-label">Cidades representadas</span><strong id="cidades">0</strong></div></div></section>
   <div class="public-layout">
     <aside class="sponsors-sidebar" aria-label="Apoiadores"><div class="sponsors-title"><span>QUEM ACREDITA NO ESPORTE</span><h2>APOIADORES</h2><p>Marcas que acreditam no esporte e fortalecem nossa comunidade.</p></div><div id="apoiadoresLista" class="sponsors-list"></div><div class="sponsors-note">Sua marca pode estar aqui.<br><strong>Seja um apoiador.</strong></div></aside>
-    <div class="athletes-content">
-      <section class="section-heading" id="atletas"><div><span>O BANCO DE DADOS</span><h2>ATLETAS</h2></div><p>Encontre jogadores por nome, cidade, posição, categoria ou equipe.</p></section>
-      <section class="filtros">
-        <input type="search" id="busca" placeholder="🔎  Buscar atleta, equipe ou cidade..." autocomplete="off">
-        <select id="filtroNivel"><option value="">Todas as categorias</option><option>Iniciante</option><option>Intermediário 1</option><option>Intermediário 2</option><option>Intermediário</option><option>Livre</option><option>Avançado</option></select>
-        <select id="filtroPosicao"><option value="">Todas as posições</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select>
-        <select id="filtroCidade"><option value="">Todas as cidades</option></select>
-        <button type="button" id="btnPesquisar" class="search-button">PESQUISAR</button>
-      </section>
-      <div class="results-bar"><span>PERFIS DISPONÍVEIS</span><strong id="resultadoTexto">Selecione um atleta para conhecer o perfil completo</strong></div>
-      <section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section>
-    </div>
+    <div class="athletes-content"><section class="section-heading" id="atletas"><div><span>O BANCO DE DADOS</span><h2>ATLETAS</h2></div><p>Encontre jogadores por nome, cidade, posição, categoria ou equipe.</p></section><section class="filtros"><input type="search" id="busca" placeholder="🔎  Buscar atleta, equipe ou cidade..." autocomplete="off"><select id="filtroNivel"><option value="">Todas as categorias</option><option>Iniciante</option><option>Intermediário 1</option><option>Intermediário 2</option><option>Intermediário</option><option>Livre</option><option>Avançado</option></select><select id="filtroPosicao"><option value="">Todas as posições</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select><select id="filtroCidade"><option value="">Todas as cidades</option></select><button type="button" id="btnPesquisar" class="search-button">PESQUISAR</button></section><div class="results-bar"><span>PERFIS DISPONÍVEIS</span><strong id="resultadoTexto">Selecione um atleta para conhecer o perfil completo</strong></div><section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section></div>
   </div>
   <footer class="site-footer"><strong>🏐 BANCO DE DADOS DE ATLETAS</strong><span>Vôlei de praia • Talento • Evolução • Um projeto M&amp;M Organização</span></footer>
 </main>
