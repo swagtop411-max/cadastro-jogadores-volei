@@ -9,6 +9,12 @@
 <link rel="stylesheet" href="apoiadores.css">
 <link rel="stylesheet" href="layout-dashboard.css?v=20260824-7">
 <link rel="stylesheet" href="hero-banner.css?v=20260824-6">
+<style>
+.filtros{grid-template-columns:minmax(240px,1.7fr) minmax(150px,1fr) minmax(150px,1fr) minmax(150px,1fr) minmax(115px,.72fr)!important}
+.search-button{width:100%;min-height:48px;border:1px solid #d9a93f;border-radius:11px;background:linear-gradient(135deg,#f2cc72,#bd8425);color:#15130e;font-size:10px;font-weight:900;letter-spacing:1px;cursor:pointer;white-space:nowrap;box-shadow:0 8px 20px rgba(217,169,63,.12)}
+@media(max-width:950px){.filtros{grid-template-columns:1.5fr 1fr 1fr!important}.search-button{grid-column:1/-1!important}}
+@media(max-width:650px){.filtros{grid-template-columns:1fr!important}.search-button{grid-column:auto!important}}
+</style>
 </head>
 <body>
 <header class="header">
