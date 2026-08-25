@@ -19,6 +19,38 @@ if (!window.__ga4_loaded) {
   });
 }
 
+// Ajustes de responsividade do painel administrativo.
+// No celular, as abas passam a ocupar duas colunas para que
+// "📊 Estatísticas" fique visível sem exigir rolagem horizontal.
+const mobileAdminStyle = document.createElement("style");
+mobileAdminStyle.textContent = `
+  @media (max-width: 700px) {
+    .admin-tabs {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      overflow: visible !important;
+      width: 100% !important;
+    }
+    .admin-tab {
+      width: 100% !important;
+      min-width: 0 !important;
+      white-space: normal !important;
+      min-height: 48px !important;
+      padding: 10px 8px !important;
+    }
+    .stats-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .stats-links {
+      grid-template-columns: 1fr !important;
+    }
+    .stats-link {
+      min-height: 62px !important;
+    }
+  }
+`;
+document.head.appendChild(mobileAdminStyle);
+
 export function trackEvent(name, params = {}) {
   if (typeof window.gtag === "function") {
     window.gtag("event", name, params);
