@@ -1,6 +1,7 @@
 // Google Analytics 4 - Banco de Dados de Atletas
 // ID de medição: G-K033D1K41Y
 const GA_ID = "G-K033D1K41Y";
+const GA_PROPERTY = "https://analytics.google.com/analytics/web/#/a390906538p532490731";
 
 if (!window.__ga4_loaded) {
   window.__ga4_loaded = true;
@@ -69,4 +70,52 @@ document.addEventListener("DOMContentLoaded", () => {
       origem: "cadastro_atleta"
     }));
   }
+
+  // Cards da aba Estatísticas: cada card abre diretamente o relatório correspondente.
+  const statReports = [
+    `${GA_PROPERTY}/`,
+    `${GA_PROPERTY}/reports/life-cycle/engagement/pages-and-screens`,
+    `${GA_PROPERTY}/reports/life-cycle/engagement/events`,
+    `${GA_PROPERTY}/reports/tech/tech-details`,
+    `${GA_PROPERTY}/reports/user-demographics`,
+    `${GA_PROPERTY}/reports/life-cycle/acquisition`
+  ];
+
+  document.querySelectorAll(".stats-card").forEach((card, index) => {
+    const url = statReports[index];
+    if (!url) return;
+
+    card.setAttribute("role", "link");
+    card.setAttribute("tabindex", "0");
+    card.setAttribute("title", "Abrir este relatório no Google Analytics");
+    card.style.cursor = "pointer";
+    card.style.transition = "transform .2s ease, border-color .2s ease, box-shadow .2s ease";
+
+    const openReport = () => {
+      trackEvent("analytics_report_click", {
+        relatorio: card.querySelector("strong")?.textContent?.trim() || "estatistica"
+      });
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+
+    card.addEventListener("click", openReport);
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openReport();
+      }
+    });
+
+    card.addEventListener("mouseenter", () => {
+      card.style.transform = "translateY(-3px)";
+      card.style.borderColor = "rgba(217,169,63,.55)";
+      card.style.boxShadow = "0 12px 28px rgba(0,0,0,.25)";
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "";
+      card.style.borderColor = "";
+      card.style.boxShadow = "";
+    });
+  });
 });
