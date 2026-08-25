@@ -48,5 +48,18 @@ service cloud.firestore {
       // Apenas o administrador pode aprovar, recusar ou excluir.
       allow update, delete: if isAdmin();
     }
+
+    match /campeonatos/{campeonatoId} {
+      // Campeonatos publicados são públicos. O administrador também pode
+      // visualizar os campeonatos que ainda estão aguardando aprovação.
+      allow read: if isAdmin() || resource.data.publicado == true;
+
+      // Qualquer visitante pode enviar um campeonato, mas nunca pode publicá-lo
+      // diretamente. A publicação inicial obrigatoriamente fica como false.
+      allow create: if request.resource.data.publicado == false;
+
+      // Somente o administrador pode aprovar, editar ou excluir campeonatos.
+      allow update, delete: if isAdmin();
+    }
   }
 }
