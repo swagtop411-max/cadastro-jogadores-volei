@@ -1,7 +1,5 @@
 // Google Analytics 4 - Banco de Dados de Atletas
 // ID de medição: G-K033D1K41Y
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-
 const GA_ID = "G-K033D1K41Y";
 
 if (!window.__ga4_loaded) {
