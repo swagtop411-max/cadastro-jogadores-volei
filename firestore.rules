@@ -23,13 +23,8 @@ service cloud.firestore {
 
     match /comentarios/{comentarioId} {
       allow read: if isAdmin() || resource.data.aprovado == true;
-
-      allow create: if request.resource.data.keys().hasAll([
-          'atletaId', 'nome', 'texto', 'aprovado', 'status', 'criadoEm'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'atletaId', 'nome', 'texto', 'aprovado', 'status', 'criadoEm'
-        ])
+      allow create: if request.resource.data.keys().hasAll(['atletaId','nome','texto','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['atletaId','nome','texto','aprovado','status','criadoEm'])
         && request.resource.data.atletaId is string
         && request.resource.data.nome is string
         && request.resource.data.texto is string
@@ -41,39 +36,18 @@ service cloud.firestore {
         && request.resource.data.texto.size() <= 500
         && request.resource.data.criadoEm is timestamp
         && exists(/databases/$(database)/documents/atletas/$(request.resource.data.atletaId));
-
       allow update, delete: if isAdmin();
     }
 
     match /campeonatos/{campeonatoId} {
-      // Visitantes só visualizam campeonatos publicados.
-      // A ADM pode visualizar todos.
       allow read: if isAdmin() || resource.data.publicado == true;
-
-      // Visitantes não podem criar campeonatos diretamente aqui.
-      // A ADM pode publicar um campeonato já aprovado.
-      allow create: if isAdmin()
-                    || request.resource.data.publicado == false;
-
-      // Somente a ADM pode alterar ou excluir campeonatos publicados.
+      allow create: if isAdmin() || request.resource.data.publicado == false;
       allow update, delete: if isAdmin();
     }
 
-    // ============================================================
-    // CAMPEONATOS PENDENTES
-    // O formulário público grava aqui antes da aprovação.
-    // ============================================================
     match /campeonatos_pendentes/{campeonatoId} {
-      // Qualquer visitante pode enviar um campeonato, mas ele
-      // obrigatoriamente precisa entrar como não publicado e pendente.
-      allow create: if request.resource.data.keys().hasAll([
-          'nome', 'organizador', 'data', 'local', 'descricao',
-          'imagem', 'publicado', 'status', 'criadoEm'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'nome', 'organizador', 'data', 'local', 'descricao',
-          'imagem', 'publicado', 'status', 'criadoEm'
-        ])
+      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','criadoEm'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -93,8 +67,41 @@ service cloud.firestore {
         && request.resource.data.publicado == false
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is string;
+      allow read, update, delete: if isAdmin();
+    }
 
-      // Somente o administrador pode consultar e moderar os envios.
+    // Novos atletas enviados pelo formulário público.
+    // O cadastro só pode entrar como pendente. Somente a ADM pode ler,
+    // aprovar, editar ou excluir esses dados.
+    match /atletas_pendentes/{atletaId} {
+      allow create: if request.resource.data.keys().hasAll([
+          'nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.nascimento is string
+        && request.resource.data.cidade is string
+        && request.resource.data.cidade.size() >= 2
+        && request.resource.data.cidade.size() <= 80
+        && request.resource.data.contato is string
+        && request.resource.data.contato.size() >= 8
+        && request.resource.data.contato.size() <= 30
+        && request.resource.data.posicao is string
+        && request.resource.data.categoria is string
+        && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
+        && request.resource.data.time is string
+        && request.resource.data.time.size() >= 2
+        && request.resource.data.time.size() <= 100
+        && request.resource.data.observacoes is string
+        && request.resource.data.observacoes.size() <= 500
+        && request.resource.data.foto is string
+        && request.resource.data.foto.size() <= 1400000
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is string;
       allow read, update, delete: if isAdmin();
     }
   }
