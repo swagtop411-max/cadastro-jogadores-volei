@@ -23,3 +23,50 @@ export function trackEvent(name, params = {}) {
     window.gtag("event", name, params);
   }
 }
+
+// Rastreamento automático das principais ações do site.
+// Não coleta nome, telefone, e-mail ou outros dados pessoais.
+document.addEventListener("DOMContentLoaded", () => {
+  const trackClick = (selector, eventName, extra = {}) => {
+    document.querySelectorAll(selector).forEach(el => {
+      el.addEventListener("click", () => trackEvent(eventName, extra));
+    });
+  };
+
+  trackClick(".whatsapp-top-cta, .whatsapp-cadastro", "whatsapp_click", {
+    origem: "site"
+  });
+
+  trackClick(".championship-cta", "campeonatos_click", {
+    origem: "site"
+  });
+
+  trackClick(".hero-button", "ver_atletas_click", {
+    origem: "site"
+  });
+
+  trackClick(".admin-cta", "painel_admin_click", {
+    origem: "site"
+  });
+
+  const cadastroLink = document.querySelector('a[href*="cadastro-atleta"]');
+  if (cadastroLink) {
+    cadastroLink.addEventListener("click", () => trackEvent("cadastro_aberto", {
+      origem: "site"
+    }));
+  }
+
+  const searchButton = document.getElementById("btnPesquisar");
+  if (searchButton) {
+    searchButton.addEventListener("click", () => trackEvent("pesquisa_atletas", {
+      origem: "site"
+    }));
+  }
+
+  const cadastroForm = document.getElementById("cadastroAtletaForm");
+  if (cadastroForm) {
+    cadastroForm.addEventListener("submit", () => trackEvent("cadastro_enviado", {
+      origem: "cadastro_atleta"
+    }));
+  }
+});
