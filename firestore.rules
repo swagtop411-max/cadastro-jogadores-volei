@@ -46,8 +46,16 @@ service cloud.firestore {
     }
 
     match /campeonatos/{campeonatoId} {
+      // Visitantes só visualizam campeonatos publicados.
+      // A ADM pode visualizar todos.
       allow read: if isAdmin() || resource.data.publicado == true;
-      allow create: if request.resource.data.publicado == false;
+
+      // Visitantes não podem criar campeonatos diretamente aqui.
+      // A ADM pode publicar um campeonato já aprovado.
+      allow create: if isAdmin()
+                    || request.resource.data.publicado == false;
+
+      // Somente a ADM pode alterar ou excluir campeonatos publicados.
       allow update, delete: if isAdmin();
     }
 
