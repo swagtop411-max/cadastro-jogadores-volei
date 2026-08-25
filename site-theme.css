@@ -1,0 +1,191 @@
+/* =========================================================
+   BANCO DE ATLETAS | TEMA GLOBAL DA PÁGINA INICIAL
+   ========================================================= */
+:root{
+  --site-bg:#070908;
+  --site-panel:#101412;
+  --site-panel-2:#171c19;
+  --site-gold:#d9a93f;
+  --site-gold-light:#f2cc72;
+  --site-cream:#f6f0df;
+  --site-muted:#969b94;
+  --site-line:rgba(217,169,63,.22);
+  --site-green:#17362a;
+  --site-red:#c96b4b;
+}
+
+html{background:var(--site-bg)!important;scroll-behavior:smooth}
+body{
+  min-height:100vh!important;
+  margin:0!important;
+  color:var(--site-cream)!important;
+  font-family:'Montserrat',Arial,sans-serif!important;
+  background:
+    radial-gradient(circle at 85% 8%,rgba(217,169,63,.12),transparent 25%),
+    radial-gradient(circle at 10% 90%,rgba(23,54,42,.28),transparent 30%),
+    var(--site-bg)!important;
+}
+body:before{
+  content:''!important;
+  position:fixed!important;
+  inset:0!important;
+  pointer-events:none!important;
+  z-index:-1!important;
+  opacity:.22!important;
+  background-image:radial-gradient(rgba(255,255,255,.18) .7px,transparent .7px)!important;
+  background-size:13px 13px!important;
+}
+
+/* Cabeçalho compartilhado */
+.header{
+  position:sticky!important;
+  top:0!important;
+  z-index:1000!important;
+  min-height:82px!important;
+  padding:12px 24px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:20px!important;
+  text-align:left!important;
+  color:#fff!important;
+  font-family:'Bebas Neue',sans-serif!important;
+  font-size:inherit!important;
+  letter-spacing:inherit!important;
+  background:rgba(7,9,8,.96)!important;
+  border-bottom:1px solid var(--site-line)!important;
+  box-shadow:0 12px 40px rgba(0,0,0,.45)!important;
+  backdrop-filter:blur(14px)!important;
+}
+.header:after{display:none!important}
+.header-brand,.brand{
+  display:flex!important;
+  align-items:center!important;
+  gap:12px!important;
+  min-width:285px!important;
+  color:#fff!important;
+  text-decoration:none!important;
+}
+.brand-ball{
+  width:50px!important;height:50px!important;flex:0 0 50px!important;
+  border-radius:50%!important;display:grid!important;place-items:center!important;
+  background:radial-gradient(circle at 35% 30%,#fff3c4,#d9a93f 55%,#75500e)!important;
+  box-shadow:0 0 25px rgba(217,169,63,.28)!important;
+  font-size:25px!important;
+}
+.header-brand strong,.brand strong{
+  display:block!important;
+  color:#fff!important;
+  font-family:'Bebas Neue',sans-serif!important;
+  font-size:28px!important;
+  line-height:.92!important;
+  letter-spacing:1.8px!important;
+}
+.header-brand span,.brand span{
+  display:block!important;
+  color:var(--site-gold-light)!important;
+  font-size:9px!important;
+  font-weight:900!important;
+  letter-spacing:3px!important;
+  margin-top:5px!important;
+}
+.header-center{flex:1!important;max-width:500px!important;display:flex!important;align-items:center!important;height:42px!important;padding:0 18px!important;border:1px solid rgba(255,255,255,.12)!important;border-radius:24px!important;background:#121514!important;color:#777b75!important;font-size:12px!important}
+.header-actions,.nav{margin-left:auto!important;display:flex!important;align-items:center!important;gap:9px!important}
+.admin-cta,.championship-cta,.header-cta,.btn-gold{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  min-height:44px!important;padding:0 17px!important;border-radius:10px!important;
+  border:1px solid var(--site-gold)!important;
+  background:linear-gradient(135deg,var(--site-gold-light),#bd8425)!important;
+  color:#15130e!important;text-decoration:none!important;font-size:10px!important;
+  font-weight:900!important;letter-spacing:1px!important;white-space:nowrap!important;
+  box-shadow:0 8px 25px rgba(217,169,63,.15)!important;transition:.2s!important;
+}
+.admin-cta:hover,.championship-cta:hover,.header-cta:hover,.btn-gold:hover{transform:translateY(-2px)!important}
+
+/* Navegação escura secundária */
+.btn-dark,.admin-tab,.btn-secondary{
+  border:1px solid rgba(217,169,63,.35)!important;
+  background:#111614!important;
+  color:var(--site-gold-light)!important;
+}
+
+/* Estrutura geral */
+.container,.admin-page,main{
+  color:var(--site-cream)!important;
+}
+.container:before{color:#c96b4b!important}
+
+/* Painéis, cartões e formulários */
+.admin-panel,.login-box,.ranking,.team-strip,.perfil-hero,.perfil-section,.form-box,.champ-card,.empty,.supporters-panel,.comments-admin-panel,.admin-view{
+  background:linear-gradient(145deg,#111614,#0b0f0d)!important;
+  border-color:var(--site-line)!important;
+  color:var(--site-cream)!important;
+  box-shadow:0 18px 50px rgba(0,0,0,.35)!important;
+}
+.admin-panel,.login-box{border-radius:24px!important}
+.admin-panel h1,.login-box h1,.perfil-nome,.perfil-section h2,.ranking h2,.section-heading h2,.section-head h2,.champ-body h3{color:#f8f1df!important}
+.subtitulo,.perfil-box span,.meta,.section-head p,.section-heading p,.status,.supporter-hint{color:var(--site-muted)!important}
+
+input,select,textarea,.field input,.field textarea,.admin-form input,.admin-form select,.admin-form textarea{
+  background:#111614!important;
+  color:#eee8d9!important;
+  border-color:rgba(217,169,63,.25)!important;
+}
+input::placeholder,textarea::placeholder{color:#6e746e!important}
+input:focus,select:focus,textarea:focus{border-color:var(--site-gold)!important;box-shadow:0 0 0 3px rgba(217,169,63,.08)!important}
+select option{background:#111614!important;color:#eee8d9!important}
+input[type=file]{background:#111614!important;color:#d7d2c6!important}
+input[type=file]::file-selector-button{background:linear-gradient(135deg,var(--site-gold-light),#bd8425)!important;color:#15130e!important}
+
+/* Abas do painel ADM */
+.admin-tabs{background:#101412!important;border:1px solid var(--site-line)!important;border-radius:16px!important}
+.admin-tab{color:#999f98!important;border-color:transparent!important;background:transparent!important}
+.admin-tab.active{background:linear-gradient(135deg,#17362a,#10271d)!important;color:#f2cc72!important;border-color:rgba(217,169,63,.35)!important}
+.comments-badge{background:#c96b4b!important;color:#fff!important}
+
+/* Campos e blocos internos do ADM */
+.atleta-admin,.times-container,.historico-item,.apoiador-card,.supporter-card,.avaliacao-admin,.avaliacao-item,.perfil-box{
+  background:#171c19!important;
+  border-color:rgba(217,169,63,.18)!important;
+  color:#ddd7ca!important;
+}
+.atleta-info strong,.perfil-box strong{color:#f2cc72!important}
+
+/* Perfil */
+.perfil-hero{grid-template-columns:300px 1fr!important}
+.perfil-status{background:#17362a!important;color:#9dd4a9!important;border:1px solid rgba(157,212,169,.25)!important}
+.timeline{border-left-color:var(--site-gold)!important}
+.timeline-item:before{background:var(--site-gold)!important;border-color:#101412!important}
+
+/* Próximos campeonatos */
+.topline{color:#c96b4b!important}
+.hero{border-color:var(--site-line)!important;background:radial-gradient(circle at 80% 25%,rgba(217,169,63,.15),transparent 25%),linear-gradient(110deg,#07120e 0%,#10271d 48%,#191c17 70%,#50361e 100%)!important;box-shadow:0 25px 80px rgba(0,0,0,.5)!important}
+.kicker,.section-head span,.field label{color:var(--site-gold-light)!important}
+.hero h1,.section-head h2{color:#fff!important}
+.hero h1 em{color:#efc35c!important}
+.hero p{color:#dedbd1!important}
+.champ-grid{gap:16px!important}
+.champ-card{overflow:hidden!important}
+.champ-image{background:#050706!important}
+.tag{color:var(--site-gold-light)!important;border-color:var(--site-line)!important}
+
+/* Rodapé */
+.site-footer,footer{border-top-color:rgba(217,169,63,.15)!important;color:#777d76!important}
+.site-footer strong,footer strong{color:#ddd4c0!important}
+
+@media(max-width:900px){
+  .header-center{display:none!important}
+  .header-brand,.brand{min-width:auto!important}
+  .header-actions,.nav{gap:6px!important}
+  .admin-cta,.championship-cta,.header-cta,.btn-gold{padding:0 11px!important;font-size:8px!important}
+}
+@media(max-width:650px){
+  .header{min-height:68px!important;padding:9px 12px!important}
+  .header-brand strong,.brand strong{font-size:22px!important}
+  .header-brand span,.brand span{font-size:7px!important}
+  .brand-ball{width:44px!important;height:44px!important;flex-basis:44px!important}
+  .header-actions,.nav{gap:5px!important}
+  .admin-cta,.championship-cta,.header-cta,.btn-gold{min-height:40px!important;padding:0 8px!important;font-size:7px!important}
+  .admin-panel,.login-box{padding:20px!important;border-radius:20px!important}
+  .perfil-hero{grid-template-columns:1fr!important}
+}
