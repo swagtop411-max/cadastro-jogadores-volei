@@ -22,11 +22,8 @@ service cloud.firestore {
     }
 
     match /comentarios/{comentarioId} {
-      // Visitantes só podem ler comentários já aprovados.
-      // O administrador pode ler todos os comentários.
       allow read: if isAdmin() || resource.data.aprovado == true;
 
-      // Visitantes podem enviar comentários, sempre começando como pendentes.
       allow create: if request.resource.data.keys().hasAll([
           'atletaId', 'nome', 'texto', 'aprovado', 'status', 'criadoEm'
         ])
@@ -45,21 +42,52 @@ service cloud.firestore {
         && request.resource.data.criadoEm is timestamp
         && exists(/databases/$(database)/documents/atletas/$(request.resource.data.atletaId));
 
-      // Apenas o administrador pode aprovar, recusar ou excluir.
       allow update, delete: if isAdmin();
     }
 
     match /campeonatos/{campeonatoId} {
-      // Campeonatos publicados são públicos. O administrador também pode
-      // visualizar os campeonatos que ainda estão aguardando aprovação.
       allow read: if isAdmin() || resource.data.publicado == true;
-
-      // Qualquer visitante pode enviar um campeonato, mas nunca pode publicá-lo
-      // diretamente. A publicação inicial obrigatoriamente fica como false.
       allow create: if request.resource.data.publicado == false;
-
-      // Somente o administrador pode aprovar, editar ou excluir campeonatos.
       allow update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // CAMPEONATOS PENDENTES
+    // O formulário público grava aqui antes da aprovação.
+    // ============================================================
+    match /campeonatos_pendentes/{campeonatoId} {
+      // Qualquer visitante pode enviar um campeonato, mas ele
+      // obrigatoriamente precisa entrar como não publicado e pendente.
+      allow create: if request.resource.data.keys().hasAll([
+          'nome', 'organizador', 'data', 'local', 'descricao',
+          'imagem', 'publicado', 'status', 'criadoEm'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'nome', 'organizador', 'data', 'local', 'descricao',
+          'imagem', 'publicado', 'status', 'criadoEm'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.organizador is string
+        && request.resource.data.organizador.size() >= 2
+        && request.resource.data.organizador.size() <= 100
+        && request.resource.data.data is string
+        && request.resource.data.data.size() >= 8
+        && request.resource.data.data.size() <= 20
+        && request.resource.data.local is string
+        && request.resource.data.local.size() >= 2
+        && request.resource.data.local.size() <= 120
+        && request.resource.data.descricao is string
+        && request.resource.data.descricao.size() <= 700
+        && request.resource.data.imagem is string
+        && request.resource.data.imagem.size() <= 1400000
+        && request.resource.data.publicado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is string;
+
+      // Somente o administrador pode consultar e moderar os envios.
+      allow read, update, delete: if isAdmin();
     }
   }
 }
