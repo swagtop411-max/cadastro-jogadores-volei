@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Cadastro de atletas - Banco de Dados de Atletas">
+<title>Cadastro de Atleta | Banco de Dados</title>
+<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="cadastro-atleta.css">
+<style>
+body{min-height:100vh;background:#050807;color:#f5f0e3}
+.cadastro-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px}
+.cadastro-modal{position:relative;max-height:none;overflow:visible}
+.cadastro-home{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;color:#f2cc72;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:1px}
+.cadastro-home:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<main class="cadastro-page">
+<div class="cadastro-modal">
+<a class="cadastro-home" href="index.html">← VOLTAR AO BANCO DE ATLETAS</a>
+<div class="cadastro-modal-head">
+<div>
+<span class="cadastro-modal-kicker">BANCO DE DADOS DE ATLETAS</span>
+<h2>QUERO ME CADASTRAR</h2>
+<p>Preencha seus dados e envie sua foto. O cadastro ficará em análise antes da publicação.</p>
+</div>
+</div>
+<form id="cadastroForm" class="cadastro-form">
+<div class="cadastro-field"><label>NOME COMPLETO *</label><input id="cadNome" required maxlength="100"></div>
+<div class="cadastro-field"><label>DATA DE NASCIMENTO</label><input id="cadNascimento" type="date"></div>
+<div class="cadastro-field"><label>CIDADE *</label><input id="cadCidade" required maxlength="80"></div>
+<div class="cadastro-field"><label>WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30"></div>
+<div class="cadastro-field"><label>POSIÇÃO</label><select id="cadPosicao"><option value="">Selecione</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select></div>
+<div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
+<div class="cadastro-field"><label>TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
+<div class="cadastro-field"><label>FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
+<div class="cadastro-field full"><label>OBSERVAÇÕES</label><textarea id="cadObs" maxlength="500"></textarea></div>
+<div class="cadastro-submit"><button id="cadEnviar" type="submit">ENVIAR PARA ANÁLISE</button><span id="cadStatus" class="cadastro-status"></span></div>
+</form>
+</div>
+</main>
+<script type="module" src="cadastro-direto.js"></script>
+</body>
+</html>
