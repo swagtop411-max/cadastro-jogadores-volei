@@ -1,7 +1,7 @@
 // Google Analytics 4 - Banco de Dados de Atletas
 // ID de medição: G-K033D1K41Y
 const GA_ID = "G-K033D1K41Y";
-const GA_PROPERTY = "https://analytics.google.com/analytics/web/#/a390906538p532490731";
+const GA_PROPERTY = "https://analytics.google.com/analytics/web/";
 
 if (!window.__ga4_loaded) {
   window.__ga4_loaded = true;
@@ -103,23 +103,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
   }
 
-  // Cards da aba Estatísticas: cada card abre diretamente o relatório correspondente.
-  const statReports = [
-    `${GA_PROPERTY}/`,
-    `${GA_PROPERTY}/reports/life-cycle/engagement/pages-and-screens`,
-    `${GA_PROPERTY}/reports/life-cycle/engagement/events`,
-    `${GA_PROPERTY}/reports/tech/tech-details`,
-    `${GA_PROPERTY}/reports/user-demographics`,
-    `${GA_PROPERTY}/reports/life-cycle/acquisition`
-  ];
+  // Corrige links antigos/específicos do Analytics que podem falhar no celular.
+  // Ao clicar, abrimos a interface oficial do Google Analytics e deixamos
+  // o próprio Google direcionar para a propriedade disponível após o login.
+  document.querySelectorAll(".analytics-cta, .stats-link").forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      window.location.href = GA_PROPERTY;
+    });
+  });
 
-  document.querySelectorAll(".stats-card").forEach((card, index) => {
-    const url = statReports[index];
-    if (!url) return;
-
+  // Cards da aba Estatísticas.
+  document.querySelectorAll(".stats-card").forEach((card) => {
     card.setAttribute("role", "link");
     card.setAttribute("tabindex", "0");
-    card.setAttribute("title", "Abrir este relatório no Google Analytics");
+    card.setAttribute("title", "Abrir o Google Analytics");
     card.style.cursor = "pointer";
     card.style.transition = "transform .2s ease, border-color .2s ease, box-shadow .2s ease";
 
@@ -127,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
       trackEvent("analytics_report_click", {
         relatorio: card.querySelector("strong")?.textContent?.trim() || "estatistica"
       });
-      window.open(url, "_blank", "noopener,noreferrer");
+      window.location.href = GA_PROPERTY;
     };
 
     card.addEventListener("click", openReport);
