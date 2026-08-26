@@ -6,7 +6,7 @@
 <meta name="description" content="Cadastro de atletas - Banco de Dados de Atletas">
 <title>Cadastro de Atleta | Banco de Dados</title>
 <link rel="stylesheet" href="estilo.css">
-<link rel="stylesheet" href="cadastro-atleta.css?v=20260826-4">
+<link rel="stylesheet" href="cadastro-atleta.css?v=20260826-5">
 <style>
 body{min-height:100vh;background:#050807;color:#f5f0e3}
 .cadastro-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px}
@@ -24,7 +24,7 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 <form id="cadastroForm" class="cadastro-form">
 <div class="cadastro-field"><label>NOME COMPLETO *</label><input id="cadNome" required maxlength="100"></div>
 <div class="cadastro-field"><label>DATA DE NASCIMENTO</label><input id="cadNascimento" type="date"></div>
-<div class="cadastro-field"><label>CIDADE *</label><input id="cadCidade" required maxlength="80" placeholder="Sertãozinho - SP"></div>
+<div class="cadastro-field"><label>ESTADO *</label><select id="cadUF" required><option value="">Selecione o estado</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div><div class="cadastro-field"><label>CIDADE *</label><input id="cadCidade" required maxlength="70" placeholder="Sertãozinho"></div>
 <div class="cadastro-field full"><label>MODALIDADE *</label><div class="opcoes-grid" id="cadModalidades"><label class="opcao-check"><input type="checkbox" value="Vôlei de praia"><span>🏖️ Vôlei de praia</span></label><label class="opcao-check"><input type="checkbox" value="Vôlei de quadra"><span>🏐 Vôlei de quadra</span></label></div><small class="campo-ajuda">Você pode selecionar uma ou as duas modalidades.</small></div>
 <div class="cadastro-field full"><label>POSIÇÕES *</label><div class="opcoes-grid posicoes-grid" id="cadPosicoes"><label class="opcao-check"><input type="checkbox" value="Levantador"><span>Levantador</span></label><label class="opcao-check"><input type="checkbox" value="Ponteiro"><span>Ponteiro</span></label><label class="opcao-check"><input type="checkbox" value="Oposto"><span>Oposto</span></label><label class="opcao-check"><input type="checkbox" value="Central"><span>Central</span></label><label class="opcao-check"><input type="checkbox" value="Líbero"><span>Líbero</span></label><label class="opcao-check"><input type="checkbox" value="Universal"><span>Universal</span></label></div><small class="campo-ajuda">Selecione uma ou mais posições.</small></div>
 <div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
@@ -43,6 +43,6 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 </div>
 </main>
 <script type="module" src="analytics.js?v=20260825-2"></script>
-<script type="module" src="cadastro-direto.js?v=20260826-4"></script>
+<script type="module" src="cadastro-direto.js?v=20260826-5"></script>
 </body>
 </html>
