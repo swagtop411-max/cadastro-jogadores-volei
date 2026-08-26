@@ -19,18 +19,12 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 <main class="cadastro-page">
 <div class="cadastro-modal">
 <a class="cadastro-home" href="index.html">← VOLTAR AO BANCO DE ATLETAS</a>
-<div class="cadastro-modal-head">
-<div>
-<span class="cadastro-modal-kicker">BANCO DE DADOS DE ATLETAS</span>
-<h2>QUERO ME CADASTRAR</h2>
-<p>Preencha seus dados e envie sua foto. O cadastro ficará em análise antes da publicação.</p>
-</div>
-</div>
+<div class="cadastro-modal-head"><div><span class="cadastro-modal-kicker">BANCO DE DADOS DE ATLETAS</span><h2>QUERO ME CADASTRAR</h2><p>Preencha seus dados e envie sua foto. O cadastro ficará em análise antes da publicação.</p></div></div>
 <form id="cadastroForm" class="cadastro-form">
 <div class="cadastro-field"><label>NOME COMPLETO *</label><input id="cadNome" required maxlength="100"></div>
 <div class="cadastro-field"><label>DATA DE NASCIMENTO</label><input id="cadNascimento" type="date"></div>
 <div class="cadastro-field"><label>CIDADE *</label><input id="cadCidade" required maxlength="80" placeholder="Sertãozinho - SP"></div>
-<div class="cadastro-field full"><label>MODALIDADE *</label><div class="opcoes-grid" id="cadModalidades"><label class="opcao-check"><input type="checkbox" value="Vôlei de praia"><span>🏖️ Vôlei de praia</span></label><label class="opcao-check"><input type="checkbox" value="Vôlei de quadra"><span>🏐 Vôlei de quadra</span></label></div><small class="campo-ajuda">Você pode selecionar as modalidades que pratica.</small></div>
+<div class="cadastro-field full"><label>MODALIDADE *</label><div class="opcoes-grid" id="cadModalidades"><label class="opcao-check"><input type="checkbox" value="Vôlei de praia"><span>🏖️ Vôlei de praia</span></label><label class="opcao-check"><input type="checkbox" value="Vôlei de quadra"><span>🏐 Vôlei de quadra</span></label></div><small class="campo-ajuda">Você pode selecionar uma ou as duas modalidades.</small></div>
 <div class="cadastro-field full"><label>POSIÇÕES *</label><div class="opcoes-grid posicoes-grid" id="cadPosicoes"><label class="opcao-check"><input type="checkbox" value="Levantador"><span>Levantador</span></label><label class="opcao-check"><input type="checkbox" value="Ponteiro"><span>Ponteiro</span></label><label class="opcao-check"><input type="checkbox" value="Oposto"><span>Oposto</span></label><label class="opcao-check"><input type="checkbox" value="Central"><span>Central</span></label><label class="opcao-check"><input type="checkbox" value="Líbero"><span>Líbero</span></label><label class="opcao-check"><input type="checkbox" value="Universal"><span>Universal</span></label></div><small class="campo-ajuda">Selecione uma ou mais posições.</small></div>
 <div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
 <div class="cadastro-field"><label>TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
@@ -38,11 +32,11 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 <div class="cadastro-field"><label>WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30" placeholder="Telefone, WhatsApp ou e-mail"></div>
 <div class="cadastro-field full"><label>FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
 <div class="cadastro-field full"><label>OBSERVAÇÕES</label><textarea id="cadObs" maxlength="500" placeholder="Conte algo que possa ajudar equipes e organizadores a conhecer você."></textarea></div>
-<div class="cadastro-submit"><button id="cadEnviar" type="submit">ENVIAR PARA ANÁLISE</button><span id="cadStatus" class="cadastro-status"></span></div>
+<div class="cadastro-submit"><button id="cadEnviar" type="submit">ENVIAR PARA ANÁLISE</button><span id="cadStatusMsg" class="cadastro-status" aria-live="polite"></span></div>
 </form>
 </div>
 </main>
 <script type="module" src="analytics.js?v=20260825-2"></script>
-<script type="module" src="cadastro-direto.js?v=20260826-1"></script>
+<script type="module" src="cadastro-direto.js?v=20260826-2"></script>
 </body>
 </html>
