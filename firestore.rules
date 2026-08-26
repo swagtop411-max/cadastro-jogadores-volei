@@ -70,16 +70,9 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
-    // Novos atletas enviados pelo formulário público.
-    // O cadastro só pode entrar como pendente. Somente a ADM pode ler,
-    // aprovar, editar ou excluir esses dados.
     match /atletas_pendentes/{atletaId} {
-      allow create: if request.resource.data.keys().hasAll([
-          'nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'
-        ])
+      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -102,6 +95,26 @@ service cloud.firestore {
         && request.resource.data.foto.size() <= 1400000
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is string;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Estatísticas próprias: visitantes anônimos podem somente criar eventos.
+    // Somente o administrador pode consultar os dados agregados no painel.
+    match /site_stats/{eventId} {
+      allow create: if request.resource.data.keys().hasAll(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 1
+        && request.resource.data.nome.size() <= 60
+        && request.resource.data.pagina is string
+        && request.resource.data.pagina.size() <= 200
+        && request.resource.data.visitante is string
+        && request.resource.data.visitante.size() >= 8
+        && request.resource.data.visitante.size() <= 100
+        && request.resource.data.dispositivo in ['Celular','Tablet','Computador']
+        && request.resource.data.origem is string
+        && request.resource.data.origem.size() <= 50
+        && request.resource.data.criadoEm is timestamp;
       allow read, update, delete: if isAdmin();
     }
   }
