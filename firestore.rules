@@ -46,8 +46,8 @@ service cloud.firestore {
     }
 
     match /campeonatos_pendentes/{campeonatoId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','criadoEm'])
+      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
