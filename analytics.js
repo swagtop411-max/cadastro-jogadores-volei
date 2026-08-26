@@ -1,10 +1,10 @@
 // Google Analytics 4 - Banco de Dados de Atletas
-// Este arquivo registra as visitas e ações do site no Google Analytics.
-// As estatísticas de atletas continuam no sistema, mas NÃO substituem as
-// estatísticas de visitas do Google Analytics.
+// Rastreamento de visitas e ações do site.
 
 const GA_ID = "G-K033D1K41Y";
-const GA_PROPERTY_URL = "https://analytics.google.com/analytics/web/#/a390906538p532490731/";
+// URL em formato de propriedade GA4, mais estável para acesso direto.
+const GA_PROPERTY_URL = "https://analytics.google.com/analytics/web/#/p532490731/reports/intelligenthome";
+const GA_REALTIME_URL = "https://analytics.google.com/analytics/web/#/p532490731/reports/realtime";
 
 if (!window.__ga4_loaded) {
   window.__ga4_loaded = true;
@@ -31,15 +31,27 @@ export function trackEvent(name, params = {}) {
   }
 }
 
-// Responsividade dos botões do painel administrativo.
+// Correções específicas para toque no celular.
 const mobileAdminStyle = document.createElement("style");
 mobileAdminStyle.textContent = `
+  .admin-tab,
+  .analytics-cta,
+  .stats-link {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 20 !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+  }
+
   @media (max-width: 700px) {
     .admin-tabs {
       display: grid !important;
       grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
       overflow: visible !important;
       width: 100% !important;
+      position: relative !important;
+      z-index: 30 !important;
     }
 
     .admin-tab {
@@ -62,10 +74,15 @@ mobileAdminStyle.textContent = `
 `;
 document.head.appendChild(mobileAdminStyle);
 
+function openAnalytics(url = GA_PROPERTY_URL) {
+  // Usa a própria aba. Isso evita bloqueios de pop-up/nova aba no Android.
+  window.location.assign(url);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const trackClick = (selector, eventName, extra = {}) => {
     document.querySelectorAll(selector).forEach(el => {
-      el.addEventListener("click", () => trackEvent(eventName, extra));
+      el.addEventListener("click", () => trackEvent(eventName, extra), { passive: true });
     });
   };
 
@@ -89,14 +106,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (cadastroLink) {
     cadastroLink.addEventListener("click", () => {
       trackEvent("cadastro_aberto", { origem: "site" });
-    });
+    }, { passive: true });
   }
 
   const searchButton = document.getElementById("btnPesquisar");
   if (searchButton) {
     searchButton.addEventListener("click", () => {
       trackEvent("pesquisa_atletas", { origem: "site" });
-    });
+    }, { passive: true });
   }
 
   const cadastroForm = document.getElementById("cadastroAtletaForm");
@@ -106,17 +123,24 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // IMPORTANTE:
-  // Não interceptamos o botão "VER ESTATÍSTICAS".
-  // Ele deve abrir o Google Analytics, onde estão os dados reais de:
-  // visitantes, usuários, sessões, páginas, dispositivos, localização,
-  // eventos e ações realizadas dentro do site.
+  // Links de estatísticas: usar URL GA4 estável e abrir na mesma aba.
   document.querySelectorAll(".analytics-cta, .stats-link").forEach(link => {
-    link.addEventListener("click", () => {
+    const text = link.textContent?.trim() || "Google Analytics";
+    const isRealtime = /tempo real/i.test(text);
+    const url = isRealtime ? GA_REALTIME_URL : GA_PROPERTY_URL;
+
+    link.href = url;
+    link.removeAttribute("target");
+    link.removeAttribute("rel");
+
+    link.addEventListener("click", event => {
+      event.preventDefault();
+      event.stopPropagation();
       trackEvent("analytics_externo_click", {
-        destino: GA_PROPERTY_URL,
-        relatorio: link.querySelector("span")?.textContent?.trim() || link.textContent?.trim() || "Google Analytics"
+        destino: url,
+        relatorio: text
       });
+      openAnalytics(url);
     });
   });
 });
