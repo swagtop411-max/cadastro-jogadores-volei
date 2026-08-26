@@ -73,7 +73,7 @@ service cloud.firestore {
 
     match /atletas_pendentes/{atletaId} {
       allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm','modalidades','posicoes'])
-        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -100,8 +100,11 @@ service cloud.firestore {
         && request.resource.data.observacoes is string
         && request.resource.data.observacoes.size() <= 500
         && request.resource.data.foto is string
-        && request.resource.data.foto.size() <= 1400000
-        && request.resource.data.status == 'pendente'
+        && request.resource.data.foto.size() <= 900000
+        && request.resource.data.status == 'ativo'
+        && request.resource.data.aprovacao == 'pendente'
+        && request.resource.data.get('historicoCampeonatos', []) is list
+        && request.resource.data.get('historicoCampeonatos', []).size() <= 30
         && request.resource.data.criadoEm is string;
       allow read, update, delete: if isAdmin();
     }
