@@ -6,7 +6,7 @@
 <meta name="description" content="Cadastro de atletas - Banco de Dados de Atletas">
 <title>Cadastro de Atleta | Banco de Dados</title>
 <link rel="stylesheet" href="estilo.css">
-<link rel="stylesheet" href="cadastro-atleta.css?v=20260825-2">
+<link rel="stylesheet" href="cadastro-atleta.css?v=20260826-4">
 <style>
 body{min-height:100vh;background:#050807;color:#f5f0e3}
 .cadastro-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px}
@@ -29,16 +29,20 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 <div class="cadastro-field full"><label>POSIÇÕES *</label><div class="opcoes-grid posicoes-grid" id="cadPosicoes"><label class="opcao-check"><input type="checkbox" value="Levantador"><span>Levantador</span></label><label class="opcao-check"><input type="checkbox" value="Ponteiro"><span>Ponteiro</span></label><label class="opcao-check"><input type="checkbox" value="Oposto"><span>Oposto</span></label><label class="opcao-check"><input type="checkbox" value="Central"><span>Central</span></label><label class="opcao-check"><input type="checkbox" value="Líbero"><span>Líbero</span></label><label class="opcao-check"><input type="checkbox" value="Universal"><span>Universal</span></label></div><small class="campo-ajuda">Selecione uma ou mais posições.</small></div>
 <div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
 <div class="cadastro-field"><label>TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
-<div class="cadastro-field"><label>STATUS</label><select id="cadStatus"><option value="ativo">🟢 Ativo</option><option value="inativo">🔴 Inativo</option></select></div>
+<div class="cadastro-field"><label>STATUS</label><select id="cadStatus" disabled><option value="ativo" selected>🟢 Ativo</option></select><small class="campo-ajuda">Seu cadastro será publicado como atleta ativo após o processamento.</small></div>
 <div class="cadastro-field"><label>WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30" placeholder="Telefone, WhatsApp ou e-mail"></div>
 <div class="cadastro-field full"><label>FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
-<div class="cadastro-field full"><label>OBSERVAÇÕES</label><textarea id="cadObs" maxlength="500" placeholder="Conte algo que possa ajudar equipes e organizadores a conhecer você."></textarea></div>
+<div class="cadastro-field full"><label>CAMPEONATOS QUE PARTICIPEI <span class="campo-opcional">(OPCIONAL)</span></label>
+<div id="cadCampeonatos" class="historico-campeonatos"></div>
+<button type="button" id="btnAddCampeonato" class="btn-add-campeonato">＋ ADICIONAR CAMPEONATO</button>
+<small class="campo-ajuda">Cadastre quantos campeonatos quiser e informe a colocação, se desejar.</small></div>
+<div class="cadastro-field full"><label>OBSERVAÇÕES <span class="campo-opcional">(OPCIONAL)</span></label><textarea id="cadObs" maxlength="500" placeholder="Conte algo que possa ajudar equipes e organizadores a conhecer você."></textarea></div>
 <div class="cadastro-submit"><button id="cadEnviar" type="submit">ENVIAR PARA ANÁLISE</button><span id="cadStatusMsg" class="cadastro-status" aria-live="polite"></span></div>
 <p class="cadastro-legal">Ao enviar o cadastro, você declara que as informações fornecidas são verdadeiras e que leu a <a href="politica-privacidade.html">Política de Privacidade</a> e os <a href="termos-de-uso.html">Termos de Uso</a>.</p>
 </form>
 </div>
 </main>
 <script type="module" src="analytics.js?v=20260825-2"></script>
-<script type="module" src="cadastro-direto.js?v=20260826-2"></script>
+<script type="module" src="cadastro-direto.js?v=20260826-4"></script>
 </body>
 </html>
