@@ -1,0 +1,17 @@
+{
+  "timeZone": "America/Sao_Paulo",
+  "dependencies": {
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "AnalyticsData",
+        "serviceId": "analyticsdata",
+        "version": "v1beta"
+      }
+    ]
+  },
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/analytics.readonly"
+  ]
+}
