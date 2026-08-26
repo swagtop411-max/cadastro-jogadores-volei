@@ -3,7 +3,7 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0
 const firebaseConfig={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015",measurementId:"G-K033D1K41Y"};
 const auth=getAuth(initializeApp(firebaseConfig));
 const GA4_PROPERTY_ID="532490731";
-const GA4_PROXY_URL="";
+const GA4_PROXY_URL="https://script.google.com/macros/s/AKfycbxFZVm1NJ910xWjkTmG1_RTWhwirD_pCHZIogWW16AN-O4UoDf_O86-cgGR7-SbiQcAbw/exec";
 const $=id=>document.getElementById(id);
 const fmt=n=>new Intl.NumberFormat("pt-BR").format(Number(n)||0);
 const esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML};
