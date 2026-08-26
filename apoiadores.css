@@ -37,3 +37,13 @@ html,body{width:100%;max-width:100%;overflow-x:hidden!important}
   .card img{height:230px!important}
   .whatsapp-cadastro{right:auto!important;padding:12px 14px!important;font-size:8px!important}
 }
+/* CORREÇÃO FINAL: BOTÕES DO PAINEL ADMINISTRATIVO NO CELULAR */
+@media(max-width:700px){
+  .admin-tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;overflow-y:hidden!important;gap:8px!important;padding:7px!important;width:100%!important;box-sizing:border-box!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}
+  .admin-tabs::-webkit-scrollbar{display:none!important}
+  .admin-tab{flex:0 0 auto!important;min-width:118px!important;width:auto!important;max-width:none!important;white-space:nowrap!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important;padding:11px 13px!important;box-sizing:border-box!important;font-size:11px!important;line-height:1!important}
+  .admin-tab .comments-badge{flex:0 0 auto!important}
+  .admin-top-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important;width:100%!important}
+  .admin-top-actions>*{min-width:0!important;width:100%!important;box-sizing:border-box!important}
+  .analytics-cta,.admin-top-actions .btn-secondary{min-height:52px!important;padding:10px 8px!important;white-space:normal!important;text-align:center!important}
+}
