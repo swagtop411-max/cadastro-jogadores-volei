@@ -100,5 +100,10 @@ document.addEventListener("DOMContentLoaded",()=>{
   const q=document.getElementById("btnPesquisar");if(q)q.addEventListener("click",()=>trackEvent("pesquisa_atletas"),{passive:true});
   const f=document.getElementById("cadastroAtletaForm");if(f)f.addEventListener("submit",()=>trackEvent("cadastro_enviado"));
   document.querySelectorAll(".commercial-banner-link").forEach(x=>x.addEventListener("click",()=>trackEvent("apoiador_banner_click",{local:"banner_comercial"}),{passive:true}));
-  document.querySelectorAll(".sponsor-card").forEach(x=>x.addEventListener("click",()=>trackEvent("apoiador_click",{apoiador:(x.querySelector(".sponsor-name")?.textContent||"desconhecido").trim()}),{passive:true}));
+});
+
+document.addEventListener("click",e=>{
+  if(isAdminPage||consent()!=="accepted")return;
+  const card=e.target.closest?.(".sponsor-card");
+  if(card){const nome=(card.querySelector(".sponsor-name")?.textContent||"desconhecido").trim();trackEvent("apoiador_click",{apoiador:nome});}
 });
