@@ -1,6 +1,79 @@
-import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getFirestore,collection,getDocs,doc,getDoc}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015",measurementId:"G-K033D1K41Y"};const db=getFirestore(getApps().length?getApp():initializeApp(cfg));
-const $=id=>document.getElementById(id);const vals=id=>[...document.querySelectorAll(`#${id} input[type="checkbox"]:checked`)].map(x=>x.value);const mark=(id,v)=>{const a=Array.isArray(v)?v:String(v||"").split(",").map(x=>x.trim()).filter(Boolean);document.querySelectorAll(`#${id} input[type="checkbox"]`).forEach(x=>x.checked=a.includes(x.value))};
-async function carregar(id){const s=await getDoc(doc(db,"atletas",id));if(!s.exists())return;const a=s.data()||{};$("atletaId").value=id;$("nome").value=a.nome||"";$("nascimento").value=a.nascimento||"";$("cidade").value=a.cidade||"";$("categoria").value=a.categoria||"";$("time").value=a.time||"";$("status").value=a.status||"ativo";$("observacoes").value=a.observacoes||"";mark("adminModalidadesBox",a.modalidades||a.modalidade);mark("adminPosicoesBox",a.posicoes||a.posicao);const p=$("posicao");if(p)p.value=Array.isArray(a.posicoes)?a.posicoes.join(", "):(a.posicao||"");const priv=await getDoc(doc(db,"atletas",id,"privado","dados"));$("contato").value=priv.exists()?(priv.data()?.contato||""):"";if(a.foto){$("fotoPreview").src=a.foto;$("fotoPreview").style.display="block"}$("btnSalvar").textContent="Salvar alterações";$("btnCancelar").classList.remove("hidden");$("atletaForm").scrollIntoView({behavior:"smooth",block:"start"})}
-function observar(){const root=$("atletasAdmin");if(!root)return;const ativar=()=>root.querySelectorAll("button.editar:not([data-edit-fix])").forEach(b=>{b.dataset.editFix="1";b.addEventListener("click",async e=>{const card=b.closest(".atleta-admin");const nome=card?.querySelector(".atleta-info strong")?.textContent?.trim();if(!nome)return;try{const s=await getDocs(collection(db,"atletas"));const d=s.docs.find(x=>String(x.data()?.nome||"").trim()===nome);if(d){e.preventDefault();await carregar(d.id)}}catch(err){console.error("Falha ao abrir edição:",err)}})});ativar();new MutationObserver(ativar).observe(root,{childList:true,subtree:true})}
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(observar,300));else setTimeout(observar,300);
+const $=id=>document.getElementById(id);
+
+const POSICOES=["Levantador","Ponteiro","Oposto","Central","Líbero","Universal"];
+
+function normalizar(v){
+  if(Array.isArray(v)) return v.flatMap(x=>String(x).split(",")).map(x=>x.trim()).filter(Boolean);
+  return String(v||"").split(",").map(x=>x.trim()).filter(Boolean);
+}
+
+function aplicarMarcacao(v){
+  const selecionadas=normalizar(v);
+  document.querySelectorAll("#adminPosicoesBox input[type=checkbox]").forEach(c=>c.checked=selecionadas.includes(c.value));
+}
+
+function atualizarCampo(){
+  const p=$("posicao");
+  if(!p)return;
+  const selecionadas=[...document.querySelectorAll("#adminPosicoesBox input[type=checkbox]:checked")].map(c=>c.value);
+  p.value=selecionadas.join(", ");
+  p.dispatchEvent(new Event("input",{bubbles:true}));
+  p.dispatchEvent(new Event("change",{bubbles:true}));
+}
+
+function criarPosicoes(){
+  const antigo=$("posicao");
+  if(!antigo)return;
+
+  if($("adminPosicoesBox")){
+    aplicarMarcacao(antigo.value);
+    return;
+  }
+
+  const box=document.createElement("div");
+  box.id="adminPosicoesBox";
+  box.className="admin-posicoes-box";
+  box.innerHTML=`
+    <div class="admin-posicoes-help">Selecione uma ou mais posições</div>
+    <div class="admin-posicoes-grid">
+      ${POSICOES.map(p=>`<label class="admin-posicao-option"><input type="checkbox" value="${p}"><span>${p}</span></label>`).join("")}
+    </div>`;
+
+  antigo.type="hidden";
+  antigo.setAttribute("aria-hidden","true");
+  antigo.style.display="none";
+  antigo.parentElement.appendChild(box);
+
+  box.querySelectorAll("input").forEach(c=>c.addEventListener("change",atualizarCampo));
+  aplicarMarcacao(antigo.value);
+}
+
+function sincronizar(){
+  const p=$("posicao"),box=$("adminPosicoesBox");
+  if(!p||!box)return;
+  const valor=normalizar(p.value).join(", ");
+  const atual=[...box.querySelectorAll("input:checked")].map(x=>x.value).join(", ");
+  if(valor!==atual)aplicarMarcacao(p.value);
+}
+
+function iniciar(){
+  criarPosicoes();
+  sincronizar();
+  setInterval(sincronizar,250);
+}
+
+const css=document.createElement("style");
+css.textContent=`
+.admin-posicoes-box{margin-top:8px;width:100%}
+.admin-posicoes-help{font-size:11px;color:#9da39c;margin:0 0 9px}
+.admin-posicoes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-posicao-option{display:flex!important;align-items:center!important;gap:10px!important;min-height:48px;padding:11px 13px;border:1px solid rgba(217,169,63,.22);border-radius:11px;background:#0d110f;color:#f5f0e3;cursor:pointer;font-weight:800}
+.admin-posicao-option:hover{border-color:rgba(242,204,114,.55);background:#121814}
+.admin-posicao-option input{width:19px!important;height:19px!important;min-width:19px!important;accent-color:#d9a93f!important;margin:0!important;cursor:pointer}
+.admin-posicao-option span{cursor:pointer}
+@media(max-width:700px){.admin-posicoes-grid{grid-template-columns:1fr}}
+`;
+document.head.appendChild(css);
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(iniciar,150));
+else setTimeout(iniciar,150);
