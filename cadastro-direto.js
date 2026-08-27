@@ -406,7 +406,9 @@ async function enviarCadastro(event) {
 
     let msg = "Não foi possível enviar o cadastro.";
 
-    if (error?.code === "permission-denied") {
+    if (error?.code === "deadline-exceeded") {
+      msg = "O banco demorou para responder. Nenhum cadastro foi confirmado. Tente novamente.";
+    } else if (error?.code === "permission-denied") {
       msg = "O Firestore recusou o cadastro. Verifique as regras publicadas.";
     } else if (error?.code === "failed-precondition") {
       msg = "O Firestore informou uma pré-condição inválida. Tente novamente.";
