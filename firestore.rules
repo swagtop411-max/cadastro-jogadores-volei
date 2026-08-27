@@ -158,7 +158,7 @@ service cloud.firestore {
 
     match /equipes_pendentes/{equipeId} {
       allow create: if request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
         && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 100
         && request.resource.data.responsavel is string && request.resource.data.responsavel.size() >= 2 && request.resource.data.responsavel.size() <= 100
         && request.resource.data.uf is string && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SE','TO']
@@ -166,6 +166,8 @@ service cloud.firestore {
         && request.resource.data.modalidade is string && request.resource.data.modalidade.size() >= 2 && request.resource.data.modalidade.size() <= 40
         && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
         && request.resource.data.contato is string && request.resource.data.contato.size() >= 5 && request.resource.data.contato.size() <= 120
+        && request.resource.data.logo is string && request.resource.data.logo.size() <= 450000
+        && request.resource.data.atletas is list && request.resource.data.atletas.size() <= 30
         && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
         && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
         && request.resource.data.valorPlano is number
