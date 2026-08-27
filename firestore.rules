@@ -65,15 +65,6 @@ service cloud.firestore {
         && request.resource.data.imagem is string
         && request.resource.data.imagem.size() <= 1400000
         && request.resource.data.publicado == false
-        && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
-        && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
-        && request.resource.data.valorPlano is number
-        && ((request.resource.data.plano == 'Gratuito' && request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0)
-          || (request.resource.data.plano == 'Bronze' && request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9)
-          || (request.resource.data.plano == 'Prata' && request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9)
-          || (request.resource.data.plano == 'Ouro' && request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9)
-          || (request.resource.data.plano == 'Premium' && request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9))
-        && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
         && request.resource.data.status == 'ativo'
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.criadoEm is string;
@@ -116,6 +107,15 @@ service cloud.firestore {
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.get('historicoCampeonatos', []) is list
         && request.resource.data.get('historicoCampeonatos', []).size() <= 30
+        && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
+        && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
+        && request.resource.data.valorPlano is number
+        && ((request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0)
+          || (request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9)
+          || (request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9)
+          || (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9)
+          || (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9))
+        && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
         && request.resource.data.criadoEm is string;
       allow read, update, delete: if isAdmin();
     }
