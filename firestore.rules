@@ -72,7 +72,7 @@ service cloud.firestore {
     }
 
     match /atletas_pendentes/{atletaId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','modalidades','posicoes'])
+      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes'])
         && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
