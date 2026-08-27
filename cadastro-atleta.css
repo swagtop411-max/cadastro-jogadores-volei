@@ -3,7 +3,7 @@
 .campo-opcional{color:#8f968e;font-size:8px;font-weight:700;letter-spacing:.7px}
 .historico-campeonatos{display:flex;flex-direction:column;gap:10px}
 .campeonato-item{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) 90px auto;gap:8px;align-items:center}
-.campeonato-item input{min-width:0}
+.campeonato-item input{min-width:0}.campeonato-item .campColocacao{min-width:0;width:100%;height:52px;padding:0 38px 0 16px;border:1px solid rgba(217,169,63,.22);border-radius:10px;background:#0c100e;color:#d8d8d8;font:inherit;cursor:pointer;appearance:auto;-webkit-appearance:menulist}.campeonato-item .campColocacao:focus{outline:2px solid rgba(217,169,63,.55);outline-offset:1px}.campeonato-item .campColocacao option{background:#101512;color:#eee}
 .btn-add-campeonato,.btn-remove-campeonato{border:1px solid rgba(217,169,63,.22);border-radius:10px;padding:10px 12px;background:#0c100e;color:#f2cc72;font-size:10px;font-weight:900;cursor:pointer}
 .btn-add-campeonato{margin-top:8px}
 .btn-remove-campeonato{color:#f19a83;border-color:rgba(241,154,131,.25)}
