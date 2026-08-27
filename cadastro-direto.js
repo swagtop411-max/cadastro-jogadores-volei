@@ -357,16 +357,46 @@ async function enviarCadastro(event) {
     const modal = document.querySelector(".cadastro-modal");
 
     if (modal) {
+      const valor = Number(plano.valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+      const pedido = ref.id.slice(0, 8).toUpperCase();
+      const pago = planoId !== "gratuito";
+      const whatsapp = "https://wa.me/5516988586327?text=" + encodeURIComponent(
+        "Olá! Fiz o pagamento do plano " + plano.nome + " do Banco de Dados de Atletas. " +
+        "Meu nome é " + dados.nome + ". Pedido: " + pedido
+      );
+
       modal.innerHTML =
         '<div class="cadastro-success">' +
           '<div class="success-icon">🏐</div>' +
           '<h3>CADASTRO ENVIADO!</h3>' +
           '<p>Seus dados foram recebidos e ficarão aguardando aprovação da M&amp;M Organização.</p>' +
+          (pago
+            ? '<div class="cadastro-pagamento">' +
+                '<div class="cadastro-pagamento-title">💳 PAGAMENTO DO PLANO ' + plano.nome.toUpperCase() + '</div>' +
+                '<p>Para ativar seu plano de visibilidade, faça o Pix no valor de <strong>' + valor + '</strong>.</p>' +
+                '<div class="cadastro-pix-label">CHAVE PIX</div>' +
+                '<button id="copiarPixAtleta" type="button" class="cadastro-pix-key">📋 memorganizacao@gmail.com</button>' +
+                '<small>Depois de realizar o pagamento, envie o comprovante para agilizar a confirmação. Seu perfil só receberá os benefícios do plano após a confirmação do pagamento.</small>' +
+                '<a href="' + whatsapp + '" target="_blank" rel="noopener noreferrer" class="cadastro-pix-whatsapp">💬 ENVIAR COMPROVANTE PELO WHATSAPP</a>' +
+                '<div class="cadastro-pedido">Pedido: <strong>' + pedido + '</strong></div>' +
+              '</div>'
+            : '<p class="cadastro-gratuito">Como você escolheu o plano gratuito, não há pagamento a fazer.</p>') +
           '<div class="cadastro-success-actions">' +
             '<a href="https://wa.me/5516988586327?text=Ol%C3%A1!%20Acabei%20de%20enviar%20meu%20cadastro%20para%20o%20Banco%20de%20Dados%20de%20Atletas." target="_blank" rel="noopener noreferrer">💬 FALAR COM A M&amp;M ORGANIZAÇÃO</a>' +
             '<a href="index.html" class="btn-voltar-site">← VOLTAR AO SITE</a>' +
-          "</div>" +
-        "</div>";
+          '</div>' +
+        '</div>';
+
+      const copiar = document.getElementById("copiarPixAtleta");
+      copiar?.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText("memorganizacao@gmail.com");
+          copiar.textContent = "✓ CHAVE PIX COPIADA";
+          setTimeout(() => { copiar.textContent = "📋 memorganizacao@gmail.com"; }, 1800);
+        } catch (_) {
+          mostrarMensagem("Copie a chave Pix: memorganizacao@gmail.com");
+        }
+      });
     }
   } catch (error) {
     console.error("Erro completo ao enviar cadastro:", error);
