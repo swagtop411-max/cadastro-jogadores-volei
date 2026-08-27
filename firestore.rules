@@ -111,6 +111,36 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /apoiadores_pendentes/{pedidoId} {
+      allow create: if request.resource.data.keys().hasAll(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
+        && request.resource.data.empresa is string
+        && request.resource.data.empresa.size() >= 2
+        && request.resource.data.empresa.size() <= 100
+        && request.resource.data.responsavel is string
+        && request.resource.data.responsavel.size() >= 2
+        && request.resource.data.responsavel.size() <= 100
+        && request.resource.data.contato is string
+        && request.resource.data.contato.size() >= 5
+        && request.resource.data.contato.size() <= 120
+        && request.resource.data.cidade is string
+        && request.resource.data.cidade.size() >= 2
+        && request.resource.data.cidade.size() <= 80
+        && request.resource.data.link is string
+        && request.resource.data.link.size() <= 300
+        && request.resource.data.plano in ['Bronze','Prata','Ouro','Master']
+        && request.resource.data.planoId in ['bronze','prata','ouro','master']
+        && request.resource.data.valor is number
+        && ((request.resource.data.plano == 'Bronze' && request.resource.data.planoId == 'bronze' && request.resource.data.valor == 50)
+          || (request.resource.data.plano == 'Prata' && request.resource.data.planoId == 'prata' && request.resource.data.valor == 100)
+          || (request.resource.data.plano == 'Ouro' && request.resource.data.planoId == 'ouro' && request.resource.data.valor == 200)
+          || (request.resource.data.plano == 'Master' && request.resource.data.planoId == 'master' && request.resource.data.valor == 350))
+        && request.resource.data.status == 'aguardando_pagamento'
+        && request.resource.data.aprovacao == 'pendente'
+        && request.resource.data.criadoEm is timestamp;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /site_stats/{eventId} {
       allow create: if request.resource.data.keys().hasAll(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
         && request.resource.data.keys().hasOnly(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
