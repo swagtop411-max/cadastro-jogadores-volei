@@ -6,7 +6,7 @@
 <meta name="description" content="Cadastro de atletas - Banco de Dados de Atletas">
 <title>Cadastro de Atleta | Banco de Dados</title>
 <link rel="stylesheet" href="estilo.css">
-<link rel="stylesheet" href="cadastro-atleta.css?v=20260827-6">
+<link rel="stylesheet" href="cadastro-atleta.css?v=20260827-7">
 <style>
 body{min-height:100vh;background:#050807;color:#f5f0e3}
 .cadastro-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px}
@@ -29,7 +29,13 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 <div class="cadastro-field full"><label>POSIÇÕES *</label><div class="opcoes-grid posicoes-grid" id="cadPosicoes"><label class="opcao-check"><input type="checkbox" value="Levantador"><span>Levantador</span></label><label class="opcao-check"><input type="checkbox" value="Ponteiro"><span>Ponteiro</span></label><label class="opcao-check"><input type="checkbox" value="Oposto"><span>Oposto</span></label><label class="opcao-check"><input type="checkbox" value="Central"><span>Central</span></label><label class="opcao-check"><input type="checkbox" value="Líbero"><span>Líbero</span></label><label class="opcao-check"><input type="checkbox" value="Universal"><span>Universal</span></label></div><small class="campo-ajuda">Selecione uma ou mais posições.</small></div>
 <div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
 <div class="cadastro-field"><label>TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
-<div class="cadastro-field"><label>STATUS</label><select id="cadStatus" disabled><option value="ativo" selected>🟢 Ativo</option></select><small class="campo-ajuda">Seu cadastro será publicado como atleta ativo após o processamento.</small></div>
+<div class="cadastro-field full plano-field"><label>PLANO DE VISIBILIDADE</label><p class="campo-ajuda">O plano gratuito continua disponível. Os planos pagos aumentam o destaque do seu perfil nas buscas e vitrines do site.</p><div id="cadPlanos" class="planos-cadastro">
+<label class="plano-card selecionado"><input type="radio" name="cadPlano" value="gratuito" data-nome="Gratuito" data-valor="0" checked><span>🆓 GRATUITO</span><strong>R$ 0/mês</strong><small>Perfil normal no banco de atletas.</small></label>
+<label class="plano-card"><input type="radio" name="cadPlano" value="bronze" data-nome="Bronze" data-valor="9.9"><span>🥉 BRONZE</span><strong>R$ 9,90/mês</strong><small>Pequeno destaque visual no perfil.</small></label>
+<label class="plano-card"><input type="radio" name="cadPlano" value="prata" data-nome="Prata" data-valor="19.9"><span>🥈 PRATA</span><strong>R$ 19,90/mês</strong><small>Mais destaque e prioridade nas buscas.</small></label>
+<label class="plano-card"><input type="radio" name="cadPlano" value="ouro" data-nome="Ouro" data-valor="34.9"><span>🥇 OURO</span><strong>R$ 34,90/mês</strong><small>Grande destaque e posição privilegiada.</small></label>
+<label class="plano-card premium"><input type="radio" name="cadPlano" value="premium" data-nome="Premium" data-valor="49.9"><span>👑 PREMIUM</span><strong>R$ 49,90/mês</strong><small>Máxima visibilidade e selo Premium.</small></label>
+</div><small class="campo-ajuda">Ao escolher um plano pago, sua solicitação fica pendente para análise e confirmação. Nenhuma cobrança é feita automaticamente.</small></div><div class="cadastro-field"><label>STATUS</label><select id="cadStatus" disabled><option value="ativo" selected>🟢 Ativo</option></select><small class="campo-ajuda">Seu cadastro será publicado como atleta ativo após o processamento.</small></div>
 <div class="cadastro-field"><label>WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30" placeholder="Telefone, WhatsApp ou e-mail"></div>
 <div class="cadastro-field full"><label>FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
 <div class="cadastro-field full"><label>CAMPEONATOS QUE PARTICIPEI <span class="campo-opcional">(OPCIONAL)</span></label>
