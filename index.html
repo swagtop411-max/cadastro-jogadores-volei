@@ -4,32 +4,7 @@
 /* =========================================================
    LATERAIS FIXAS • CENTRO COM ROLAGEM
    ========================================================= */
-@media(min-width:901px){
-  .public-layout{align-items:start!important;position:relative!important}
-  .public-layout>.sponsors-sidebar,
-  .public-layout>.supporter-banner{
-    position:sticky!important;
-    top:92px!important;
-    align-self:start!important;
-    height:calc(100vh - 112px)!important;
-    max-height:calc(100vh - 112px)!important;
-    overflow-y:auto!important;
-    overflow-x:hidden!important;
-    scrollbar-width:thin!important;
-    z-index:20!important;
-  }
-  .public-layout>.sponsors-sidebar{grid-column:1!important;grid-row:1!important}
-  .public-layout>.athletes-content{grid-column:2!important;grid-row:1!important;min-height:100vh!important}
-  .public-layout>.supporter-banner{grid-column:3!important;grid-row:1!important;width:100%!important;box-sizing:border-box!important}
-  .public-layout>.sponsors-sidebar::-webkit-scrollbar,
-  .public-layout>.supporter-banner::-webkit-scrollbar{width:4px}
-  .public-layout>.sponsors-sidebar::-webkit-scrollbar-thumb,
-  .public-layout>.supporter-banner::-webkit-scrollbar-thumb{background:rgba(217,169,63,.35);border-radius:10px}
-}
-@media(max-width:900px){
-  .public-layout>.sponsors-sidebar,
-  .public-layout>.supporter-banner{position:static!important;height:auto!important;max-height:none!important;overflow:visible!important}
-}
+@media(min-width:901px){.public-layout{align-items:start!important;position:relative!important}.public-layout>.sponsors-sidebar,.public-layout>.supporter-banner{position:sticky!important;top:92px!important;align-self:start!important;height:auto!important;max-height:none!important;overflow:visible!important;z-index:20!important}.public-layout>.sponsors-sidebar{grid-column:1!important;grid-row:1!important}.public-layout>.athletes-content{grid-column:2!important;grid-row:1!important;min-height:100vh!important}.public-layout>.supporter-banner{grid-column:3!important;grid-row:1!important;width:100%!important;box-sizing:border-box!important}}@media(max-width:900px){.public-layout>.sponsors-sidebar,.public-layout>.supporter-banner{position:static!important;height:auto!important;max-height:none!important;overflow:visible!important}}
 </style><style>
 /* Remove somente a chamada horizontal comercial acima dos atletas */
 .home-sponsor-cta{display:none!important}
