@@ -100,7 +100,7 @@ service cloud.firestore {
         && request.resource.data.observacoes is string
         && request.resource.data.observacoes.size() <= 500
         && request.resource.data.foto is string
-        && request.resource.data.foto.size() <= 900000
+        && request.resource.data.foto.size() <= 800000
         && request.resource.data.status == 'ativo'
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.get('historicoCampeonatos', []) is list
