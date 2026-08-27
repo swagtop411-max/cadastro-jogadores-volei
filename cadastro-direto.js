@@ -13,6 +13,8 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const DATA_TIMEOUT_MS = 20000;
+const withTimeout = (promise, ms = DATA_TIMEOUT_MS) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error("O banco demorou para responder. Tente novamente em alguns segundos."), { code: "deadline-exceeded" })), ms))]);
 
 const $ = (id) => document.getElementById(id);
 const form = $("cadastroForm");
@@ -342,6 +344,7 @@ async function enviarCadastro(event) {
       planoId,
       valorPlano: plano.valor,
       planoStatus: planoId === "gratuito" ? "ativo" : "aguardando_pagamento",
+      pagamentoConfirmado: false,
 
       criadoEm: new Date().toISOString()
     };
@@ -350,7 +353,7 @@ async function enviarCadastro(event) {
      * A gravação só limpa/troca a tela depois que o Firestore
      * confirmar o addDoc. Assim um erro não reinicia o formulário.
      */
-    const ref = await addDoc(collection(db, "atletas_pendentes"), dados);
+    const ref = await withTimeout(addDoc(collection(db, "atletas_pendentes"), dados));
 
     console.info("Cadastro criado com sucesso:", ref.id);
 
