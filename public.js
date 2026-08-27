@@ -21,7 +21,10 @@ if(!location.hash){requestAnimationFrame(()=>window.scrollTo(0,0));setTimeout(()
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",aplicarEstabilizacao,{once:true});else aplicarEstabilizacao();
 carregarApoiadores();carregar();carregarEquipes();
 
-const btnRank=$("btnAbrirRanking"),btnFechar=$("btnFecharRanking"),drawer=$("rankingDrawer");btnRank?.addEventListener("click",abrirRanking);btnFechar?.addEventListener("click",fecharRanking);drawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fecharRanking()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharRanking()});
+const btnRank=$("btnAbrirRanking"),btnFechar=$("btnFecharRanking"),drawer=$("rankingDrawer");
+function abrirRanking(){if(!drawer)return;drawer.classList.add("aberto");drawer.setAttribute("aria-hidden","false");btnRank?.setAttribute("aria-expanded","true")}
+function fecharRanking(){if(!drawer)return;drawer.classList.remove("aberto");drawer.setAttribute("aria-hidden","true");btnRank?.setAttribute("aria-expanded","false")}
+btnRank?.addEventListener("click",abrirRanking);btnFechar?.addEventListener("click",fecharRanking);drawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fecharRanking()});
 
 const btnEquipes=$("btnAbrirEquipes"),btnFecharEquipes=$("btnFecharEquipes"),equipesDrawer=$("equipesDrawer");
 function abrirEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.add("aberto");equipesDrawer.setAttribute("aria-hidden","false");btnEquipes?.setAttribute("aria-expanded","true");document.body.classList.add("equipes-open");if(!equipes.length)carregarEquipes()}
