@@ -157,10 +157,12 @@ service cloud.firestore {
     }
 
     match /equipes_pendentes/{equipeId} {
-      // Cadastro público: a equipe entra somente na fila de pendentes.
-      // Publicação e alterações posteriores continuam exclusivas do administrador.
+      // Cadastro público: somente o conjunto de campos esperado pode ser enviado.
+      // Publicação, alterações e exclusões posteriores continuam exclusivas do administrador.
       allow create: if
-        request.resource.data.nome is string
+        request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
+        && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
         && request.resource.data.responsavel is string
