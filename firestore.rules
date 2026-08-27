@@ -74,7 +74,7 @@ service cloud.firestore {
 
     match /atletas_pendentes/{atletaId} {
       allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes','plano','planoId','valorPlano','planoStatus'])
-        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos','plano','planoId','valorPlano','planoStatus'])
+        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos','plano','planoId','valorPlano','planoStatus','pagamentoConfirmado'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -117,7 +117,8 @@ service cloud.firestore {
           || (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9)
           || (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9))
         && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
-        && request.resource.data.criadoEm is string;
+        && request.resource.data.criadoEm is string
+        && request.resource.data.get('pagamentoConfirmado', false) is bool;
       allow read, update, delete: if isAdmin();
     }
 
@@ -162,7 +163,7 @@ service cloud.firestore {
       // Publicação, alterações e exclusões posteriores continuam exclusivas do administrador.
       allow create: if
         request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm','pagamentoConfirmado'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
