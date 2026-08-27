@@ -67,8 +67,7 @@ service cloud.firestore {
         && request.resource.data.publicado == false
         && request.resource.data.status == 'ativo'
         && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is string
-        && request.resource.data.get('pagamentoConfirmado', false) is bool;
+        && request.resource.data.criadoEm is string;
       allow read, update, delete: if isAdmin();
     }
 
