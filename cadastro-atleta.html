@@ -15,7 +15,7 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 .cadastro-home:hover{text-decoration:underline}
 .cadastro-legal{margin:10px 0 0;color:#8f968e;font-size:10px;line-height:1.5}.cadastro-legal a{color:#f2cc72;text-decoration:none}.cadastro-legal a:hover{text-decoration:underline}
 </style>
-</head>
+<script>window.addEventListener("error",function(e){var m=document.getElementById("cadStatusMsg");if(m&&e.message){m.textContent="Erro ao carregar o cadastro: "+e.message;m.className="cadastro-status erro"}});window.addEventListener("unhandledrejection",function(e){var m=document.getElementById("cadStatusMsg");if(m){m.textContent="Erro no cadastro: "+(e.reason?.message||"verifique a conexão");m.className="cadastro-status erro"}});</script></head>
 <body>
 <main class="cadastro-page">
 <div class="cadastro-modal">
@@ -49,6 +49,6 @@ body{min-height:100vh;background:#050807;color:#f5f0e3}
 </div>
 </main>
 <script type="module" src="analytics.js?v=20260825-2"></script>
-<script type="module" src="cadastro-direto.js?v=20260827-6"></script>
+<script type="module" src="cadastro-direto.js?v=20260827-8"></script>
 </body>
 </html>
