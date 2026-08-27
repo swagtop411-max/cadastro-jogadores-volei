@@ -68,3 +68,43 @@
 .apoio-sponsor-visual img{object-fit:contain!important;object-position:center center!important;width:100%!important;height:100%!important;min-width:0!important;min-height:0!important;max-width:100%!important;max-height:100%!important;background:#070a09!important}
 .apoio-public-card.master .apoio-sponsor-visual img{object-fit:contain!important;object-position:center center!important}
 @media(max-width:600px){.apoio-sponsor-visual img,.apoio-public-card.master .apoio-sponsor-visual img{object-fit:contain!important;object-position:center center!important}}
+
+/* =========================================================
+   VITRINE FINAL - REPLICA DA REFERÊNCIA PREMIUM
+   ========================================================= */
+.home-sponsor-showcase{background:#050806!important;border:0!important;border-radius:0!important;padding:20px 0 30px!important;box-shadow:none!important}
+.home-sponsor-heading{padding:0 2px 14px!important;margin:0!important;align-items:end!important}
+.home-sponsor-heading h2{font-size:17px!important;letter-spacing:2px!important;color:#f2cc72!important;text-transform:uppercase!important}
+.home-sponsor-heading span{font-size:0!important}
+.home-sponsor-heading span:after{content:"MARCAS QUE JÁ APOIAM";font-size:9px!important}
+.home-sponsor-heading p{font-size:9px!important;color:#778078!important}
+.home-sponsor-showcase .apoio-banner-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px!important;margin:0!important}
+.home-sponsor-showcase .apoio-public-card{height:400px!important;min-height:400px!important;max-height:400px!important;border-radius:18px!important;background:#050806!important}
+.home-sponsor-showcase .apoio-public-card.master{grid-column:1/-1!important;height:470px!important;min-height:470px!important;max-height:470px!important}
+.home-sponsor-showcase .apoio-card-tier{height:48px!important;box-sizing:border-box!important;padding:0 18px!important;background:rgba(0,0,0,.28)!important}
+.home-sponsor-showcase .apoio-card-main,.home-sponsor-showcase .apoio-public-card.master .apoio-card-main{display:grid!important;grid-template-columns:1fr 48%!important;gap:0!important;height:255px!important;min-height:255px!important;max-height:255px!important;padding:0!important;overflow:hidden!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-card-main{height:300px!important;min-height:300px!important;max-height:300px!important;grid-template-columns:52% 48%!important}
+.home-sponsor-showcase .apoio-card-info{order:1!important;padding:28px 20px!important;justify-content:center!important;background:linear-gradient(90deg,rgba(4,7,5,.98),rgba(4,7,5,.72))!important}
+.home-sponsor-showcase .apoio-sponsor-visual{order:2!important;height:100%!important;min-height:100%!important;max-height:none!important;border-left:1px solid rgba(242,204,114,.13)!important;border-top:0!important;background:#030504!important}
+.home-sponsor-showcase .apoio-sponsor-visual:after{display:none!important}
+.home-sponsor-showcase .apoio-sponsor-visual img{object-fit:contain!important;object-position:center center!important;width:100%!important;height:100%!important;background:#030504!important}
+.home-sponsor-showcase .apoio-public-card:not(.master) .apoio-sponsor-visual{order:1!important;border-left:0!important;border-right:1px solid rgba(242,204,114,.13)!important}
+.home-sponsor-showcase .apoio-public-card:not(.master) .apoio-card-info{order:2!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-sponsor-visual{order:2!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-card-info{order:1!important;padding:32px 26px!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-sponsor-visual img{object-fit:contain!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-card-info h3{font-size:38px!important;margin-bottom:10px!important}
+.home-sponsor-showcase .apoio-card-info h3{font-size:27px!important}
+.home-sponsor-showcase .apoio-card-info p{font-size:10px!important;line-height:1.5!important}
+.home-sponsor-showcase .apoio-card-mini{margin-top:13px!important}
+.home-sponsor-showcase .apoio-card-benefits{grid-template-columns:repeat(4,1fr)!important;height:72px!important;min-height:72px!important;max-height:72px!important;margin:0 18px 12px!important;overflow:visible!important}
+.home-sponsor-showcase .apoio-card-benefits div{height:72px!important;min-height:72px!important;padding:8px 9px!important;background:rgba(0,0,0,.2)!important;border-color:rgba(242,204,114,.18)!important}
+.home-sponsor-showcase .apoio-card-benefits span{font-size:7px!important}
+.home-sponsor-showcase .apoio-card-benefits i{font-size:17px!important}
+.home-sponsor-showcase .apoio-card-bottom{height:45px!important;min-height:45px!important;max-height:45px!important;padding:0 18px!important}
+.home-sponsor-showcase .apoio-card-bottom strong{padding:9px 15px!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-card-benefits{height:76px!important;min-height:76px!important;max-height:76px!important}
+.home-sponsor-showcase .apoio-public-card.master .apoio-card-benefits div{height:76px!important;min-height:76px!important}
+.home-sponsor-cta{margin-top:14px!important;background:#090d0a!important;border:1px solid rgba(242,204,114,.24)!important;border-radius:14px!important;padding:13px 18px!important}
+@media(max-width:900px){.home-sponsor-showcase .apoio-public-card.master{height:450px!important;min-height:450px!important;max-height:450px!important}.home-sponsor-showcase .apoio-public-card{height:390px!important;min-height:390px!important;max-height:390px!important}.home-sponsor-showcase .apoio-card-main,.home-sponsor-showcase .apoio-public-card.master .apoio-card-main{grid-template-columns:1fr 45%!important}.home-sponsor-showcase .apoio-public-card.master .apoio-card-main{grid-template-columns:55% 45%!important}}
+@media(max-width:600px){.home-sponsor-showcase{padding:15px 0 24px!important}.home-sponsor-heading{display:block!important}.home-sponsor-heading p{text-align:left!important;margin-top:6px!important}.home-sponsor-showcase .apoio-banner-grid{grid-template-columns:1fr!important}.home-sponsor-showcase .apoio-public-card,.home-sponsor-showcase .apoio-public-card.master{height:auto!important;min-height:0!important;max-height:none!important}.home-sponsor-showcase .apoio-card-main,.home-sponsor-showcase .apoio-public-card.master .apoio-card-main{display:flex!important;flex-direction:column!important;height:auto!important;min-height:0!important;max-height:none!important}.home-sponsor-showcase .apoio-card-info,.home-sponsor-showcase .apoio-public-card:not(.master) .apoio-card-info,.home-sponsor-showcase .apoio-public-card.master .apoio-card-info{order:1!important;padding:20px 15px!important}.home-sponsor-showcase .apoio-sponsor-visual,.home-sponsor-showcase .apoio-public-card:not(.master) .apoio-sponsor-visual,.home-sponsor-showcase .apoio-public-card.master .apoio-sponsor-visual{order:2!important;width:100%!important;height:230px!important;min-height:230px!important;border:0!important;border-top:1px solid rgba(242,204,114,.13)!important}.home-sponsor-showcase .apoio-card-benefits{grid-template-columns:1fr 1fr!important;height:auto!important;min-height:0!important;max-height:none!important}.home-sponsor-showcase .apoio-card-benefits div{height:auto!important;min-height:55px!important}}
