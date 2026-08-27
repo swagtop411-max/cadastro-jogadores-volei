@@ -23,3 +23,10 @@
 - [ ] Publicar as regras novas do Firestore após confirmação
 - [ ] Verificar a comunidade no domínio online
 - [ ] Testar uma publicação e um comentário após a ativação
+
+## Publicação autorizada
+
+- [ ] Enviar o commit `6a79976` para o remoto do site
+- [ ] Publicar as regras `publicacoes` e `comentarios_publicacoes` no Firebase
+- [ ] Verificar a página online e o carregamento do feed
+- [ ] Registrar o resultado final da publicação
