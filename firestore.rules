@@ -157,28 +157,50 @@ service cloud.firestore {
     }
 
     match /equipes_pendentes/{equipeId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
-        && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 100
-        && request.resource.data.responsavel is string && request.resource.data.responsavel.size() >= 2 && request.resource.data.responsavel.size() <= 100
-        && request.resource.data.uf is string && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SE','TO']
-        && request.resource.data.cidade is string && request.resource.data.cidade.size() >= 2 && request.resource.data.cidade.size() <= 80
-        && request.resource.data.modalidade is string && request.resource.data.modalidade.size() >= 2 && request.resource.data.modalidade.size() <= 40
+      // Cadastro público: a equipe entra somente na fila de pendentes.
+      // Publicação e alterações posteriores continuam exclusivas do administrador.
+      allow create: if
+        request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.responsavel is string
+        && request.resource.data.responsavel.size() >= 2
+        && request.resource.data.responsavel.size() <= 100
+        && request.resource.data.uf is string
+        && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SE','TO']
+        && request.resource.data.cidade is string
+        && request.resource.data.cidade.size() >= 2
+        && request.resource.data.cidade.size() <= 80
+        && request.resource.data.modalidade is string
+        && request.resource.data.modalidade.size() >= 2
+        && request.resource.data.modalidade.size() <= 40
+        && request.resource.data.categoria is string
         && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
-        && request.resource.data.contato is string && request.resource.data.contato.size() >= 5 && request.resource.data.contato.size() <= 120
-        && request.resource.data.logo is string && request.resource.data.logo.size() <= 450000
-        && request.resource.data.atletas is list && request.resource.data.atletas.size() <= 30
+        && request.resource.data.contato is string
+        && request.resource.data.contato.size() >= 5
+        && request.resource.data.contato.size() <= 120
+        && request.resource.data.get('logo', '') is string
+        && request.resource.data.get('logo', '').size() <= 450000
+        && request.resource.data.get('atletas', []) is list
+        && request.resource.data.get('atletas', []).size() <= 30
+        && request.resource.data.plano is string
         && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
+        && request.resource.data.planoId is string
         && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
         && request.resource.data.valorPlano is number
-        && ((request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0)
-          || (request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9)
-          || (request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9)
-          || (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9)
-          || (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9))
+        && (
+          (request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0) ||
+          (request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9) ||
+          (request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9) ||
+          (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9) ||
+          (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9)
+        )
+        && request.resource.data.planoStatus is string
         && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
-        && request.resource.data.status == 'ativo' && request.resource.data.aprovacao == 'pendente'
+        && request.resource.data.status == 'ativo'
+        && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.criadoEm is string;
+
       allow read, update, delete: if isAdmin();
     }
 
