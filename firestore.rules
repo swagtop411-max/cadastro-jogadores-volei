@@ -72,8 +72,8 @@ service cloud.firestore {
     }
 
     match /atletas_pendentes/{atletaId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','contato','posicao','categoria','time','observacoes','foto','status','criadoEm','modalidades','posicoes'])
-        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos'])
+      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','modalidades','posicoes'])
+        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -81,6 +81,8 @@ service cloud.firestore {
         && request.resource.data.cidade is string
         && request.resource.data.cidade.size() >= 2
         && request.resource.data.cidade.size() <= 80
+        && request.resource.data.uf is string
+        && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
         && request.resource.data.contato is string
         && request.resource.data.contato.size() >= 8
         && request.resource.data.contato.size() <= 30
