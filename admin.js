@@ -16,46 +16,60 @@ async function recusarEquipe(id){if(!confirm("Recusar e excluir esta equipe pend
 async function loadMonetizacao(){
   const cards=$("monetizacaoCards"),planosBox=$("monetizacaoPlanos"),engBox=$("monetizacaoEngajamento"),st=$("monetizacaoStatus");
   if(!cards)return;
-  cards.innerHTML='<div class="monetizacao-loading">🔄 Atualizando dados...</div>'; if(st)clear(st);
+  cards.innerHTML='<div class="monetizacao-loading">🔄 Atualizando dados...</div>';if(st)clear(st);
+  const timeout=(p,ms=15000)=>Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error("Tempo esgotado"),{code:"deadline-exceeded"})),ms))]);
   try{
-    const [spSnap,atSnap,statsSnap]=await Promise.all([
-      getDocs(collection(db,"apoiadores")),
-      getDocs(collection(db,"atletas")),
-      getDocs(collection(db,"site_stats"))
+    const [spSnap,atSnap,eqSnap,statsSnap,atPendSnap,eqPendSnap]=await Promise.all([
+      timeout(getDocs(collection(db,"apoiadores"))),
+      timeout(getDocs(collection(db,"atletas"))),
+      timeout(getDocs(collection(db,"equipes"))),
+      timeout(getDocs(collection(db,"site_stats"))),
+      timeout(getDocs(collection(db,"atletas_pendentes"))),
+      timeout(getDocs(collection(db,"equipes_pendentes")))
     ]);
     const apoi=spSnap.docs.map(d=>({id:d.id,...d.data()}));
-    const ativos=apoi.filter(a=>a.ativo!==false);
-    const valores={Bronze:50,Prata:100,Ouro:200,Master:350};
-    const receita=ativos.reduce((s,a)=>s+Number(a.valor||valores[a.plano]||0),0);
-    const planos={Bronze:0,Prata:0,Ouro:0,Master:0};
-    ativos.forEach(a=>{const p=String(a.plano||"").trim();if(Object.prototype.hasOwnProperty.call(planos,p))planos[p]++});
+    const atletas=atSnap.docs.map(d=>d.data());
+    const equipes=eqSnap.docs.map(d=>d.data());
     const eventos=statsSnap.docs.map(d=>d.data());
+    const atPend=atPendSnap.docs.map(d=>d.data());
+    const eqPend=eqPendSnap.docs.map(d=>d.data());
+    const ativosApoi=apoi.filter(a=>a.ativo!==false);
+    const valorPlano=v=>Number(v||0);
+    const pagosAtletas=atletas.filter(a=>a.status!=="inativo"&&a.planoId&&a.planoId!=="gratuito"&&a.planoStatus==="ativo");
+    const pagosEquipes=equipes.filter(a=>a.status!=="inativo"&&a.planoId&&a.planoId!=="gratuito"&&a.planoStatus==="ativo");
+    const valoresApoio={Bronze:50,Prata:100,Ouro:200,Master:350};
+    const receitaApoiadores=ativosApoi.reduce((s,a)=>s+Number(a.valor||valoresApoio[a.plano]||0),0);
+    const receitaAtletas=pagosAtletas.reduce((s,a)=>s+valorPlano(a.valorPlano),0);
+    const receitaEquipes=pagosEquipes.reduce((s,a)=>s+valorPlano(a.valorPlano),0);
+    const receita=receitaApoiadores+receitaAtletas+receitaEquipes;
+    const planos={Bronze:0,Prata:0,Ouro:0,Master:0};
+    ativosApoi.forEach(a=>{const p=String(a.plano||"").trim();if(planos[p]!=null)planos[p]++});
     const visualizacoes=eventos.filter(e=>e.nome==="page_view").length;
     const cliques=eventos.filter(e=>["apoiador_click","apoiador_banner_click"].includes(e.nome)).length;
-    const campanhas=ativos.length;
-    const anuncios=ativos.filter(a=>String(a.imagem||"").trim()).length;
-    const isPremium=a=>{const vals=[a.planoPremium,a.premium,a.assinatura,a.plano].map(v=>String(v??"").toLowerCase().trim());return a.premium===true||vals.some(v=>v.includes("premium"))};
-    const atletasPremium=atSnap.docs.map(d=>d.data()).filter(isPremium).length;
-    let equipesPremium=0;
-    try{const eqSnap=await getDocs(collection(db,"equipes"));equipesPremium=eqSnap.docs.map(d=>d.data()).filter(isPremium).length}catch{}
+    const campanhas=ativosApoi.length;
+    const anuncios=ativosApoi.filter(a=>String(a.imagem||"").trim()).length;
+    const atletasPremium=pagosAtletas.filter(a=>String(a.planoId||"").toLowerCase()==="premium").length;
+    const equipesPremium=pagosEquipes.filter(a=>String(a.planoId||"").toLowerCase()==="premium").length;
+    const pendentesPagamento=atPend.filter(a=>a.planoId&&a.planoId!=="gratuito"&&a.pagamentoConfirmado!==true).length+
+      eqPend.filter(a=>a.planoId&&a.planoId!=="gratuito"&&a.pagamentoConfirmado!==true).length;
     const fmt=n=>Number(n||0).toLocaleString("pt-BR");
     const dinheiro=n=>Number(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
     const cardsData=[
-      ["💰","Receita mensal",dinheiro(receita),"Soma dos apoiadores ativos"],
-      ["🤝","Patrocinadores ativos",fmt(ativos.length),"Marcas com divulgação ativa"],
-      ["📦","Planos",fmt(ativos.length),"Contratos ativos por nível"],
+      ["💰","Receita mensal",dinheiro(receita),"Apoiadores + atletas + equipes com planos ativos"],
+      ["🤝","Patrocinadores ativos",fmt(ativosApoi.length),"Marcas com divulgação ativa"],
+      ["📦","Planos",fmt(ativosApoi.length+pagosAtletas.length+pagosEquipes.length),"Contratos pagos ativos"],
       ["🖱️","Cliques",fmt(cliques),"Interações com espaços comerciais"],
       ["👁️","Visualizações",fmt(visualizacoes),"Visualizações registradas"],
       ["📣","Campanhas",fmt(campanhas),"Campanhas comerciais ativas"],
       ["📰","Anúncios",fmt(anuncios),"Apoiadores com material visual"],
-      ["🏐","Atletas Premium",fmt(atletasPremium),"Cadastros com plano Premium"],
-      ["👥","Equipes Premium",fmt(equipesPremium),"Equipes com plano Premium"]
+      ["🏐","Atletas Premium",fmt(atletasPremium),"Atletas com plano Premium ativo"],
+      ["👥","Equipes Premium",fmt(equipesPremium),"Equipes com plano Premium ativo"]
     ];
     cards.innerHTML=cardsData.map(x=>'<div class="monetizacao-card"><span class="ico">'+x[0]+'</span><span class="valor">'+x[2]+'</span><span class="rotulo">'+x[1]+'</span><span class="desc">'+x[3]+'</span></div>').join("");
     planosBox.innerHTML=Object.entries(planos).map(([p,n])=>'<div class="monetizacao-row"><span>'+p+'</span><strong>'+fmt(n)+'</strong></div>').join("");
-    engBox.innerHTML='<div class="monetizacao-row"><span>Cliques em apoiadores</span><strong>'+fmt(eventos.filter(e=>e.nome==="apoiador_click").length)+'</strong></div><div class="monetizacao-row"><span>Cliques no banner comercial</span><strong>'+fmt(eventos.filter(e=>e.nome==="apoiador_banner_click").length)+'</strong></div><div class="monetizacao-row"><span>Solicitações pendentes</span><strong>Consulte a aba Apoiadores</strong></div>';
+    engBox.innerHTML='<div class="monetizacao-row"><span>Cliques em apoiadores</span><strong>'+fmt(eventos.filter(e=>e.nome==="apoiador_click").length)+'</strong></div><div class="monetizacao-row"><span>Cliques no banner comercial</span><strong>'+fmt(eventos.filter(e=>e.nome==="apoiador_banner_click").length)+'</strong></div><div class="monetizacao-row"><span>Pagamentos aguardando confirmação</span><strong>'+fmt(pendentesPagamento)+'</strong></div><div class="monetizacao-row"><span>Receita de atletas</span><strong>'+dinheiro(receitaAtletas)+'</strong></div><div class="monetizacao-row"><span>Receita de equipes</span><strong>'+dinheiro(receitaEquipes)+'</strong></div><div class="monetizacao-row"><span>Receita de apoiadores</span><strong>'+dinheiro(receitaApoiadores)+'</strong></div>';
   }catch(e){
-    console.error(e); cards.innerHTML='<div class="monetizacao-loading">Não foi possível carregar os dados de monetização.</div>'; if(st)status(st,"Erro ao carregar monetização ("+(e.code||"erro")+"). Verifique as permissões do Firestore.","erro");
+    console.error(e);cards.innerHTML='<div class="monetizacao-loading">Não foi possível carregar os dados de monetização.</div>';if(st)status(st,"Erro ao carregar monetização ("+(e.code||"erro")+"). Verifique as permissões do Firestore.","erro");
   }
 }
 function renderAtletas(){atletasAdmin.innerHTML="";if(!atletas.length){atletasAdmin.innerHTML='<p class="subtitulo">Nenhum atleta cadastrado.</p>';return}atletas.forEach(a=>{const media=Number(a.avaliacaoTecnica?.media||0);const d=document.createElement("div");d.className="atleta-admin";d.innerHTML=`<div class="atleta-info"><strong>${esc(a.nome||"Sem nome")}</strong><span>${esc(a.time||"Sem time")} · ${esc(a.categoria||"Sem categoria")} · ${a.status==="inativo"?"🔴 Inativo":"🟢 Ativo"}</span><small>🔒 ${esc(a.privado?.contato||"Sem contato cadastrado")}</small>${media?`<small>⭐ Técnica: ${media.toFixed(1)}/5</small>`:"<small>⭐ Técnica: não avaliada</small>"}</div><div class="atleta-actions"><button class="btn-secondary editar" type="button">Editar</button><button class="btn-danger excluir" type="button">Excluir</button></div>`;d.querySelector(".editar").onclick=()=>editAtleta(a.id);d.querySelector(".excluir").onclick=()=>removeAtleta(a.id);atletasAdmin.appendChild(d)})}
