@@ -22,3 +22,8 @@ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",
 carregarApoiadores();carregar();carregarEquipes();
 
 const btnRank=$("btnAbrirRanking"),btnFechar=$("btnFecharRanking"),drawer=$("rankingDrawer");btnRank?.addEventListener("click",abrirRanking);btnFechar?.addEventListener("click",fecharRanking);drawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fecharRanking()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharRanking()});
+
+const btnEquipes=$("btnAbrirEquipes"),btnFecharEquipes=$("btnFecharEquipes"),equipesDrawer=$("equipesDrawer");
+function abrirEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.add("aberto");equipesDrawer.setAttribute("aria-hidden","false");btnEquipes?.setAttribute("aria-expanded","true");document.body.classList.add("equipes-open");if(!equipes.length)carregarEquipes()}
+function fecharEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.remove("aberto");equipesDrawer.setAttribute("aria-hidden","true");btnEquipes?.setAttribute("aria-expanded","false");document.body.classList.remove("equipes-open")}
+btnEquipes?.addEventListener("click",abrirEquipes);btnFecharEquipes?.addEventListener("click",fecharEquipes);equipesDrawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-equipes]"))fecharEquipes()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharEquipes()});
