@@ -203,7 +203,8 @@ service cloud.firestore {
         && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
         && request.resource.data.status == 'ativo'
         && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is string;
+        && request.resource.data.criadoEm is string
+        && request.resource.data.get('pagamentoConfirmado', false) is bool;
 
       allow read, update, delete: if isAdmin();
     }
