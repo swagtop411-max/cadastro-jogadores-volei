@@ -113,7 +113,7 @@ service cloud.firestore {
 
     match /apoiadores_pendentes/{pedidoId} {
       allow create: if request.resource.data.keys().hasAll(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['empresa','responsavel','contato','cidade','link','imagem','plano','planoId','valor','status','aprovacao','criadoEm'])
         && request.resource.data.empresa is string
         && request.resource.data.empresa.size() >= 2
         && request.resource.data.empresa.size() <= 100
@@ -128,6 +128,7 @@ service cloud.firestore {
         && request.resource.data.cidade.size() <= 80
         && request.resource.data.link is string
         && request.resource.data.link.size() <= 300
+        && (!request.resource.data.keys().hasAny(['imagem']) || (request.resource.data.imagem is string && request.resource.data.imagem.size() <= 700000))
         && request.resource.data.plano in ['Bronze','Prata','Ouro','Master']
         && request.resource.data.planoId in ['bronze','prata','ouro','master']
         && request.resource.data.valor is number
