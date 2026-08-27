@@ -208,6 +208,52 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    match /publicacoes/{publicacaoId} {
+      // O feed público mostra somente publicações aprovadas.
+      allow read: if isAdmin() || resource.data.aprovado == true;
+
+      // Visitantes podem enviar conteúdo para moderação, nunca publicar diretamente.
+      allow create: if request.resource.data.keys().hasAll(['nome','texto','imagem','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','texto','imagem','aprovado','status','criadoEm'])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 80
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 3
+        && request.resource.data.texto.size() <= 1000
+        && request.resource.data.imagem is string
+        && request.resource.data.imagem.size() <= 700000
+        && request.resource.data.aprovado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp;
+
+      // Somente o administrador aprova, edita ou exclui publicações.
+      allow update, delete: if isAdmin();
+    }
+
+    match /comentarios_publicacoes/{comentarioId} {
+      // O feed público mostra somente comentários aprovados.
+      allow read: if isAdmin() || resource.data.aprovado == true;
+
+      // Comentários públicos entram sempre como pendentes.
+      allow create: if request.resource.data.keys().hasAll(['publicacaoId','nome','texto','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['publicacaoId','nome','texto','aprovado','status','criadoEm'])
+        && request.resource.data.publicacaoId is string
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 80
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 3
+        && request.resource.data.texto.size() <= 500
+        && request.resource.data.aprovado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp
+        && exists(/databases/$(database)/documents/publicacoes/$(request.resource.data.publicacaoId));
+
+      // Somente o administrador aprova, edita ou exclui comentários.
+      allow update, delete: if isAdmin();
+    }
+
     match /site_stats/{eventId} {
       allow create: if request.resource.data.keys().hasAll(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
         && request.resource.data.keys().hasOnly(['nome','pagina','visitante','dispositivo','origem','criadoEm'])

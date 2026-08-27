@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Comunidade do Banco de Dados de Atletas: compartilhe momentos, encontre parceiros e interaja com a rede do vôlei de praia.">
+  <title>Comunidade | Banco de Dados de Atletas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site-theme.css?v=20260827-1">
+  <link rel="stylesheet" href="comunidade.css?v=1">
+</head>
+<body class="community-page">
+  <header class="header community-header">
+    <a class="header-brand" href="index.html" aria-label="Voltar ao Banco de Dados de Atletas">
+      <div class="brand-ball" aria-hidden="true">🏐</div>
+      <div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div>
+    </a>
+    <div class="header-center" aria-hidden="true">✦ &nbsp; Comunidade dos atletas</div>
+    <nav class="header-actions" aria-label="Navegação principal">
+      <a class="community-top-cta active" href="comunidade.html">✦ COMUNIDADE</a>
+      <a class="championship-cta" href="index.html#atletas">🏐 ATLETAS</a>
+      <a class="admin-cta" href="admin.html">🔐 PAINEL ADM</a>
+    </nav>
+  </header>
+
+  <main class="community-shell">
+    <section class="community-hero" aria-labelledby="community-title">
+      <div class="community-hero-copy">
+        <span class="community-kicker">A REDE ESTÁ EM MOVIMENTO</span>
+        <h1 id="community-title">A comunidade<br><em>do vôlei de praia</em></h1>
+        <p>Compartilhe sua rotina, conte uma conquista, publique uma foto e encontre pessoas que vivem o esporte com a mesma energia.</p>
+        <div class="community-hero-pills" aria-label="Recursos da comunidade">
+          <span>📸 Publicações com foto</span>
+          <span>💬 Conversas moderadas</span>
+          <span>🤝 Novas conexões</span>
+        </div>
+      </div>
+      <div class="community-hero-art" aria-hidden="true">
+        <div class="hero-orbit orbit-one"></div>
+        <div class="hero-orbit orbit-two"></div>
+        <div class="hero-ball">🏐</div>
+        <span class="hero-art-label">JOGUE<br>JUNTO</span>
+      </div>
+    </section>
+
+    <section class="community-layout" aria-label="Feed e publicação">
+      <div class="community-main-column">
+        <section class="publish-card" aria-labelledby="publish-title">
+          <div class="section-eyebrow">FAÇA PARTE DA CONVERSA</div>
+          <div class="publish-heading">
+            <div>
+              <h2 id="publish-title">O que está acontecendo na areia?</h2>
+              <p>Seu conteúdo passa por uma análise rápida antes de aparecer no feed.</p>
+            </div>
+            <span class="publish-badge">● MODERAÇÃO ATIVA</span>
+          </div>
+          <form id="publishForm" class="publish-form">
+            <div class="publish-form-grid">
+              <label class="field-group">
+                <span>Como podemos chamar você?</span>
+                <input id="postName" name="nome" type="text" maxlength="80" placeholder="Seu nome ou nome esportivo" required>
+              </label>
+              <label class="field-group">
+                <span>Foto da publicação <small>(opcional)</small></span>
+                <input id="postPhoto" name="foto" type="file" accept="image/jpeg,image/png,image/webp">
+              </label>
+            </div>
+            <label class="field-group">
+              <span>Mensagem</span>
+              <textarea id="postText" name="texto" maxlength="1000" rows="4" placeholder="Conte uma novidade, compartilhe uma conquista ou deixe uma dica para a comunidade..." required></textarea>
+              <small class="field-hint"><span id="postCounter">0</span>/1000 caracteres</small>
+            </label>
+            <div id="photoPreview" class="photo-preview hidden" aria-live="polite"></div>
+            <div class="publish-form-footer">
+              <p class="form-note">Ao publicar, você concorda com uma convivência respeitosa. Não compartilhe dados pessoais de terceiros.</p>
+              <button class="community-gold-button" type="submit"><span>PUBLICAR PARA ANÁLISE</span><strong>→</strong></button>
+            </div>
+            <div id="publishStatus" class="inline-status" role="status" aria-live="polite"></div>
+          </form>
+        </section>
+
+        <div class="feed-toolbar">
+          <div><span class="section-eyebrow">CONVERSAS RECENTES</span><h2>Feed da comunidade</h2></div>
+          <button id="refreshFeed" class="refresh-button" type="button">↻ ATUALIZAR</button>
+        </div>
+        <div id="feedStatus" class="feed-status" role="status" aria-live="polite">Carregando publicações...</div>
+        <section id="communityFeed" class="community-feed" aria-label="Publicações aprovadas"></section>
+      </div>
+
+      <aside class="community-sidebar" aria-label="Informações da comunidade">
+        <section class="community-info-card">
+          <span class="info-card-mark">✦</span>
+          <span class="section-eyebrow">COMO FUNCIONA</span>
+          <h2>Um espaço para quem joga junto</h2>
+          <p>Toda publicação e todo comentário passam por moderação antes de aparecerem publicamente. Assim, o feed permanece leve, respeitoso e focado no esporte.</p>
+          <div class="info-steps">
+            <div><b>01</b><span>Você compartilha</span></div>
+            <div><b>02</b><span>A comunidade conversa</span></div>
+            <div><b>03</b><span>O esporte se fortalece</span></div>
+          </div>
+        </section>
+        <section class="community-rules-card">
+          <span class="section-eyebrow">BOA CONVIVÊNCIA</span>
+          <h3>Antes de publicar</h3>
+          <ul>
+            <li>Respeite atletas, equipes e organizadores.</li>
+            <li>Publique apenas fotos que você pode compartilhar.</li>
+            <li>Não divulgue telefone, endereço ou dados de terceiros.</li>
+            <li>Conteúdo ofensivo ou comercial sem relação com o esporte será recusado.</li>
+          </ul>
+          <a href="termos-de-uso.html">Ler termos de uso →</a>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <footer class="site-footer community-footer">
+    <strong>🏐 BANCO DE DADOS DE ATLETAS</strong>
+    <span>Comunidade do vôlei de praia • <a href="index.html">Voltar ao banco</a></span>
+  </footer>
+
+  <script type="module" src="comunidade.js?v=1"></script>
+</body>
+</html>
