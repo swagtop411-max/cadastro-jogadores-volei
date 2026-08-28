@@ -79,11 +79,19 @@ function friendlyError(error, operation = "generic") {
   if (messages[code]) return messages[code];
 
   if (operation === "register") {
-    return "Não foi possível criar a conta. Verifique a configuração do Firebase e tente novamente.";
+    // Nunca esconder o código real durante o diagnóstico: isso permite identificar
+    // exatamente qual bloqueio o Firebase está devolvendo no ambiente publicado.
+    const detail = [code, error?.message].filter(Boolean).join(" — ");
+    return detail
+      ? `Não foi possível criar a conta. Firebase: ${detail}`
+      : "Não foi possível criar a conta. Verifique a configuração do Firebase e tente novamente.";
   }
 
   if (operation === "login") {
-    return "Não foi possível entrar. Verifique o e-mail, a senha e a configuração do Firebase.";
+    const detail = [code, error?.message].filter(Boolean).join(" — ");
+    return detail
+      ? `Não foi possível entrar. Firebase: ${detail}`
+      : "Não foi possível entrar. Verifique o e-mail, a senha e a configuração do Firebase.";
   }
 
   return error?.message || "Não foi possível concluir agora. Tente novamente.";
