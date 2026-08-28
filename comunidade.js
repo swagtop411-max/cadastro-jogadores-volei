@@ -198,8 +198,25 @@ async function uploadPostImage(file, uid) {
   const blob = await response.blob();
   const path = `usuarios/${uid}/publicacoes/${crypto.randomUUID()}.jpg`;
   const imageRef = ref(storage, path);
-  await uploadBytes(imageRef, blob, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
-  return getDownloadURL(imageRef);
+
+  // Upload com limite de tempo para nunca deixar o botão preso indefinidamente.
+  try {
+    await Promise.race([
+      uploadBytes(imageRef, blob, {
+        contentType: "image/jpeg",
+        cacheControl: "public,max-age=31536000"
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("O envio da foto demorou demais.")), 15000)
+      )
+    ]);
+    return await getDownloadURL(imageRef);
+  } catch (error) {
+    console.warn("Falha no Storage. Usando a imagem compactada diretamente no Firestore.", error);
+    // O Firestore aceita a imagem compactada dentro do limite das regras.
+    if (compressed.length <= 700000) return compressed;
+    throw new Error("Não foi possível enviar a foto. Tente uma imagem menor.");
+  }
 }
 
 async function compressImage(file) {
@@ -279,7 +296,12 @@ publishForm?.addEventListener("submit", async (event) => {
     setStatus(publishStatus, "Publicação enviada. Ela aparecerá no feed depois da aprovação.", "success");
   } catch (error) {
     console.error("Erro ao enviar publicação:", error);
-    setStatus(publishStatus, "Não foi possível enviar agora. Confira sua conexão e tente novamente.", "error");
+    const message = error?.message || "";
+    if (message.includes("permission") || message.includes("Missing")) {
+      setStatus(publishStatus, "O Firebase recusou o envio. Verifique as permissões do Storage/Firestore.", "error");
+    } else {
+      setStatus(publishStatus, message || "Não foi possível enviar agora. Confira sua conexão e tente novamente.", "error");
+    }
   } finally {
     button.disabled = false;
   }
