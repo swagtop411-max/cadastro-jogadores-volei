@@ -17,7 +17,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBMsuR0320Nz3asVRJ5axXFvKJ5Ftz9COQ",
+  apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
   projectId: "jogadores-de-volei",
   storageBucket: "jogadores-de-volei.firebasestorage.app",
