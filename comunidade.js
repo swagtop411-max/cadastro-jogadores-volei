@@ -1,10 +1,16 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
+  getDoc,
   getDocs,
   getFirestore,
   query,
+  setDoc,
   Timestamp,
   where,
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -18,7 +24,10 @@ const firebaseConfig = {
   appId: "1:48728914064:web:1dd7aeb705319886f74015",
 };
 
-const db = getFirestore(initializeApp(firebaseConfig));
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+const storage = getStorage(app);
 const postsRef = collection(db, "publicacoes");
 const commentsRef = collection(db, "comentarios_publicacoes");
 const $ = (id) => document.getElementById(id);
@@ -32,6 +41,9 @@ const postText = $("postText");
 const postCounter = $("postCounter");
 let currentPosts = [];
 let currentComments = [];
+let currentUser = null;
+let likesByPost = {};
+let likedPosts = new Set();
 
 function escapeHTML(value) {
   const div = document.createElement("div");
@@ -124,7 +136,7 @@ function renderFeed() {
           <div class="post-meta"><div class="post-avatar" aria-hidden="true">${initials(post.nome)}</div><div class="post-meta-copy"><span class="post-author">${escapeHTML(post.nome)}</span><span class="post-date">${escapeHTML(formatDate(post.criadoEm))} • publicação aprovada</span></div></div>
           <p class="post-text">${escapeHTML(post.texto)}</p>
           ${imageMarkup}
-          <div class="post-actions"><button class="post-action toggle-comments" type="button" aria-expanded="false">💬 ${commentsCount ? `${commentsCount} comentário${commentsCount === 1 ? "" : "s"}` : "COMENTAR"}</button><button class="post-action share-post" type="button">↗ COMPARTILHAR</button></div>
+          <div class="post-actions"><button class="post-action like-post" type="button">${likedPosts.has(post.id) ? "♥" : "♡"} CURTIR${likesByPost[post.id] ? ` ${likesByPost[post.id]}` : ""}</button><button class="post-action toggle-comments" type="button" aria-expanded="false">💬 ${commentsCount ? `${commentsCount} comentário${commentsCount === 1 ? "" : "s"}` : "COMENTAR"}</button><button class="post-action share-post" type="button">↗ COMPARTILHAR</button><button class="post-action report-post" type="button">⚑ DENUNCIAR</button></div>
         </div>
         <section class="comments-panel" aria-label="Comentários da publicação"><div class="comments-title"><span>CONVERSA DA COMUNIDADE</span><span>${commentsCount} ${commentsCount === 1 ? "comentário" : "comentários"}</span></div><div class="comments-list">${renderComments(post.id, commentsByPost)}</div><form class="comment-form" data-post-id="${escapeHTML(post.id)}"><input name="nome" type="text" maxlength="80" placeholder="Seu nome" required><input name="texto" type="text" maxlength="500" placeholder="Escreva um comentário respeitoso..." required><button class="comment-submit" type="submit">ENVIAR</button><div class="comment-status" role="status" aria-live="polite"></div></form></section>
       </article>`;
@@ -146,6 +158,13 @@ async function loadFeed() {
     currentComments = commentsSnapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((comment) => text(comment.publicacaoId) && text(comment.texto));
+    const likeSnapshots = await Promise.all(currentPosts.map((post) => getDocs(collection(db, "curtidas_publicacoes", post.id, "usuarios"))));
+    likesByPost = Object.fromEntries(currentPosts.map((post, index) => [post.id, likeSnapshots[index].size]));
+    likedPosts = new Set();
+    if (currentUser) {
+      const likedSnapshots = await Promise.all(currentPosts.map((post) => getDoc(doc(db, "curtidas_publicacoes", post.id, "usuarios", currentUser.uid))));
+      likedSnapshots.forEach((snapshot, index) => { if (snapshot.exists()) likedPosts.add(currentPosts[index].id); });
+    }
     renderFeed();
     setFeedStatus(currentPosts.length ? `${currentPosts.length} publicação${currentPosts.length === 1 ? "" : "ões"} na comunidade.` : "Nenhuma publicação aprovada no momento.");
   } catch (error) {
@@ -171,6 +190,16 @@ function loadImage(dataURL) {
     image.onerror = () => reject(new Error("A imagem selecionada é inválida."));
     image.src = dataURL;
   });
+}
+
+async function uploadPostImage(file, uid) {
+  const compressed = await compressImage(file);
+  const response = await fetch(compressed);
+  const blob = await response.blob();
+  const path = `usuarios/${uid}/publicacoes/${crypto.randomUUID()}.jpg`;
+  const imageRef = ref(storage, path);
+  await uploadBytes(imageRef, blob, { contentType: "image/jpeg", cacheControl: "public,max-age=31536000" });
+  return getDownloadURL(imageRef);
 }
 
 async function compressImage(file) {
@@ -225,12 +254,18 @@ publishForm?.addEventListener("submit", async (event) => {
     setStatus(publishStatus, "Informe seu nome e escreva uma mensagem com pelo menos 3 caracteres.", "error");
     return;
   }
+  if (!currentUser) {
+    setStatus(publishStatus, "Entre na sua conta para publicar na comunidade.", "error");
+    return;
+  }
   button.disabled = true;
   setStatus(publishStatus, "Enviando publicação para análise...");
   try {
-    const image = file ? await compressImage(file) : "";
+    const image = file ? await uploadPostImage(file, currentUser.uid) : "";
     await addDoc(postsRef, {
-      nome: name,
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email || "",
+      nome: currentUser.displayName || name,
       texto: body,
       imagem: image,
       aprovado: false,
@@ -256,6 +291,45 @@ feed?.addEventListener("click", async (event) => {
   const button = event.target.closest("button");
   const card = event.target.closest(".post-card");
   if (!button || !card) return;
+  if (button.classList.contains("like-post")) {
+    if (!currentUser) {
+      setFeedStatus("Entre na sua conta para curtir publicações.", "error");
+      return;
+    }
+    const postId = card.dataset.postId;
+    const likeRef = doc(db, "curtidas_publicacoes", postId, "usuarios", currentUser.uid);
+    try {
+      if (likedPosts.has(postId)) {
+        await deleteDoc(likeRef);
+        likedPosts.delete(postId);
+        likesByPost[postId] = Math.max(0, (likesByPost[postId] || 1) - 1);
+      } else {
+        await setDoc(likeRef, { uid: currentUser.uid, criadoEm: Timestamp.now() });
+        likedPosts.add(postId);
+        likesByPost[postId] = (likesByPost[postId] || 0) + 1;
+      }
+      renderFeed();
+    } catch (error) {
+      console.error("Erro ao alternar curtida:", error);
+      setFeedStatus("Não foi possível registrar a curtida.", "error");
+    }
+  }
+  if (button.classList.contains("report-post")) {
+    if (!currentUser) {
+      setFeedStatus("Entre na sua conta para denunciar uma publicação.", "error");
+      return;
+    }
+    const reason = window.prompt("Por que você deseja denunciar esta publicação?", "Conteúdo inadequado");
+    if (!reason?.trim()) return;
+    try {
+      await addDoc(collection(db, "denuncias"), { alvoTipo: "publicacao", alvoId: card.dataset.postId, motivo: reason.trim(), detalhes: "", reportadoPorUid: currentUser.uid, criadoEm: Timestamp.now(), status: "pendente" });
+      button.textContent = "✓ DENÚNCIA ENVIADA";
+      button.disabled = true;
+    } catch (error) {
+      console.error("Erro ao denunciar publicação:", error);
+      setFeedStatus("Não foi possível enviar a denúncia.", "error");
+    }
+  }
   if (button.classList.contains("toggle-comments")) {
     const panel = card.querySelector(".comments-panel");
     const isOpen = panel.classList.toggle("open");
@@ -289,12 +363,18 @@ feed?.addEventListener("submit", async (event) => {
     status.textContent = "Informe seu nome e um comentário válido.";
     return;
   }
+  if (!currentUser) {
+    status.textContent = "Entre na sua conta para comentar na comunidade.";
+    return;
+  }
   button.disabled = true;
   status.textContent = "Enviando para análise...";
   try {
     await addDoc(commentsRef, {
+      ownerUid: currentUser.uid,
+      ownerEmail: currentUser.email || "",
       publicacaoId: form.dataset.postId,
-      nome: name,
+      nome: currentUser.displayName || name,
       texto: body,
       aprovado: false,
       status: "pendente",
@@ -307,6 +387,15 @@ feed?.addEventListener("submit", async (event) => {
     status.textContent = "Não foi possível enviar o comentário agora.";
   } finally {
     button.disabled = false;
+  }
+});
+
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+  const accountLink = $("accountLink");
+  if (accountLink) {
+    accountLink.textContent = user ? `◉ ${user.displayName || "MINHA CONTA"}` : "◉ ENTRAR";
+    accountLink.href = "conta.html";
   }
 });
 

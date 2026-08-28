@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migrar imagens | Banco de Dados de Atletas</title>
+  <link rel="stylesheet" href="site-theme.css?v=20260827-1">
+  <style>
+    main{max-width:900px;margin:0 auto;padding:48px 20px}.card{background:#151b18;border:1px solid rgba(217,169,63,.25);border-radius:18px;padding:28px;box-shadow:0 16px 50px #0004}h1{margin:0 0 12px;color:#f2cc72}.muted{color:#aeb6ad;line-height:1.6}.row{display:flex;gap:16px;flex-wrap:wrap;margin:24px 0}.stat{flex:1;min-width:180px;padding:16px;border-radius:12px;background:#0d110f;color:#f5f0e3}.stat b{display:block;font-size:28px;color:#f2cc72}.btn{border:0;border-radius:10px;padding:13px 18px;font-weight:900;cursor:pointer;background:linear-gradient(135deg,#f2cc72,#bd8425);color:#17130c}.btn:disabled{opacity:.5;cursor:not-allowed}.status{margin-top:18px;white-space:pre-line;color:#d5d8d2}.danger{color:#f19a83}.success{color:#9ce0af}a{color:#f2cc72}
+  </style>
+</head>
+<body>
+  <main><div class="card">
+    <p><a href="admin.html">← Voltar ao painel</a></p>
+    <h1>Migração de imagens legadas</h1>
+    <p class="muted">Esta ferramenta localiza fotos e logos armazenados como data URL nas coleções públicas, envia uma cópia ao Firebase Storage e atualiza somente o campo de imagem com a URL pública. Registros sem base64 são ignorados.</p>
+    <div class="row"><div class="stat"><b id="total">—</b>registros analisados</div><div class="stat"><b id="migrated">—</b>imagens migradas</div><div class="stat"><b id="skipped">—</b>sem migração</div></div>
+    <button id="start" class="btn" type="button" disabled>Iniciar migração</button>
+    <div id="status" class="status" role="status" aria-live="polite">Verificando acesso administrativo…</div>
+  </div></main>
+  <script type="module" src="migrar-imagens.js"></script>
+</body>
+</html>
