@@ -96,8 +96,16 @@ service cloud.firestore {
     }
 
     match /atletas_pendentes/{atletaId} {
-      allow create: if request.auth != null
-        && request.resource.data.ownerUid == request.auth.uid
+      // Cadastro público: funciona mesmo quando Anonymous Auth está desativado.
+      // Quando houver sessão anônima, o vínculo ownerUid continua sendo preservado.
+      allow create: if (
+          (request.auth != null
+            && request.resource.data.ownerUid == request.auth.uid)
+          ||
+          (request.auth == null
+            && request.resource.data.ownerUid == ''
+            && request.resource.data.ownerEmail == '')
+        )
         && request.resource.data.ownerEmail is string
         && request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes','plano','planoId','valorPlano','planoStatus'])
         && request.resource.data.nome is string
