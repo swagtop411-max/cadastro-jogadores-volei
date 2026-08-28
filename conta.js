@@ -43,11 +43,12 @@ function redirectAfterLogin() {
     const target = decodeURIComponent(returnTarget);
     if (target.startsWith("/") && !target.startsWith("//")) location.href = target;
   } catch {
-    // destino inválido, permanece na página
+    // destino inválido
   }
 }
 
 function setStatus(message, type = "") {
+  if (!status) return;
   status.textContent = message;
   status.className = `account-status ${type}`.trim();
 }
@@ -61,14 +62,14 @@ function friendlyError(error, operation = "generic") {
     "auth/wrong-password": "E-mail ou senha incorretos.",
     "auth/user-not-found": "E-mail ou senha incorretos.",
     "auth/invalid-email": "Informe um e-mail válido.",
-    "auth/email-already-in-use": "Este e-mail já possui uma conta. Entre na aba "Entrar".",
+    "auth/email-already-in-use": 'Este e-mail já possui uma conta. Entre na aba "Entrar".',
     "auth/weak-password": "Use uma senha com pelo menos 6 caracteres.",
     "auth/password-does-not-meet-requirements": "A senha não atende aos requisitos de segurança do Firebase.",
     "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
     "auth/network-request-failed": "Falha de conexão. Verifique sua internet e tente novamente.",
     "auth/user-disabled": "Esta conta está desativada. Entre em contato com a administração.",
-    "auth/operation-not-allowed": "O cadastro por e-mail e senha está desativado no Firebase. Ative o provedor "E-mail/Senha" em Authentication → Sign-in method.",
-    "auth/admin-restricted-operation": "O Firebase está bloqueando o cadastro por e-mail/senha. Ative o provedor "E-mail/Senha" em Authentication → Sign-in method e publique a configuração.",
+    "auth/operation-not-allowed": 'O cadastro por e-mail e senha está desativado no Firebase. Ative o provedor "E-mail/Senha" em Authentication → Sign-in method.',
+    "auth/admin-restricted-operation": 'O Firebase está bloqueando o cadastro por e-mail/senha. Ative o provedor "E-mail/Senha" em Authentication → Sign-in method.',
     "auth/internal-error": "O Firebase encontrou um erro interno. Tente novamente em alguns instantes.",
     "auth/unauthorized-domain": "Este domínio ainda não está autorizado no Firebase Authentication. Adicione o domínio do site em Authentication → Settings → Authorized domains.",
     "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
@@ -78,7 +79,7 @@ function friendlyError(error, operation = "generic") {
   if (messages[code]) return messages[code];
 
   if (operation === "register") {
-    return "Não foi possível criar a conta. Abra o console do navegador (F12) para ver o código do Firebase.";
+    return "Não foi possível criar a conta. Verifique a configuração do Firebase e tente novamente.";
   }
 
   if (operation === "login") {
@@ -95,15 +96,17 @@ function setBusy(form, busy) {
 }
 
 function showTab(name) {
+  const isRegister = name === "register";
+
   tabs.forEach((tab) => {
     const active = tab.dataset.accountTab === name;
     tab.classList.toggle("active", active);
     tab.setAttribute("aria-selected", String(active));
   });
 
-  loginForm.classList.toggle("hidden", name !== "login");
-  registerForm.classList.toggle("hidden", name !== "register");
-
+  loginForm.classList.toggle("hidden", isRegister);
+  registerForm.classList.toggle("hidden", !isRegister);
+  logged.classList.add("hidden");
   setStatus("");
 }
 
@@ -127,7 +130,10 @@ function showSignedOut() {
 }
 
 tabs.forEach((tab) => {
-  tab.addEventListener("click", () => showTab(tab.dataset.accountTab));
+  tab.addEventListener("click", (event) => {
+    event.preventDefault();
+    showTab(tab.dataset.accountTab);
+  });
 });
 
 loginForm.addEventListener("submit", async (event) => {
@@ -197,8 +203,6 @@ registerForm.addEventListener("submit", async (event) => {
   setStatus("Criando sua conta...");
 
   try {
-    // A criação da conta é feita primeiro no Firebase Authentication.
-    // Depois o documento público do usuário é sincronizado no Firestore.
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     const user = credential.user;
 
@@ -219,11 +223,7 @@ registerForm.addEventListener("submit", async (event) => {
         atualizadoEm: serverTimestamp()
       }, { merge: true });
     } catch (profileDocError) {
-      // A conta já existe no Authentication. Não devemos informar que a criação falhou.
       console.error("Conta criada, mas falhou a sincronização do perfil no Firestore:", profileDocError);
-      setStatus("Conta criada! O perfil será sincronizado assim que o acesso ao banco for liberado.", "success");
-      showLogged(user);
-      return;
     }
 
     try {
