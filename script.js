@@ -1,4 +1,3 @@
-```javascript
 /* =========================================================
    CADASTRO DE JOGADORES DE VÔLEI
    Script principal
@@ -1394,4 +1393,3 @@ document.addEventListener(
 
   }
 );
-```

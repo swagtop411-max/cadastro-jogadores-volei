@@ -24,7 +24,17 @@ function redirectAfterLogin() {
 function setStatus(message, type = "") { status.textContent = message; status.className = `account-status ${type}`.trim(); }
 function friendlyError(error) {
   const code = error?.code || "";
-  const messages = { "auth/invalid-credential": "E-mail ou senha incorretos.", "auth/email-already-in-use": "Este e-mail já possui uma conta.", "auth/invalid-email": "Informe um e-mail válido.", "auth/weak-password": "Use uma senha com pelo menos 6 caracteres.", "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos e tente novamente." };
+  const messages = {
+    "auth/invalid-credential": "E-mail ou senha incorretos.",
+    "auth/email-already-in-use": "Este e-mail já possui uma conta. Use a aba Entrar ou recupere sua senha.",
+    "auth/invalid-email": "Informe um e-mail válido.",
+    "auth/weak-password": "Use uma senha com pelo menos 6 caracteres.",
+    "auth/too-many-requests": "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+    "auth/unauthorized-domain": "Este endereço do site ainda não está autorizado para criar contas. Atualize a página e tente novamente.",
+    "auth/operation-not-allowed": "O cadastro por e-mail está desativado no Firebase. Avise a administração.",
+    "auth/network-request-failed": "Não foi possível conectar ao Firebase. Verifique sua internet e tente novamente.",
+    "permission-denied": "A conta foi criada, mas o perfil não pôde ser salvo. Avise a administração.",
+  };
   return messages[code] || "Não foi possível concluir agora. Tente novamente.";
 }
 function setBusy(form, busy) { form.querySelectorAll("button").forEach((button) => { button.disabled = busy; }); }
@@ -69,7 +79,10 @@ registerForm.addEventListener("submit", async (event) => {
     await setDoc(doc(db, "usuarios", credential.user.uid), { uid: credential.user.uid, nome: name, email, papel: "usuario", status: "ativo", criadoEm: serverTimestamp(), atualizadoEm: serverTimestamp() }, { merge: true });
     try { await sendEmailVerification(credential.user); } catch (verificationError) { console.warn("Não foi possível enviar verificação agora:", verificationError); }
     setStatus("Conta criada. Você já pode acessar seus cadastros.", "success");
-  } catch (error) { setStatus(friendlyError(error), "error"); }
+  } catch (error) {
+    console.error("Falha no cadastro da conta:", { code: error?.code, message: error?.message });
+    setStatus(friendlyError(error), "error");
+  }
   finally { setBusy(registerForm, false); }
 });
 
