@@ -17,6 +17,8 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const $ = (id) => document.getElementById(id);
+const ADMIN_EMAILS = new Set(["swagtop411@gmail.com", "murilosantostz@hotmail.com"]);
+
 const state = { total: 0, migrated: 0, skipped: 0, running: false };
 const collections = [
   { name: "atletas", field: "foto" },
@@ -86,8 +88,16 @@ async function startMigration() {
   }
 }
 
-onAuthStateChanged(auth, (user) => {
-  const isAdmin = user?.email === "swagtop411@gmail.com";
+onAuthStateChanged(auth, async (user) => {
+  let isAdmin = false;
+  try {
+    if (user) {
+      const token = await user.getIdTokenResult(true);
+      isAdmin = token.claims?.admin === true || ADMIN_EMAILS.has(String(user.email || "").trim().toLowerCase());
+    }
+  } catch (error) {
+    console.error("Falha ao validar administrador:", error);
+  }
   $("start").disabled = !isAdmin;
   $("status").className = isAdmin ? "status" : "status danger";
   $("status").textContent = isAdmin ? "Acesso administrativo confirmado. A operação é idempotente." : "Entre com a conta administrativa para usar esta ferramenta.";
