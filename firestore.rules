@@ -196,7 +196,7 @@ service cloud.firestore {
           && resource.data.ownerUid == request.auth.uid
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'
+            'nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas'
           ]));
     }
 
