@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
@@ -13,6 +14,7 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 const DATA_TIMEOUT_MS = 20000;
 const withTimeout = (promise, ms = DATA_TIMEOUT_MS) => Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(Object.assign(new Error("O banco demorou para responder. Tente novamente em alguns segundos."), { code: "deadline-exceeded" })), ms))]);
 
@@ -317,7 +319,21 @@ async function enviarCadastro(event) {
 
     const imagem = await comprimirFoto(foto.files[0]);
 
+    // O cadastro público não pode depender da ativação do Login Anônimo.
+    // Se o projeto estiver com Anonymous Auth desativado, seguimos com um
+    // envio público controlado pelas regras do Firestore.
+    let usuario = auth.currentUser;
+    if (!usuario) {
+      try {
+        usuario = (await signInAnonymously(auth)).user;
+      } catch (authError) {
+        if (authError?.code !== "auth/admin-restricted-operation") throw authError;
+      }
+    }
+
     const dados = {
+      ownerUid: usuario?.uid || "",
+      ownerEmail: usuario?.email || "",
       nome: $("cadNome").value.trim(),
       nascimento: $("cadNascimento").value || "",
       cidade: normalizarCidade($("cadCidade").value, $("cadUF").value),
