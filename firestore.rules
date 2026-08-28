@@ -217,7 +217,7 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail is string
-        && request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasAll(['ownerUid','ownerEmail','nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
         && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm','pagamentoConfirmado'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
