@@ -70,8 +70,16 @@ service cloud.firestore {
     }
 
     match /campeonatos_pendentes/{campeonatoId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
+      // Formulário público: envia somente para fila de aprovação.
+      // O cliente nunca consegue publicar diretamente em /campeonatos.
+      allow create: if request.resource.data.keys().hasAll([
+          'nome','organizador','data','local','descricao','imagem',
+          'publicado','status','aprovacao','criadoEm'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'nome','organizador','data','local','descricao','imagem',
+          'publicado','status','aprovacao','criadoEm'
+        ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -87,11 +95,14 @@ service cloud.firestore {
         && request.resource.data.descricao is string
         && request.resource.data.descricao.size() <= 700
         && request.resource.data.imagem is string
-        && request.resource.data.imagem.size() <= 1400000
+        && request.resource.data.imagem.size() <= 900000
         && request.resource.data.publicado == false
         && request.resource.data.status == 'pendente'
         && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is string;
+        && request.resource.data.criadoEm is string
+        && request.resource.data.criadoEm.size() >= 10
+        && request.resource.data.criadoEm.size() <= 40;
+
       allow read, update, delete: if isAdmin();
     }
 
@@ -280,12 +291,16 @@ service cloud.firestore {
       // O feed público mostra somente publicações aprovadas.
       allow read: if isAdmin() || resource.data.aprovado == true;
 
-      // Visitantes podem enviar conteúdo para moderação, nunca publicar diretamente.
+      // Usuários autenticados enviam para moderação. Nunca publicam diretamente.
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail is string
-        && request.resource.data.keys().hasAll(['ownerUid','ownerEmail','nome','texto','imagem','aprovado','status','criadoEm'])
-        && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','nome','texto','imagem','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasAll([
+          'ownerUid','ownerEmail','nome','texto','imagem','aprovado','status','criadoEm'
+        ])
+        && request.resource.data.keys().hasOnly([
+          'ownerUid','ownerEmail','nome','texto','imagem','aprovado','status','criadoEm'
+        ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 80
@@ -296,16 +311,8 @@ service cloud.firestore {
         && request.resource.data.imagem.size() <= 700000
         && request.resource.data.aprovado == false
         && request.resource.data.status == 'pendente'
-        && request.resource.data.criadoEm is timestamp
-        && request.resource.data.atualizadoEm is timestamp
-        && request.resource.data.solicitanteEmail is string
-        && request.resource.data.solicitanteNome is string
-        && request.resource.data.keys().hasOnly([
-          'perfilId','perfilNome','solicitanteUid','solicitanteEmail','solicitanteNome',
-          'status','criadoEm','atualizadoEm'
-        ]);
+        && request.resource.data.criadoEm is timestamp;
 
-      // Somente o administrador aprova, edita ou exclui publicações.
       allow update, delete: if isAdmin();
     }
 
