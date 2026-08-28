@@ -73,7 +73,6 @@ service cloud.firestore {
 
     match /atletas_pendentes/{atletaId} {
       allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes','plano','planoId','valorPlano','planoStatus'])
-        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos','plano','planoId','valorPlano','planoStatus','pagamentoConfirmado'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -88,10 +87,10 @@ service cloud.firestore {
         && request.resource.data.contato.size() <= 30
         && request.resource.data.modalidades is list
         && request.resource.data.modalidades.size() >= 1
-        && request.resource.data.modalidades.size() <= 2
+        && request.resource.data.modalidades.size() <= 5
         && request.resource.data.posicoes is list
         && request.resource.data.posicoes.size() >= 1
-        && request.resource.data.posicoes.size() <= 6
+        && request.resource.data.posicoes.size() <= 10
         && request.resource.data.modalidade is string
         && request.resource.data.posicao is string
         && request.resource.data.categoria is string
