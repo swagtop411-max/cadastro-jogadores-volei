@@ -65,7 +65,7 @@ service cloud.firestore {
 
     match /campeonatos/{campeonatoId} {
       allow read: if isAdmin() || resource.data.publicado == true;
-      allow create: if isAdmin() || request.resource.data.publicado == false;
+      allow create: if isAdmin();
       allow update, delete: if isAdmin();
     }
 
@@ -89,7 +89,7 @@ service cloud.firestore {
         && request.resource.data.imagem is string
         && request.resource.data.imagem.size() <= 1400000
         && request.resource.data.publicado == false
-        && request.resource.data.status == 'ativo'
+        && request.resource.data.status == 'pendente'
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.criadoEm is string;
       allow read, update, delete: if isAdmin();
@@ -296,7 +296,14 @@ service cloud.firestore {
         && request.resource.data.imagem.size() <= 700000
         && request.resource.data.aprovado == false
         && request.resource.data.status == 'pendente'
-        && request.resource.data.criadoEm is timestamp;
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.atualizadoEm is timestamp
+        && request.resource.data.solicitanteEmail is string
+        && request.resource.data.solicitanteNome is string
+        && request.resource.data.keys().hasOnly([
+          'perfilId','perfilNome','solicitanteUid','solicitanteEmail','solicitanteNome',
+          'status','criadoEm','atualizadoEm'
+        ]);
 
       // Somente o administrador aprova, edita ou exclui publicações.
       allow update, delete: if isAdmin();
