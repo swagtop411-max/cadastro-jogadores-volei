@@ -1,275 +1,49 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email == 'swagtop411@gmail.com';
+    function isAdmin() { return request.auth != null && request.auth.token.email == 'swagtop411@gmail.com'; }
+    match /usuarios/{uid} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+      allow create: if request.auth != null && request.auth.uid == uid && request.resource.data.uid == uid && request.resource.data.papel == 'usuario';
+      allow update: if request.auth != null && request.auth.uid == uid && request.resource.data.uid == resource.data.uid && request.resource.data.papel == resource.data.papel;
+      allow delete: if isAdmin();
     }
-
-    match /atletas/{atletaId} {
+    match /atletas/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == request.auth.uid);
     }
-
-    match /atletas/{atletaId}/privado/{documento} {
-      allow read, write: if isAdmin();
-    }
-
-    match /apoiadores/{apoiadorId} {
+    match /atletas/{id}/privado/{sub} { allow read, write: if isAdmin(); }
+    match /equipes/{id} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == request.auth.uid);
     }
-
-    match /comentarios/{comentarioId} {
+    match /apoiadores/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /campeonatos/{id} { allow read: if isAdmin() || resource.data.publicado == true; allow create: if isAdmin() || request.resource.data.publicado == false; allow update, delete: if isAdmin(); }
+    match /comentarios/{id} {
       allow read: if isAdmin() || resource.data.aprovado == true;
-      allow create: if request.resource.data.keys().hasAll(['atletaId','nome','texto','aprovado','status','criadoEm'])
-        && request.resource.data.keys().hasOnly(['atletaId','nome','texto','aprovado','status','criadoEm'])
-        && request.resource.data.atletaId is string
-        && request.resource.data.nome is string
-        && request.resource.data.texto is string
-        && request.resource.data.aprovado == false
-        && request.resource.data.status == 'pendente'
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 80
-        && request.resource.data.texto.size() >= 3
-        && request.resource.data.texto.size() <= 500
-        && request.resource.data.criadoEm is timestamp
-        && exists(/databases/$(database)/documents/atletas/$(request.resource.data.atletaId));
+      allow create: if request.resource.data.atletaId is string && request.resource.data.nome is string && request.resource.data.texto is string && request.resource.data.texto.size() >= 3 && request.resource.data.texto.size() <= 500 && request.resource.data.aprovado == false && request.resource.data.status == 'pendente' && request.resource.data.criadoEm is timestamp;
       allow update, delete: if isAdmin();
     }
-
-    match /campeonatos/{campeonatoId} {
-      allow read: if isAdmin() || resource.data.publicado == true;
-      allow create: if isAdmin() || request.resource.data.publicado == false;
+    match /atletas_pendentes/{id} {
+      allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail is string && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 100 && request.resource.data.nascimento is string && request.resource.data.cidade is string && request.resource.data.cidade.size() >= 2 && request.resource.data.cidade.size() <= 80 && request.resource.data.uf is string && request.resource.data.contato is string && request.resource.data.contato.size() >= 8 && request.resource.data.contato.size() <= 30 && request.resource.data.modalidades is list && request.resource.data.modalidades.size() >= 1 && request.resource.data.modalidades.size() <= 2 && request.resource.data.posicoes is list && request.resource.data.posicoes.size() >= 1 && request.resource.data.posicoes.size() <= 6 && request.resource.data.foto is string && request.resource.data.foto.size() <= 700000 && request.resource.data.status == 'ativo' && request.resource.data.aprovacao == 'pendente' && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium'] && request.resource.data.valorPlano is number && request.resource.data.criadoEm is string;
+      allow read: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == request.auth.uid);
+    }
+    match /equipes_pendentes/{id} { allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail is string && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.status == 'ativo' && request.resource.data.aprovacao == 'pendente' && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium'] && request.resource.data.valorPlano is number && request.resource.data.criadoEm is string; allow read: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid); allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == request.auth.uid); }
+    match /apoiadores_pendentes/{id} { allow create: if request.resource.data.aprovacao == 'pendente'; allow read, update, delete: if isAdmin(); }
+    match /campeonatos_pendentes/{id} { allow create: if request.resource.data.aprovacao == 'pendente' && request.resource.data.publicado == false; allow read, update, delete: if isAdmin(); }
+    match /publicacoes/{id} { allow read: if isAdmin() || resource.data.aprovado == true; allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail is string && request.resource.data.nome is string && request.resource.data.texto is string && request.resource.data.texto.size() >= 3 && request.resource.data.texto.size() <= 1000 && request.resource.data.imagem is string && request.resource.data.aprovado == false && request.resource.data.status == 'pendente' && request.resource.data.criadoEm is timestamp; allow update, delete: if isAdmin(); }
+    match /comentarios_publicacoes/{id} { allow read: if isAdmin() || resource.data.aprovado == true; allow create: if request.auth != null && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail is string && request.resource.data.publicacaoId is string && request.resource.data.nome is string && request.resource.data.texto is string && request.resource.data.texto.size() >= 3 && request.resource.data.texto.size() <= 500 && request.resource.data.aprovado == false && request.resource.data.status == 'pendente' && request.resource.data.criadoEm is timestamp; allow update, delete: if isAdmin(); }
+    match /curtidas_perfis/{atletaId}/usuarios/{uid} { allow read: if true; allow create, delete: if request.auth != null && request.auth.uid == uid; allow update: if false; }
+    match /curtidas_publicacoes/{postId}/usuarios/{uid} { allow read: if true; allow create, delete: if request.auth != null && request.auth.uid == uid; allow update: if false; }
+    match /denuncias/{id} { allow create: if request.auth != null && request.resource.data.reportadoPorUid == request.auth.uid; allow read, update, delete: if isAdmin(); }
+    match /site_stats/{id} { allow create: if request.resource.data.nome is string && request.resource.data.pagina is string && request.resource.data.criadoEm is timestamp; allow read, update, delete: if isAdmin(); }
+    match /reivindicacoes_perfis/{id} {
+      allow create: if request.auth != null && request.resource.data.solicitanteUid == request.auth.uid && request.resource.data.perfilId is string && request.resource.data.status == 'pendente';
+      allow read: if isAdmin() || (request.auth != null && resource.data.solicitanteUid == request.auth.uid);
       allow update, delete: if isAdmin();
-    }
-
-    match /campeonatos_pendentes/{campeonatoId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 100
-        && request.resource.data.organizador is string
-        && request.resource.data.organizador.size() >= 2
-        && request.resource.data.organizador.size() <= 100
-        && request.resource.data.data is string
-        && request.resource.data.data.size() >= 8
-        && request.resource.data.data.size() <= 20
-        && request.resource.data.local is string
-        && request.resource.data.local.size() >= 2
-        && request.resource.data.local.size() <= 120
-        && request.resource.data.descricao is string
-        && request.resource.data.descricao.size() <= 700
-        && request.resource.data.imagem is string
-        && request.resource.data.imagem.size() <= 1400000
-        && request.resource.data.publicado == false
-        && request.resource.data.status == 'ativo'
-        && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is string;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /atletas_pendentes/{atletaId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes','plano','planoId','valorPlano','planoStatus'])
-        && request.resource.data.keys().hasOnly(['nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao','categoria','time','observacoes','foto','status','aprovacao','criadoEm','historicoCampeonatos','plano','planoId','valorPlano','planoStatus','pagamentoConfirmado'])
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 100
-        && request.resource.data.nascimento is string
-        && request.resource.data.cidade is string
-        && request.resource.data.cidade.size() >= 2
-        && request.resource.data.cidade.size() <= 80
-        && request.resource.data.uf is string
-        && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
-        && request.resource.data.contato is string
-        && request.resource.data.contato.size() >= 8
-        && request.resource.data.contato.size() <= 30
-        && request.resource.data.modalidades is list
-        && request.resource.data.modalidades.size() >= 1
-        && request.resource.data.modalidades.size() <= 2
-        && request.resource.data.posicoes is list
-        && request.resource.data.posicoes.size() >= 1
-        && request.resource.data.posicoes.size() <= 6
-        && request.resource.data.modalidade is string
-        && request.resource.data.posicao is string
-        && request.resource.data.categoria is string
-        && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
-        && request.resource.data.time is string
-        && request.resource.data.time.size() >= 2
-        && request.resource.data.time.size() <= 100
-        && request.resource.data.observacoes is string
-        && request.resource.data.observacoes.size() <= 500
-        && request.resource.data.foto is string
-        && request.resource.data.foto.size() <= 700000
-        && request.resource.data.status == 'ativo'
-        && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.get('historicoCampeonatos', []) is list
-        && request.resource.data.get('historicoCampeonatos', []).size() <= 30
-        && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
-        && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
-        && request.resource.data.valorPlano is number
-        && ((request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0)
-          || (request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9)
-          || (request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9)
-          || (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9)
-          || (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9))
-        && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
-        && request.resource.data.criadoEm is string
-        && request.resource.data.get('pagamentoConfirmado', false) is bool;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /apoiadores_pendentes/{pedidoId} {
-      allow create: if request.resource.data.keys().hasAll(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['empresa','responsavel','contato','cidade','link','imagem','plano','planoId','valor','status','aprovacao','criadoEm'])
-        && request.resource.data.empresa is string
-        && request.resource.data.empresa.size() >= 2
-        && request.resource.data.empresa.size() <= 100
-        && request.resource.data.responsavel is string
-        && request.resource.data.responsavel.size() >= 2
-        && request.resource.data.responsavel.size() <= 100
-        && request.resource.data.contato is string
-        && request.resource.data.contato.size() >= 5
-        && request.resource.data.contato.size() <= 120
-        && request.resource.data.cidade is string
-        && request.resource.data.cidade.size() >= 2
-        && request.resource.data.cidade.size() <= 80
-        && request.resource.data.link is string
-        && request.resource.data.link.size() <= 300
-        && (!request.resource.data.keys().hasAny(['imagem']) || (request.resource.data.imagem is string && request.resource.data.imagem.size() <= 700000))
-        && request.resource.data.plano in ['Bronze','Prata','Ouro','Master']
-        && request.resource.data.planoId in ['bronze','prata','ouro','master']
-        && request.resource.data.valor is number
-        && ((request.resource.data.plano == 'Bronze' && request.resource.data.planoId == 'bronze' && request.resource.data.valor == 50)
-          || (request.resource.data.plano == 'Prata' && request.resource.data.planoId == 'prata' && request.resource.data.valor == 100)
-          || (request.resource.data.plano == 'Ouro' && request.resource.data.planoId == 'ouro' && request.resource.data.valor == 200)
-          || (request.resource.data.plano == 'Master' && request.resource.data.planoId == 'master' && request.resource.data.valor == 350))
-        && request.resource.data.status == 'aguardando_pagamento'
-        && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is timestamp;
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /equipes/{equipeId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /equipes_pendentes/{equipeId} {
-      // Cadastro público: somente o conjunto de campos esperado pode ser enviado.
-      // Publicação, alterações e exclusões posteriores continuam exclusivas do administrador.
-      allow create: if
-        request.resource.data.keys().hasAll(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm','pagamentoConfirmado'])
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 100
-        && request.resource.data.responsavel is string
-        && request.resource.data.responsavel.size() >= 2
-        && request.resource.data.responsavel.size() <= 100
-        && request.resource.data.uf is string
-        && request.resource.data.uf in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
-        && request.resource.data.cidade is string
-        && request.resource.data.cidade.size() >= 2
-        && request.resource.data.cidade.size() <= 80
-        && request.resource.data.modalidade is string
-        && request.resource.data.modalidade.size() >= 2
-        && request.resource.data.modalidade.size() <= 40
-        && request.resource.data.categoria is string
-        && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
-        && request.resource.data.contato is string
-        && request.resource.data.contato.size() >= 5
-        && request.resource.data.contato.size() <= 120
-        && request.resource.data.get('logo', '') is string
-        && request.resource.data.get('logo', '').size() <= 450000
-        && request.resource.data.get('atletas', []) is list
-        && request.resource.data.get('atletas', []).size() <= 30
-        && request.resource.data.plano is string
-        && request.resource.data.plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
-        && request.resource.data.planoId is string
-        && request.resource.data.planoId in ['gratuito','bronze','prata','ouro','premium']
-        && request.resource.data.valorPlano is number
-        && (
-          (request.resource.data.planoId == 'gratuito' && request.resource.data.valorPlano == 0) ||
-          (request.resource.data.planoId == 'bronze' && request.resource.data.valorPlano == 9.9) ||
-          (request.resource.data.planoId == 'prata' && request.resource.data.valorPlano == 19.9) ||
-          (request.resource.data.planoId == 'ouro' && request.resource.data.valorPlano == 34.9) ||
-          (request.resource.data.planoId == 'premium' && request.resource.data.valorPlano == 49.9)
-        )
-        && request.resource.data.planoStatus is string
-        && request.resource.data.planoStatus in ['ativo','aguardando_pagamento']
-        && request.resource.data.status == 'ativo'
-        && request.resource.data.aprovacao == 'pendente'
-        && request.resource.data.criadoEm is string
-        && request.resource.data.get('pagamentoConfirmado', false) is bool;
-
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /publicacoes/{publicacaoId} {
-      // O feed público mostra somente publicações aprovadas.
-      allow read: if isAdmin() || resource.data.aprovado == true;
-
-      // Visitantes podem enviar conteúdo para moderação, nunca publicar diretamente.
-      allow create: if request.resource.data.keys().hasAll(['nome','texto','imagem','aprovado','status','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','texto','imagem','aprovado','status','criadoEm'])
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 80
-        && request.resource.data.texto is string
-        && request.resource.data.texto.size() >= 3
-        && request.resource.data.texto.size() <= 1000
-        && request.resource.data.imagem is string
-        && request.resource.data.imagem.size() <= 700000
-        && request.resource.data.aprovado == false
-        && request.resource.data.status == 'pendente'
-        && request.resource.data.criadoEm is timestamp;
-
-      // Somente o administrador aprova, edita ou exclui publicações.
-      allow update, delete: if isAdmin();
-    }
-
-    match /comentarios_publicacoes/{comentarioId} {
-      // O feed público mostra somente comentários aprovados.
-      allow read: if isAdmin() || resource.data.aprovado == true;
-
-      // Comentários públicos entram sempre como pendentes.
-      allow create: if request.resource.data.keys().hasAll(['publicacaoId','nome','texto','aprovado','status','criadoEm'])
-        && request.resource.data.keys().hasOnly(['publicacaoId','nome','texto','aprovado','status','criadoEm'])
-        && request.resource.data.publicacaoId is string
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 80
-        && request.resource.data.texto is string
-        && request.resource.data.texto.size() >= 3
-        && request.resource.data.texto.size() <= 500
-        && request.resource.data.aprovado == false
-        && request.resource.data.status == 'pendente'
-        && request.resource.data.criadoEm is timestamp
-        && exists(/databases/$(database)/documents/publicacoes/$(request.resource.data.publicacaoId));
-
-      // Somente o administrador aprova, edita ou exclui comentários.
-      allow update, delete: if isAdmin();
-    }
-
-    match /site_stats/{eventId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','pagina','visitante','dispositivo','origem','criadoEm'])
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 1
-        && request.resource.data.nome.size() <= 60
-        && request.resource.data.pagina is string
-        && request.resource.data.pagina.size() <= 200
-        && request.resource.data.visitante is string
-        && request.resource.data.visitante.size() >= 8
-        && request.resource.data.visitante.size() <= 100
-        && request.resource.data.dispositivo in ['Celular','Tablet','Computador']
-        && request.resource.data.origem is string
-        && request.resource.data.origem.size() <= 50
-        && request.resource.data.criadoEm is timestamp;
-      allow read, update, delete: if isAdmin();
     }
   }
 }

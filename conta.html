@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Acesse sua conta no Banco de Dados de Atletas.">
+  <title>Minha conta | Banco de Dados de Atletas</title>
+  <link rel="stylesheet" href="estilo.css?v=20260827-1">
+  <link rel="stylesheet" href="conta.css?v=1">
+</head>
+<body class="account-page">
+  <header class="header account-header">
+    <a class="header-brand" href="index.html" aria-label="Voltar ao Banco de Dados de Atletas">
+      <div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div>
+    </a>
+    <nav class="header-actions" aria-label="Navegação principal">
+      <a class="championship-cta" href="comunidade.html">✦ COMUNIDADE</a>
+      <a class="championship-cta" href="index.html">🏐 ATLETAS</a>
+    </nav>
+  </header>
+  <main class="account-shell">
+    <section class="account-intro">
+      <span class="account-kicker">SUA PRESENÇA NO BANCO</span>
+      <h1>Entre para cuidar do seu perfil.</h1>
+      <p>Crie uma conta para enviar cadastros, acompanhar alterações e participar da comunidade com mais segurança.</p>
+      <div class="account-promise"><span>01</span><strong>Seu conteúdo fica vinculado à sua conta</strong></div>
+      <div class="account-promise"><span>02</span><strong>Você edita apenas os seus cadastros</strong></div>
+      <div class="account-promise"><span>03</span><strong>Publicações continuam passando por moderação</strong></div>
+    </section>
+    <section class="account-card" aria-labelledby="accountTitle">
+      <div class="account-card-head"><span class="account-mark">✦</span><div><span class="account-kicker">ACESSO DE VISITANTES</span><h2 id="accountTitle">Minha conta</h2></div></div>
+      <div class="account-tabs" role="tablist" aria-label="Acesso e cadastro">
+        <button class="account-tab active" type="button" role="tab" aria-selected="true" data-account-tab="login">Entrar</button>
+        <button class="account-tab" type="button" role="tab" aria-selected="false" data-account-tab="register">Criar conta</button>
+      </div>
+      <div id="accountStatus" class="account-status" role="status" aria-live="polite"></div>
+      <form id="loginForm" class="account-form" novalidate>
+        <label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="email" required>
+        <label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required>
+        <button class="account-primary" type="submit">ENTRAR <span>→</span></button>
+        <button class="account-link" type="button" id="forgotPassword">Esqueci minha senha</button>
+      </form>
+      <form id="registerForm" class="account-form hidden" novalidate>
+        <label for="registerName">Nome ou nome esportivo</label><input id="registerName" type="text" autocomplete="name" maxlength="80" required>
+        <label for="registerEmail">E-mail</label><input id="registerEmail" type="email" autocomplete="email" required>
+        <label for="registerPassword">Senha</label><input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required>
+        <label for="registerPasswordConfirm">Confirme a senha</label><input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required>
+        <label class="account-check"><input id="acceptTerms" type="checkbox" required><span>Concordo com os <a href="termos-de-uso.html">termos de uso</a> e a <a href="politica-privacidade.html">política de privacidade</a>.</span></label>
+        <button class="account-primary" type="submit">CRIAR MINHA CONTA <span>→</span></button>
+      </form>
+      <section id="accountLogged" class="account-logged hidden" aria-live="polite"><span class="account-kicker">ACESSO CONFIRMADO</span><h3 id="loggedName">Olá!</h3><p id="loggedEmail"></p><div class="account-logged-actions"><a class="account-primary" href="index.html#atletas">VER MEUS CADASTROS <span>→</span></a><a class="account-secondary" href="comunidade.html">IR PARA A COMUNIDADE</a><button id="logoutButton" class="account-link" type="button">Sair da conta</button></div></section>
+      <p class="account-footnote">Nunca compartilhe sua senha. A administração não solicita códigos de acesso por mensagem.</p>
+    </section>
+  </main>
+  <script type="module" src="conta.js?v=1"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-import{initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,sendPasswordResetEmail,signOut}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";import{getFirestore,collection,addDoc,getDocs,updateDoc,deleteDoc,doc,setDoc,getDoc,serverTimestamp,query,orderBy}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getAuth,onAuthStateChanged,signInWithEmailAndPassword,sendPasswordResetEmail,signOut}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";import{getFirestore,collection,addDoc,getDocs,updateDoc,deleteDoc,doc,setDoc,getDoc,serverTimestamp,query,orderBy,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const firebaseConfig={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015",measurementId:"G-K033D1K41Y"};
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);const $=id=>document.getElementById(id);const campeonatosContainer=$("campeonatosContainer"),loginSection=$("loginSection"),adminSection=$("adminSection"),loginForm=$("loginForm"),loginStatus=$("loginStatus"),adminStatus=$("adminStatus"),atletaForm=$("atletaForm"),atletaId=$("atletaId"),foto=$("foto"),fotoPreview=$("fotoPreview"),historicoContainer=$("historicoContainer"),atletasAdmin=$("atletasAdmin"),apoiadorForm=$("apoiadorForm"),apoiadorStatus=$("apoiadorStatus"),apoiadoresAdmin=$("apoiadoresAdmin"),apoiadoresPendentes=$("apoiadoresPendentes"),apoiadoresPendentesStatus=$("apoiadoresPendentesStatus"),apoiadoresPendentesBadge=$("apoiadoresPendentesBadge");let atletas=[],fotoAtual="",apoiadores=[],apoiadorImagemAtual="";
 const normalizarCategoria=v=>{const s=String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");if(s.includes("inic"))return"Iniciante";if(s.includes("avan"))return"Avançado";if(s.includes("inter"))return"Intermediário";return String(v||"").trim()};const UFS=new Set(["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"]);const normalizarCidade=v=>{let s=String(v||"").trim().replace(/\s+/g," ");let m=s.match(/^([A-Z]{2})\s*[-,]\s*(.+)$/i);if(m&&UFS.has(m[1].toUpperCase())){let cidade=m[2].trim().replace(/\s*[-,]\s*[A-Z]{2}$/i,"");return m[1].toUpperCase()+" - "+cidade}m=s.match(/^(.+?)\s*[-,]\s*([A-Z]{2})$/i);if(m&&UFS.has(m[2].toUpperCase()))return m[2].toUpperCase()+" - "+m[1].trim();return s};const notasIds=["Saque","Recepcao","Levantamento","Ataque","Bloqueio","Defesa"];function status(el,msg,t="ok"){el.textContent=msg;el.className=`status ${t}`}function clear(el){el.textContent="";el.className="status"}function esc(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}function normalizeUrl(v){let x=(v||"").trim();if(x&&!/^https?:\/\//i.test(x))x="https://"+x;return x}
@@ -90,4 +90,90 @@ $("btnSair").onclick=()=>signOut(auth);$("btnAtualizarMonetizacao")?.addEventLis
 document.querySelectorAll(".admin-tab").forEach(btn=>btn.onclick=()=>{document.querySelectorAll(".admin-tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".admin-view").forEach(x=>x.classList.remove("active"));btn.classList.add("active");$(btn.dataset.tab).classList.add("active")});
 atletaForm.onsubmit=async e=>{e.preventDefault();clear(adminStatus);const nome=$("nome").value.trim(),time=$("time").value.trim();if(!nome||!time)return status(adminStatus,"Preencha nome completo e time atual.","erro");$("btnSalvar").disabled=true;try{let f=fotoAtual;if(foto.files[0])f=await compress(foto.files[0]);const data={nome,nascimento:$("nascimento").value,cidade:normalizarCidade(cidadeComUF()),modalidades:normalizarModalidades([...document.querySelectorAll('#atletaForm input[name="modalidade"]:checked')].map(x=>x.value)),modalidade:normalizarModalidades([...document.querySelectorAll('#atletaForm input[name="modalidade"]:checked')].map(x=>x.value)).join(", "),posicoes:getPosicoes(),posicao:getPosicoes().join(", "),categoria:normalizarCategoria($("categoria").value),time,status:$("status").value,historicoEquipes:getHistorico(),historicoCampeonatos:getCampeonatos(),observacoes:$("observacoes").value.trim(),foto:f,avaliacaoTecnica:getAvaliacao(),atualizadoEm:serverTimestamp()};let id=atletaId.value;if(id)await updateDoc(doc(db,"atletas",id),data);else id=(await addDoc(collection(db,"atletas"),{...data,criadoEm:serverTimestamp()})).id;await setDoc(doc(db,"atletas",id,"privado","dados"),{contato:$("contato").value.trim(),atualizadoEm:serverTimestamp()},{merge:true});status(adminStatus,atletaId.value?"Atleta atualizado com sucesso.":"Atleta cadastrado com sucesso.");resetForm();await loadAtletas()}catch(err){console.error(err);status(adminStatus,`Não foi possível salvar (${err.code||"erro"}). Verifique as regras do Firestore.` ,"erro")}finally{$("btnSalvar").disabled=false}};
 apoiadorForm.onsubmit=async e=>{e.preventDefault();clear(apoiadorStatus);const nome=$("apoiadorNome").value.trim(),link=normalizeUrl($("apoiadorLink").value),id=$("apoiadorId").value,plano=$("apoiadorPlano").value;if(!nome||!link)return status(apoiadorStatus,"Informe o nome e o link do apoiador.","erro");if(!apoiadorImagemAtual&&!$("apoiadorImagem").files[0])return status(apoiadorStatus,"Escolha a imagem ou logo do apoiador.","erro");$("btnSalvarApoiador").disabled=true;try{let imagem=apoiadorImagemAtual;if($("apoiadorImagem").files[0])imagem=await compress($("apoiadorImagem").files[0],700);const valores={Bronze:50,Prata:100,Ouro:200,Master:350};const ordemPorPlano={Master:1,Ouro:2,Prata:3,Bronze:4};const data={nome,link,imagem,plano,valor:Number(valores[plano]||200),ativo:$("apoiadorAtivo").checked,ordem:ordemPorPlano[plano]||4,atualizadoEm:serverTimestamp()};if(id)await updateDoc(doc(db,"apoiadores",id),data);else await addDoc(collection(db,"apoiadores"),{...data,criadoEm:serverTimestamp()});status(apoiadorStatus,id?"Apoiador atualizado com sucesso.":"Apoiador adicionado com sucesso.");resetApoiadorForm();await loadApoiadores()}catch(err){console.error(err);status(apoiadorStatus,`Não foi possível salvar (${err.code||"erro"}). Verifique as regras do Firestore.` ,"erro")}finally{$("btnSalvarApoiador").disabled=false}};
-$("btnAdicionarCampeonato").onclick=()=>addCampeonato();$("btnAdicionarHistorico").onclick=()=>addHistorico();onAuthStateChanged(auth,async u=>{if(u){loginSection.classList.add("hidden");adminSection.classList.remove("hidden");$("usuarioLogado").textContent=`Administrador conectado: ${u.email}`;resetForm();resetApoiadorForm();await Promise.allSettled([loadAtletas(),loadApoiadores(),loadApoiadoresPendentes(),loadNovosCadastros(),loadEquipesPendentes(),loadMonetizacao()]);if($("novosCadastrosLista")&&$("novosCadastrosLista").textContent.trim()==="Carregando...")await loadNovosCadastros()}else{loginSection.classList.remove("hidden");adminSection.classList.add("hidden")}});
+$("btnAdicionarCampeonato").onclick=()=>addCampeonato();$("btnAdicionarHistorico").onclick=()=>addHistorico();onAuthStateChanged(auth,async u=>{if(u){loginSection.classList.add("hidden");adminSection.classList.remove("hidden");$("usuarioLogado").textContent=`Administrador conectado: ${u.email}`;resetForm();resetApoiadorForm();await Promise.allSettled([loadAtletas(),loadApoiadores(),loadApoiadoresPendentes(),loadNovosCadastros(),loadEquipesPendentes(),loadMonetizacao(),loadReivindicacoes()]);if($("novosCadastrosLista")&&$("novosCadastrosLista").textContent.trim()==="Carregando...")await loadNovosCadastros()}else{loginSection.classList.remove("hidden");adminSection.classList.add("hidden")}});
+
+
+async function loadReivindicacoes() {
+  const lista = $("reivindicacoesLista");
+  const badge = $("reivindicacoesBadge");
+  if (!lista) return;
+  try {
+    const [claimsSnapshot, athletesSnapshot] = await Promise.all([
+      getDocs(query(collection(db, "reivindicacoes_perfis"), where("status", "==", "pendente"))),
+      getDocs(collection(db, "atletas")),
+    ]);
+    const athletes = athletesSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
+    const claims = claimsSnapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((claim) => athletes.some((athlete) => athlete.id === claim.perfilId && !athlete.ownerUid));
+    const unlinked = athletes.filter((athlete) => !athlete.ownerUid).sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
+    if (badge) badge.textContent = String(claims.length);
+    const claimsHtml = claims.length ? claims.map((claim) => `<article class="atleta-admin claim-card"><div class="atleta-info"><strong>${esc(claim.perfilNome || "Perfil sem nome")}</strong><span>Solicitante: ${esc(claim.solicitanteNome || "Nome não informado")}</span><small>${esc(claim.solicitanteEmail || "E-mail não informado")} · UID: ${esc(claim.solicitanteUid || "não informado")}</small></div><div class="atleta-actions"><button class="btn-primary claim-approve" data-id="${esc(claim.id)}" type="button">Vincular e aprovar</button><button class="btn-danger claim-reject" data-id="${esc(claim.id)}" type="button">Recusar</button></div></article>`).join("") : '<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
+    const unlinkedHtml = unlinked.length ? `<div class="legacy-profiles"><h3>Perfis sem login vinculado (${unlinked.length})</h3><p class="subtitulo">Selecione um perfil para preencher o ID no vínculo manual abaixo.</p>${unlinked.slice(0, 100).map((athlete) => `<div class="atleta-admin"><div class="atleta-info"><strong>${esc(athlete.nome || "Sem nome")}</strong><span>${esc(athlete.cidade || "Cidade não informada")} · ${esc(athlete.categoria || "Categoria não informada")}</span><small>ID: ${esc(athlete.id)}</small></div><div class="atleta-actions"><button class="btn-secondary choose-profile" data-profile-id="${esc(athlete.id)}" type="button">Usar este ID</button></div></div>`).join("")}</div>` : '<p class="subtitulo">Não há perfis legados sem vínculo.</p>';
+    lista.innerHTML = `<div class="pending-claims"><h3>Solicitações aguardando análise (${claims.length})</h3>${claimsHtml}</div>${unlinkedHtml}`;
+    lista.querySelectorAll(".claim-approve").forEach((button) => button.onclick = () => aprovarReivindicacao(claims.find((claim) => claim.id === button.dataset.id)));
+    lista.querySelectorAll(".claim-reject").forEach((button) => button.onclick = () => recusarReivindicacao(claims.find((claim) => claim.id === button.dataset.id)));
+    lista.querySelectorAll(".choose-profile").forEach((button) => button.onclick = () => { $("vinculoPerfilId").value = button.dataset.profileId; $("vinculoUid")?.focus(); });
+    status($("reivindicacoesStatus"), `${claims.length} solicitação${claims.length === 1 ? "" : "ões"} pendente${claims.length === 1 ? "" : "s"}; ${unlinked.length} perfil${unlinked.length === 1 ? "" : "is"} sem vínculo.`);
+  } catch (error) {
+    console.error("Erro ao carregar reivindicações:", error);
+    if (badge) badge.textContent = "!";
+    status($("reivindicacoesStatus"), `Não foi possível carregar as reivindicações (${error.code || "erro"}).`, "erro");
+  }
+}
+
+async function aprovarReivindicacao(claim) {
+  if (!claim) return;
+  if (!confirm(`Vincular o perfil “${claim.perfilNome || "Atleta"}” à conta ${claim.solicitanteEmail || claim.solicitanteUid}?`)) return;
+  try {
+    const athleteRef = doc(db, "atletas", claim.perfilId);
+    const athleteSnapshot = await getDoc(athleteRef);
+    if (!athleteSnapshot.exists()) throw new Error("Perfil não encontrado.");
+    const athlete = athleteSnapshot.data();
+    if (athlete.ownerUid) throw new Error("Este perfil já possui uma conta vinculada.");
+    await updateDoc(athleteRef, { ownerUid: claim.solicitanteUid, ownerEmail: claim.solicitanteEmail || "", ownerDisplayName: claim.solicitanteNome || "", atualizadoEm: serverTimestamp() });
+    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), { status: "aprovada", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() });
+    await loadReivindicacoes();
+    status($("reivindicacoesStatus"), "Perfil vinculado e reivindicação aprovada.");
+  } catch (error) {
+    console.error("Erro ao aprovar reivindicação:", error);
+    status($("reivindicacoesStatus"), error.message || "Não foi possível vincular o perfil.", "erro");
+  }
+}
+
+async function recusarReivindicacao(claim) {
+  if (!claim || !confirm("Recusar esta solicitação de reivindicação?")) return;
+  try {
+    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), { status: "recusada", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() });
+    await loadReivindicacoes();
+  } catch (error) {
+    console.error("Erro ao recusar reivindicação:", error);
+    status($("reivindicacoesStatus"), "Não foi possível recusar a solicitação.", "erro");
+  }
+}
+
+$("btnAtualizarReivindicacoes")?.addEventListener("click", loadReivindicacoes);
+$("vinculoManualForm")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const profileId = $("vinculoPerfilId").value.trim();
+  const uid = $("vinculoUid").value.trim();
+  const output = $("vinculoManualStatus");
+  if (!profileId || !uid) return status(output, "Informe o ID do perfil e o UID da conta.", "erro");
+  const button = event.currentTarget.querySelector("button[type=submit]");
+  button.disabled = true;
+  try {
+    const athleteRef = doc(db, "atletas", profileId);
+    const athleteSnapshot = await getDoc(athleteRef);
+    if (!athleteSnapshot.exists()) throw new Error("Perfil não encontrado.");
+    const athlete = athleteSnapshot.data();
+    if (athlete.ownerUid) throw new Error("Este perfil já está vinculado a uma conta.");
+    const userSnapshot = await getDoc(doc(db, "usuarios", uid));
+    const user = userSnapshot.exists() ? userSnapshot.data() : {};
+    await updateDoc(athleteRef, { ownerUid: uid, ownerEmail: user.email || "", ownerDisplayName: user.nome || "", atualizadoEm: serverTimestamp() });
+    await setDoc(doc(db, "reivindicacoes_perfis", `manual_${profileId}_${uid}`), { perfilId: profileId, perfilNome: athlete.nome || "Atleta", solicitanteUid: uid, solicitanteEmail: user.email || "", solicitanteNome: user.nome || "", status: "aprovada", origem: "manual_admin", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() }, { merge: true });
+    event.currentTarget.reset();
+    status(output, "Perfil vinculado manualmente com sucesso.");
+    await loadReivindicacoes();
+  } catch (error) {
+    console.error("Erro no vínculo manual:", error);
+    status(output, error.message || "Não foi possível vincular o perfil.", "erro");
+  } finally { button.disabled = false; }
+});
