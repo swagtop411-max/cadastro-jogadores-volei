@@ -73,6 +73,8 @@ function friendlyError(error, operation = "generic") {
     "auth/internal-error": "O Firebase encontrou um erro interno. Tente novamente em alguns instantes.",
     "auth/unauthorized-domain": "Este domínio ainda não está autorizado no Firebase Authentication. Adicione o domínio do site em Authentication → Settings → Authorized domains.",
     "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
+    "auth/api-key-not-valid-please-pass-a-valid-api-key": "A chave da API do Firebase deste site está inválida ou foi revogada. Atualize o firebaseConfig do aplicativo Web no Firebase e publique novamente.",
+    "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
     "auth/app-not-authorized": "Esta aplicação não está autorizada pelo Firebase. Verifique o domínio e a configuração do projeto.",
     "permission-denied": "A conta foi criada, mas o perfil não pôde ser salvo. Avise a administração."
   };
