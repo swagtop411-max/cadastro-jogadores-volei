@@ -319,11 +319,21 @@ async function enviarCadastro(event) {
 
     const imagem = await comprimirFoto(foto.files[0]);
 
-    const usuario = auth.currentUser || (await signInAnonymously(auth)).user;
+    // O cadastro público não pode depender da ativação do Login Anônimo.
+    // Se o projeto estiver com Anonymous Auth desativado, seguimos com um
+    // envio público controlado pelas regras do Firestore.
+    let usuario = auth.currentUser;
+    if (!usuario) {
+      try {
+        usuario = (await signInAnonymously(auth)).user;
+      } catch (authError) {
+        if (authError?.code !== "auth/admin-restricted-operation") throw authError;
+      }
+    }
 
     const dados = {
-      ownerUid: usuario.uid,
-      ownerEmail: usuario.email || "",
+      ownerUid: usuario?.uid || "",
+      ownerEmail: usuario?.email || "",
       nome: $("cadNome").value.trim(),
       nascimento: $("cadNascimento").value || "",
       cidade: normalizarCidade($("cadCidade").value, $("cadUF").value),
