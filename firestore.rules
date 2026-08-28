@@ -26,7 +26,11 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == request.auth.uid);
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nome','nascimento','cidade','uf','modalidades','posicoes','modalidade','posicao',
+            'categoria','time','historicoEquipes','historicoCampeonatos','observacoes','foto'
+          ]));
     }
 
     match /atletas/{atletaId}/privado/{documento} {
@@ -141,10 +145,16 @@ service cloud.firestore {
         && request.resource.data.criadoEm is string
         && request.resource.data.get('pagamentoConfirmado', false) is bool;
       allow read: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
-      allow update, delete: if isAdmin()
+      allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == request.auth.uid);
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao',
+            'categoria','time','historicoCampeonatos','observacoes','foto'
+          ]));
+      allow delete: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
     match /apoiadores_pendentes/{pedidoId} {
@@ -184,7 +194,10 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == request.auth.uid);
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'
+          ]));
     }
 
     match /equipes_pendentes/{equipeId} {
@@ -238,10 +251,15 @@ service cloud.firestore {
         && request.resource.data.get('pagamentoConfirmado', false) is bool;
 
       allow read: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
-      allow update, delete: if isAdmin()
+      allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == request.auth.uid);
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas'
+          ]));
+      allow delete: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
     match /publicacoes/{publicacaoId} {
