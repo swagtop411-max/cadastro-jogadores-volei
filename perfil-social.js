@@ -168,12 +168,31 @@ function storagePathFor(file){
 }
 async function uploadWithProgress(file,path,status){
  const storageRef=ref(storage,path);
+ status.textContent="Enviando mídia... 0%";
+ status.className="upload-status";
  return new Promise((resolve,reject)=>{
   let settled=false;
-  status.textContent="Enviando mídia... 0%";
-  const task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
-  const timeout=setTimeout(()=>{if(settled)return;settled=true;try{task.cancel()}catch{}reject(new Error("O Firebase Storage não respondeu. Verifique as regras do Storage e tente novamente."))},120000);
-  task.on("state_changed",snap=>{const pct=snap.totalBytes?Math.min(99,Math.round(snap.bytesTransferred/snap.totalBytes*100)):0;status.textContent="Enviando mídia... "+pct+"%"},err=>{if(settled)return;settled=true;clearTimeout(timeout);reject(err)},()=>{if(settled)return;settled=true;clearTimeout(timeout);status.textContent="Upload concluído. 100%";resolve(storageRef)})
+  let task=null;
+  const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timeout);fn(value)};
+  const timeout=setTimeout(()=>{try{task?.cancel()}catch{};finish(reject,new Error("O Firebase Storage não respondeu. Verifique se as regras do Storage foram publicadas e tente novamente."))},120000);
+  try{
+   /*
+    * Upload direto: evita o travamento do upload resumable em navegadores
+    * quando o Firebase Storage fica aguardando uma sessão resumable.
+    * A barra continua funcional e o usuário recebe feedback claro.
+    */
+   task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
+   task.on("state_changed",
+    snap=>{
+     const total=Number(snap.totalBytes||0);
+     const sent=Number(snap.bytesTransferred||0);
+     const pct=total?Math.min(99,Math.round(sent/total*100)):0;
+     status.textContent="Enviando mídia... "+pct+"%";
+    },
+    err=>finish(reject,err),
+    ()=>{status.textContent="Upload concluído. 100%";finish(resolve,storageRef)}
+   );
+  }catch(err){finish(reject,err)}
  })
 }
 async function publishSelectedMedia(){
@@ -211,7 +230,44 @@ async function publishSelectedMedia(){
   if(uploadedRef){try{await deleteObject(uploadedRef)}catch{}}
  }finally{button.disabled=false;if(button.textContent==="PUBLICANDO...")button.textContent="PUBLICAR"}
 }
-$("cameraInput")?.addEventListener("change",e=>{mediaSelected(e.target.files?.[0]);e.target.value=""});
-$("galleryInput")?.addEventListener("change",e=>{mediaSelected(e.target.files?.[0]);e.target.value=""});
-$("changeMediaBtn")?.addEventListener("click",resetComposer);
-$("postMediaBtn")?.addEventListener("click",publishSelectedMedia);
+/*
+ * CONTROLES DE PUBLICAÇÃO - V3
+ * Usa delegação de eventos para continuar funcionando mesmo após
+ * re-renderizações/alterações do DOM e impede duplo clique no publicar.
+ */
+document.addEventListener("change",e=>{
+ const input=e.target;
+ if(input?.id==="cameraInput"||input?.id==="galleryInput"){
+   const file=input.files?.[0];
+   if(file)mediaSelected(file);
+   input.value="";
+ }
+});
+document.addEventListener("click",e=>{
+ const button=e.target.closest?.("#cameraBtn,#galleryBtn,#changeMediaBtn,#postMediaBtn");
+ if(!button)return;
+ if(button.id==="cameraBtn"){
+   e.preventDefault();
+   e.stopPropagation();
+   const input=$("cameraInput");
+   if(input){try{input.click()}catch(err){console.error("Falha ao abrir câmera:",err)}}
+   return;
+ }
+ if(button.id==="galleryBtn"){
+   e.preventDefault();
+   e.stopPropagation();
+   const input=$("galleryInput");
+   if(input){try{input.click()}catch(err){console.error("Falha ao abrir galeria:",err)}}
+   return;
+ }
+ if(button.id==="changeMediaBtn"){
+   e.preventDefault();
+   resetComposer();
+   return;
+ }
+ if(button.id==="postMediaBtn"){
+   e.preventDefault();
+   if(button.disabled)return;
+   publishSelectedMedia();
+ }
+},true);
