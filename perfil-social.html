@@ -6,7 +6,7 @@
 <link rel="stylesheet" href="style.css?v=20260830-3">
 <link rel="stylesheet" href="home-social.css?v=20260830-4">
 <style>
-.publish-card{position:relative}.publish-card h2{font-size:24px;margin:6px 0 18px}.publish-options{display:grid;gap:10px}.publish-options .pp-btn{width:100%;padding:13px 14px;font-size:10px}.publish-choice{cursor:pointer}.publish-card .pp-kicker{display:block;margin-bottom:3px}.publish-card input{display:none}
+.publish-card{position:relative}.publish-card h2{font-size:24px;margin:6px 0 18px}.publish-options{display:grid;gap:10px}.publish-options .pp-btn{width:100%;padding:13px 14px;font-size:10px}.publish-choice{cursor:pointer}.publish-card .pp-kicker{display:block;margin-bottom:3px}.publish-card input{display:none}.publish-card textarea{width:100%;min-height:95px;resize:vertical;border:1px solid rgba(217,169,63,.25);border-radius:10px;background:#111713;color:#f5f0e4;padding:11px;font:inherit;font-size:11px;outline:none}.composer-label{display:block;color:var(--gold);font-size:8px;font-weight:900;letter-spacing:1.7px;margin:12px 0 6px}.media-preview{width:100%;aspect-ratio:1/1;background:#050706;border-radius:10px;overflow:hidden;border:1px solid rgba(217,169,63,.18);display:grid;place-items:center}.media-preview img,.media-preview video{width:100%;height:100%;object-fit:contain}.composer-actions{display:flex;gap:8px;margin-top:10px}.composer-actions .pp-btn{flex:1}.upload-status{margin-top:9px;text-align:center;color:#b9c0ba;font-size:9px}.upload-status.error{color:#ff9a8b}.upload-status.ok{color:#9be3aa}
 :root{--gold:#f2cc72;--gold2:#bd8425;--bg:#070908;--card:#0b100d;--line:rgba(217,169,63,.2)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#070908!important;color:#f5f0e4!important;overflow-x:hidden!important}
@@ -73,16 +73,22 @@ body{font-family:Arial,Helvetica,sans-serif}
 <button id="closeMedia" class="pp-close" type="button">×</button>
 <span class="pp-kicker">ADICIONAR MÍDIA</span>
 <h2 id="mediaTitle">Escolha como adicionar</h2>
-<div class="publish-options">
+<div id="mediaChooser" class="publish-options">
 <button type="button" class="pp-btn primary" id="cameraBtn">📷 ABRIR CÂMERA</button>
 <button type="button" class="pp-btn" id="galleryBtn">🖼️ ABRIR GALERIA</button>
 </div>
 <input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
 <input id="galleryInput" type="file" accept="image/*,video/*" hidden>
-<div id="selectedMedia" class="pp-empty" hidden></div>
+<div id="composer" hidden>
+<div class="media-preview"><img id="mediaPreviewImage" alt="Pré-visualização" hidden><video id="mediaPreviewVideo" controls playsinline hidden></video></div>
+<label class="composer-label" for="captionInput">LEGENDA</label>
+<textarea id="captionInput" maxlength="2200" placeholder="Escreva uma legenda..."></textarea>
+<div class="composer-actions"><button type="button" class="pp-btn" id="changeMediaBtn">← TROCAR MÍDIA</button><button type="button" class="pp-btn primary" id="postMediaBtn">PUBLICAR</button></div>
+<div id="uploadStatus" class="upload-status" hidden></div>
+</div>
 </div></div>
 <div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
-<script type="module" src="perfil-social.js?v=20260830-6"></script>
+<script type="module" src="perfil-social.js?v=20260830-7"></script>
 <script type="module" src="ranking.js?v=20260830-1"></script>
 <script type="module" src="menu-perfil.js?v=20260830-1"></script>
 </body></html>
