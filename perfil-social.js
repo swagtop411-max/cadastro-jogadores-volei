@@ -1,6 +1,6 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
@@ -156,46 +156,86 @@ async function publishSelectedMedia(){
  if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
  const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";
  if(!button||!status)return;
- button.disabled=true;button.textContent="PUBLICANDO...";
- status.hidden=false;status.className="upload-status";status.textContent="Preparando envio...";
+ button.disabled=true;
+ status.hidden=false;
+ status.className="upload-status";
+ status.textContent="Preparando envio...";
+ let uploadedRef=null;
  try{
-  const safeName=(selectedFile.name||"midia").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-120);
   const mediaKind=selectedFile.type.startsWith("video/")?"video":"image";
-  const extension=safeName.includes(".")?safeName.split(".").pop():(mediaKind==="video"?"mp4":"jpg");
-  const fileName=Date.now()+"_"+crypto.randomUUID()+"."+extension;
+  const safeName=(selectedFile.name||"midia").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100);
+  const extension=safeName.includes(".")?safeName.split(".").pop().toLowerCase():(mediaKind==="video"?"mp4":"jpg");
+  const fileName=Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+extension;
   const path="usuarios/"+uid+"/publicacoes/"+fileName;
-  const storageRef=ref(storage,path);
-  status.textContent="Enviando mídia...";
-  const snap=await uploadBytes(storageRef,selectedFile,{contentType:selectedFile.type});
-  status.textContent="Finalizando publicação...";
-  const url=await getDownloadURL(snap.ref);
-  if(!url)throw new Error("O Firebase não retornou a URL da mídia.");
+  uploadedRef=ref(storage,path);
 
+  status.textContent="Enviando mídia... 0%";
+  await new Promise((resolve,reject)=>{
+   const task=uploadBytesResumable(uploadedRef,selectedFile,{contentType:selectedFile.type});
+   let finished=false;
+   const timer=setTimeout(()=>{if(!finished){try{task.cancel()}catch{};reject(new Error("O envio demorou mais de 90 segundos. Verifique a conexão com o Firebase Storage."))}},90000);
+   task.on("state_changed",
+    snap=>{const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;status.textContent="Enviando mídia... "+pct+"%";},
+    err=>{if(finished)return;finished=true;clearTimeout(timer);reject(err);},
+    ()=>{if(finished)return;finished=true;clearTimeout(timer);resolve();}
+   );
+  });
+
+  status.textContent="Obtendo endereço da mídia...";
+  const url=await getDownloadURL(uploadedRef);
+  if(!url)throw new Error("O Firebase Storage não retornou o endereço da imagem.");
+
+  status.textContent="Salvando publicação...";
   if(publishType==="story"){
    await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,mediaType:mediaKind,mediaPath:path,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
   }else if(mediaKind==="image"){
    const postRef=doc(collection(db,"publicacoes"));
-   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(selectedFile.type||"image/jpeg"),imagemTamanho:Number(selectedFile.size||0),legenda:String(caption),tipo:"imagem",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+   await setDoc(postRef,{
+    ownerUid:uid,
+    ownerEmail:String(currentUser.email||""),
+    nome:String(profile?.nome||currentUser.displayName||"Atleta"),
+    texto:String(caption),
+    imagem:url,
+    imagemUrl:url,
+    imagemPath:path,
+    imagemMime:String(selectedFile.type||"image/jpeg"),
+    imagemTamanho:Number(selectedFile.size||0),
+    legenda:String(caption),
+    tipo:"imagem",
+    aprovado:true,
+    status:"publicado",
+    criadoEm:serverTimestamp()
+   });
    const verify=await getDoc(postRef);
-   if(!verify.exists())throw new Error("A publicação não foi confirmada pelo banco de dados.");
+   if(!verify.exists())throw new Error("O banco não confirmou a criação da publicação.");
   }else{
    await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(selectedFile.type||"video/mp4"),videoTamanho:Number(selectedFile.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
   }
-  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":"Publicação realizada com sucesso!";
+
+  status.className="upload-status ok";
+  status.textContent=publishType==="story"?"Story publicado com sucesso!":"Foto publicada com sucesso!";
   await loadMedia();
-  setTimeout(()=>{closeMediaModal();resetComposer()},900);
+  setTimeout(()=>closeMediaModal(),1000);
  }catch(e){
-  console.error("Falha ao publicar mídia:",e);
+  console.error("ERRO COMPLETO AO PUBLICAR:",e);
   const code=String(e?.code||"");
   let message="Não foi possível publicar a mídia.";
-  if(code.includes("storage/unauthorized"))message="O Storage recusou o upload. Verifique as regras do Firebase Storage.";
-  else if(code.includes("storage/unauthenticated"))message="Sua sessão expirou. Entre novamente na conta.";
-  else if(code.includes("storage/quota-exceeded"))message="O armazenamento do Firebase atingiu o limite.";
-  else if(code.includes("storage/canceled"))message="O envio foi cancelado.";
-  else if(code.includes("permission-denied"))message="O Firestore recusou a publicação. Verifique as regras da coleção publicacoes.";
+  if(code.includes("storage/unauthorized"))message="Firebase Storage: envio não autorizado. As regras do Storage precisam estar publicadas.";
+  else if(code.includes("storage/unauthenticated"))message="Firebase: sua sessão não está autenticada. Entre novamente na conta.";
+  else if(code.includes("storage/canceled"))message="O envio da mídia foi cancelado.";
+  else if(code.includes("storage/retry-limit-exceeded"))message="Firebase Storage: limite de tentativas atingido. Tente novamente.";
+  else if(code.includes("storage/unknown"))message="Firebase Storage: erro desconhecido durante o upload.";
+  else if(code.includes("permission-denied"))message="Firestore: publicação recusada pelas regras da coleção publicacoes.";
   else if(e?.message)message=e.message;
-  status.className="upload-status error";status.textContent=message;alert(message);
- }finally{button.disabled=false;button.textContent="PUBLICAR";}
+  status.className="upload-status error";
+  status.textContent=message;
+  button.textContent="TENTAR NOVAMENTE";
+  alert(message);
+  if(uploadedRef&&code&&!code.includes("storage/canceled")){try{await deleteObject(uploadedRef)}catch{}}
+ }finally{
+  button.disabled=false;
+  if(button.textContent==="PUBLICANDO..."||button.textContent==="PUBLICAR")button.textContent="PUBLICAR";
+ }
 }
 $("cameraInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
 $("galleryInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
