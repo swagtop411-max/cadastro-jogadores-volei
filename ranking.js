@@ -104,14 +104,38 @@ async function carregar(){
 function iniciar(){const b=$("btnAbrirRanking"),x=$("btnFecharRanking"),d=$("rankingDrawer");if(!b||!d)return;b.addEventListener("click",abrir);x&&x.addEventListener("click",fechar);d.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fechar()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});const h=document.querySelector(".ranking-panel-head");if(h&&!$("rankingFiltros"))h.insertAdjacentHTML("afterend","<div id=\"rankingFiltros\" class=\"ranking-filtros\" aria-label=\"Filtros do ranking\"></div>")}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",iniciar,{once:true});else iniciar();
 
-/* AUTO-OPEN-RANKING-FIX-V1 */
-// Abre automaticamente o painel quando o usuário chega pelo menu Ranking.
-function abrirRankingSolicitado(){
+
+/* GLOBAL-RANKING-SAME-PAGE-V2 */
+function garantirRankingDrawer(){
+  let d=document.getElementById("rankingDrawer");
+  if(d)return d;
+  d=document.createElement("div");
+  d.id="rankingDrawer";d.className="ranking-drawer";d.setAttribute("aria-hidden","true");
+  d.innerHTML='<div class="ranking-overlay" data-fechar-ranking></div><aside class="ranking-panel" role="dialog" aria-modal="true" aria-labelledby="rankingTitulo"><div class="ranking-panel-head"><div><span>DESEMPENHO NO CIRCUITO</span><h2 id="rankingTitulo">RANKING DOS ATLETAS</h2></div><button id="btnFecharRanking" class="ranking-close" type="button" aria-label="Fechar ranking">×</button></div><p class="ranking-intro">Pontuação calculada automaticamente a partir das colocações informadas nos campeonatos do perfil de cada atleta.</p><div id="rankingLista" class="ranking-lista"><p class="ranking-loading">Carregando ranking...</p></div><details class="ranking-regras"><summary>Como os pontos são calculados?</summary><ul><li><strong>1º lugar:</strong> 100 pontos</li><li><strong>2º lugar:</strong> 80 pontos</li><li><strong>3º lugar:</strong> 65 pontos</li><li><strong>4º lugar:</strong> 55 pontos</li><li><strong>5º ao 8º:</strong> 40 pontos</li><li><strong>9º ao 16º:</strong> 25 pontos</li><li><strong>Participação / outras colocações:</strong> 10 pontos</li></ul></details></aside>';
+  document.body.appendChild(d);
+  return d;
+}
+function instalarRankingGlobal(){
+  garantirRankingDrawer();
+  document.addEventListener("click",e=>{
+    const el=e.target.closest&&e.target.closest("a[href],button");
+    if(!el)return;
+    const href=el.getAttribute("href")||"";
+    const id=el.id||"";
+    const eRanking=id==="menuRanking"||/ranking[.]html(?:[?#]|$)/i.test(href)||/index[.]html[?]abrir=ranking(?:[&#]|$)/i.test(href);
+    if(!eRanking)return;
+    if(id==="btnAbrirRanking")return;
+    e.preventDefault();e.stopPropagation();
+    if(window.closeSiteMenu)window.closeSiteMenu();
+    garantirRankingDrawer();
+    abrir();
+  },true);
+}
+instalarRankingGlobal();
+function abrirRankingSolicitadoV2(){
   const params=new URLSearchParams(window.location.search);
   if(params.get("abrir")==="ranking" || window.location.hash==="#ranking"){
-    setTimeout(()=>abrir(),0);
+    setTimeout(()=>{garantirRankingDrawer();abrir()},0);
   }
 }
-const iniciarOriginal=iniciar;
-// iniciarOriginal já registra os eventos; em seguida respeitamos o destino solicitado.
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",abrirRankingSolicitado,{once:true});else abrirRankingSolicitado();
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",abrirRankingSolicitadoV2,{once:true});else abrirRankingSolicitadoV2();
