@@ -25,16 +25,39 @@ service cloud.firestore {
 
     match /perfis/{uid} {
       allow read: if true;
+
       allow create: if request.auth != null
         && request.auth.uid == uid
         && request.resource.data.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
+          'fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId','valorPlano',
+          'planoStatus','pagamentoConfirmado','status','historicoCampeonatos'
+        ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 100;
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.cidade is string
+        && request.resource.data.cidade.size() >= 2
+        && request.resource.data.cidade.size() <= 100
+        && request.resource.data.uf is string
+        && request.resource.data.uf.size() == 2
+        && request.resource.data.categoria in ['Iniciante','Intermediário','Avançado']
+        && request.resource.data.historicoCampeonatos is list
+        && request.resource.data.historicoCampeonatos.size() <= 30;
+
       allow update: if isAdmin()
         || (request.auth != null
           && request.auth.uid == uid
-          && request.resource.data.uid == resource.data.uid);
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.keys().hasOnly([
+            'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
+            'fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId','valorPlano',
+            'planoStatus','pagamentoConfirmado','status','historicoCampeonatos'
+          ])
+          && request.resource.data.historicoCampeonatos is list
+          && request.resource.data.historicoCampeonatos.size() <= 30);
+
       allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
     }
 
