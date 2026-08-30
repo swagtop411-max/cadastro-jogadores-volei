@@ -3,7 +3,7 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
-let profile=null,currentUser=null,following=false;
+let profile=null,currentUser=null,following=false,publishType="feed";
 const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
 const img=v=>v||fallback;
 async function safeDocs(ref,...constraints){try{return await getDocs(query(ref,...constraints,orderBy("criadoEm","desc")))}catch{return await getDocs(query(ref,...constraints))}}
@@ -34,9 +34,9 @@ async function toggleFollow(){
 function renderActions(){
  const a=$("actions");if(!a)return;
  if(!currentUser)a.innerHTML='<a class="pp-btn primary" href="conta.html?tab=login">ENTRAR PARA SEGUIR</a>';
- else if(currentUser.uid===uid)a.innerHTML='<a class="pp-btn primary" href="meu-perfil.html?editar=1">✎ EDITAR MEU PERFIL</a><a class="pp-btn" href="meu-perfil.html#publicar">＋ PUBLICAR</a>';
+ else if(currentUser.uid===uid)a.innerHTML='<a class="pp-btn primary" href="meu-perfil.html?editar=1">✎ EDITAR MEU PERFIL</a><button type="button" id="publishButton" class="pp-btn">＋ PUBLICAR</button>';
  else a.innerHTML='<button id="followButton" class="pp-btn '+(following?"following":"primary")+'">'+(following?"✓ SEGUINDO":"SEGUIR")+'</button>';
- $("followButton")?.addEventListener("click",toggleFollow);
+ $("followButton")?.addEventListener("click",toggleFollow);$("publishButton")?.addEventListener("click",()=>openPublishModal());
 }
 function renderPosts(items){
  $("gallery").innerHTML=items.length?items.map(x=>x.t==="img"?'<div class="pp-grid-item"><img src="'+esc(x.url)+'" loading="lazy" alt="Publicação de '+esc(profile?.nome||"Atleta")+'"></div>':'<div class="pp-grid-item"><video src="'+esc(x.url)+'" controls preload="metadata"></video><span class="type">▶</span></div>').join(""):'<div class="pp-empty">Este atleta ainda não publicou conteúdo.</div>';
@@ -94,3 +94,38 @@ document.querySelectorAll(".pp-tab").forEach(b=>b.addEventListener("click",()=>{
 $("followersStat").onclick=()=>loadFollowers("followers");$("followingStat").onclick=()=>loadFollowers("following");$("closeModal").onclick=()=>$("listModal").classList.remove("open");$("listModal").addEventListener("click",e=>{if(e.target.id==="listModal")$("listModal").classList.remove("open")});
 load();
 onAuthStateChanged(auth,async u=>{currentUser=u;try{await getFollowState();await refreshCounts()}catch{}renderActions()});
+
+function openPublishModal(){
+ const m=$("publishModal");if(!m)return;
+ m.classList.add("open");m.setAttribute("aria-hidden","false");
+}
+function closePublishModal(){
+ const m=$("publishModal");if(!m)return;
+ m.classList.remove("open");m.setAttribute("aria-hidden","true");
+}
+function openMediaModal(type){
+ publishType=type;
+ closePublishModal();
+ const m=$("mediaModal");if(!m)return;
+ $("mediaTitle").textContent=type==="story"?"Adicionar mídia ao Story":"Adicionar mídia ao Feed";
+ m.classList.add("open");m.setAttribute("aria-hidden","false");
+}
+function closeMediaModal(){
+ const m=$("mediaModal");if(!m)return;
+ m.classList.remove("open");m.setAttribute("aria-hidden","true");
+}
+document.querySelectorAll(".publish-choice").forEach(b=>b.addEventListener("click",()=>openMediaModal(b.dataset.publishType)));
+$("closePublish")?.addEventListener("click",closePublishModal);
+$("closeMedia")?.addEventListener("click",closeMediaModal);
+$("publishModal")?.addEventListener("click",e=>{if(e.target.id==="publishModal")closePublishModal()});
+$("mediaModal")?.addEventListener("click",e=>{if(e.target.id==="mediaModal")closeMediaModal()});
+$("cameraBtn")?.addEventListener("click",()=>{ $("cameraInput")?.click(); });
+$("galleryBtn")?.addEventListener("click",()=>{ $("galleryInput")?.click(); });
+function mediaSelected(file){
+ if(!file)return;
+ const box=$("selectedMedia");if(!box)return;
+ box.hidden=false;
+ box.textContent=(publishType==="story"?"Story selecionado: ":"Mídia selecionada: ")+file.name;
+}
+$("cameraInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
+$("galleryInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
