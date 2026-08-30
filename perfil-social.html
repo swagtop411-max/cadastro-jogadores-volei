@@ -46,4 +46,9 @@
 </main>
 <div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
 <script type="module" src="perfil-social.js?v=20260830-2"></script>
-</body></html>
+</body></html><style>
+/* Mídia do perfil sem corte: a proporção original é preservada */
+.pp-grid{grid-template-columns:1fr!important}
+.pp-grid-item{aspect-ratio:auto!important;height:auto!important}
+.pp-grid-item img,.pp-grid-item video{display:block;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
+</style>
