@@ -296,34 +296,33 @@ service cloud.firestore {
     // ============================================================
     // REDE SOCIAL
     // ============================================================
-    match /publicacoes/{publicacaoId} {
+        match /publicacoes/{publicacaoId} {
       allow read: if resource.data.aprovado == true || isAdmin();
 
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.ownerEmail is string
-        && request.resource.data.nome is string
-        && request.resource.data.nome.size() >= 2
-        && request.resource.data.nome.size() <= 100
-        && request.resource.data.texto is string
-        && request.resource.data.texto.size() >= 3
-        && request.resource.data.texto.size() <= 2200
-        && request.resource.data.imagem is string
-        && request.resource.data.imagem.size() <= 700000
-        && ((request.resource.data.aprovado == false && request.resource.data.status == 'pendente')
-          || (request.resource.data.aprovado == true && request.resource.data.status == 'publicado'))
-        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasAll(['ownerUid','imagemUrl','legenda','tipo','aprovado','status','criadoEm'])
         && request.resource.data.keys().hasOnly([
           'ownerUid','ownerEmail','nome','texto','imagem',
           'imagemUrl','imagemPath','imagemMime','imagemTamanho',
-          'aprovado','status','criadoEm'
-        ]);
+          'legenda','tipo','aprovado','status','criadoEm'
+        ])
+        && request.resource.data.imagemUrl is string
+        && request.resource.data.imagemUrl.size() <= 2000
+        && request.resource.data.legenda is string
+        && request.resource.data.legenda.size() <= 2200
+        && request.resource.data.tipo == 'imagem'
+        && request.resource.data.aprovado == true
+        && request.resource.data.status == 'publicado'
+        && request.resource.data.criadoEm is timestamp;
 
-      allow update: if isAdmin();
-      allow delete: if isAdmin()
+      allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && resource.data.aprovado == false);
+          && request.resource.data.ownerUid == resource.data.ownerUid);
+
+      allow delete: if isAdmin()
+        || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
     match /comentarios_publicacoes/{comentarioId} {
@@ -380,15 +379,19 @@ service cloud.firestore {
       allow update: if false;
     }
 
-    match /stories/{storyId} {
+        match /stories/{storyId} {
       allow read: if true;
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasAll(['ownerUid','mediaUrl','legenda','tipo','criadoEm','expiraEm'])
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo','criadoEm','expiraEm'])
         && request.resource.data.mediaUrl is string
-        && request.resource.data.mediaUrl.size() <= 1000
+        && request.resource.data.mediaUrl.size() <= 2000
+        && request.resource.data.legenda is string
+        && request.resource.data.legenda.size() <= 2200
+        && request.resource.data.tipo in ['image','video']
         && request.resource.data.criadoEm is timestamp
-        && request.resource.data.expiraEm is timestamp
-        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','criadoEm','expiraEm']);
+        && request.resource.data.expiraEm is timestamp;
       allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
