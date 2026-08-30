@@ -42,6 +42,7 @@ body{font-family:Arial,Helvetica,sans-serif}
 @media(max-width:900px){.header{grid-template-columns:1fr auto!important}.header-center{display:none!important}.pp-left{display:none}.pp-right{display:none}.public-profile{padding:78px 12px 35px!important}.pp-shell{max-width:100%}}
 @media(max-width:600px){.header{height:58px!important;min-height:58px!important;padding:6px 10px!important}.header-brand .brand-ball{width:34px!important;height:34px!important;flex-basis:34px!important;font-size:17px!important}.header-brand strong{font-size:11px!important}.header-brand span{font-size:6px!important}.header-actions{gap:5px!important}.header-actions a{font-size:7px!important}.public-profile{padding-top:70px!important}.pp-cover{height:105px}.pp-head{grid-template-columns:1fr;padding:0 14px 18px;text-align:center;gap:0}.pp-avatar{width:125px;height:125px;margin:-48px auto 0}.pp-info{padding-top:12px}.pp-head h1{font-size:30px}.pp-actions{justify-content:center}.pp-stats{justify-content:center;gap:13px}.pp-grid{grid-template-columns:repeat(3,1fr);gap:3px}.pp-section{padding:9px}}
 </style>
+<link rel="stylesheet" href="ranking-global.css?v=20260830-1">
 </head>
 <body>
 <header class="header">
@@ -49,7 +50,7 @@ body{font-family:Arial,Helvetica,sans-serif}
 <div class="header-center">👤 &nbsp; PERFIL DO ATLETA</div>
 <div class="header-actions"><a href="index.html">🏠 FEED</a><a href="conta.html">◉ CONTA</a></div>
 </header>
-<aside class="pp-left"><div class="pp-left-title"><span>REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p></div><nav class="pp-nav"><a href="index.html">🏠 INÍCIO / FEED</a><a href="index.html#atletas">🏐 TODOS OS ATLETAS</a><a href="ranking.html">🏆 RANKING DOS ATLETAS</a><a href="index.html#equipes">👥 EQUIPES CADASTRADAS</a><a href="proximos-campeonatos.html">🏆 CAMPEONATOS</a><a href="comunidade.html">💬 COMUNIDADE</a><a href="conta.html">◉ MINHA CONTA</a></nav></aside>
+<aside class="pp-left"><div class="pp-left-title"><span>REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p></div><nav class="pp-nav"><a href="index.html">🏠 INÍCIO / FEED</a><a href="index.html#atletas">🏐 TODOS OS ATLETAS</a><a href="index.html?abrir=ranking">🏆 RANKING DOS ATLETAS</a><a href="index.html#equipes">👥 EQUIPES CADASTRADAS</a><a href="proximos-campeonatos.html">🏆 CAMPEONATOS</a><a href="comunidade.html">💬 COMUNIDADE</a><a href="conta.html">◉ MINHA CONTA</a></nav></aside>
 <aside class="pp-right"><div class="pp-right-title"><span>QUEM ACREDITA NO ESPORTE</span><h2>APOIADORES</h2></div><div id="profileSponsors" class="profile-sponsors"><div class="ps-empty">Carregando apoiadores...</div></div></aside>
 <main class="public-profile"><div class="pp-shell">
 <a class="pp-back" href="index.html">← VOLTAR AO FEED</a>
@@ -58,4 +59,5 @@ body{font-family:Arial,Helvetica,sans-serif}
 </div></main>
 <div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
 <script type="module" src="perfil-social.js?v=20260830-6"></script>
+<script type="module" src="ranking.js?v=20260830-1"></script>
 </body></html>
