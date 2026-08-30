@@ -94,15 +94,24 @@ $("btnAdicionarCampeonato").onclick=()=>addCampeonato();$("btnAdicionarHistorico
 
 
 function renderClaimProfile(x, extra="") {
-  return '<article class="claim-profile-row" data-profile-id="'+esc(x.id||"")+'"><div><strong>'+esc(x.nome||"Sem nome")+'</strong><span>'+esc(x.location||"Local não informado")+' · '+esc(x.kind==="atleta"?"Perfil atleta":"Conta da rede")+'</span><small>UID do perfil: '+esc(x.profileUid||x.uid||"Sem UID")+'<br>E-mail: '+esc(x.email||"Sem e-mail")+'</small></div><div class="claim-profile-actions"><span class="claim-badge '+(x.claimed?"claim-ok":"claim-open")+'">'+(x.claimed?"REIVINDICADO":"NÃO REIVINDICADO")+'</span>'+extra+'</div></article>';
+  return '<article class="claim-profile-row" data-profile-id="'+esc(x.id||"")+'">'+
+    '<div><strong>'+esc(x.nome||"Sem nome")+'</strong>'+
+    '<span>'+esc(x.location||"Local não informado")+' · '+esc(x.kind==="atleta"?"Perfil atleta":"Conta da rede")+'</span>'+
+    '<small>UID do perfil: '+esc(x.profileUid||x.id||"Sem UID")+'<br>E-mail: '+esc(x.email||"Sem e-mail")+'</small></div>'+
+    '<div class="claim-profile-actions"><span class="claim-badge '+(x.claimed?"claim-ok":"claim-open")+'">'+
+    (x.claimed?"REIVINDICADO":"NÃO REIVINDICADO")+'</span>'+extra+'</div></article>';
 }
 
 function bindClaimTabs() {
-  document.querySelectorAll("[data-claim-tab]").forEach(button => {
+  const root = document.querySelector(".claim-admin-tabs");
+  if (!root) return;
+  const buttons = root.querySelectorAll("[data-claim-tab]");
+  const panes = document.querySelectorAll(".claim-admin-pane");
+  buttons.forEach(button => {
     button.onclick = () => {
       const target = button.dataset.claimTab;
-      document.querySelectorAll("[data-claim-tab]").forEach(b => b.classList.toggle("active", b === button));
-      document.querySelectorAll(".claim-admin-pane").forEach(p => { p.hidden = p.id !== target; });
+      buttons.forEach(b => b.classList.toggle("active", b === button));
+      panes.forEach(p => { p.hidden = p.id !== target; });
     };
   });
 }
@@ -111,7 +120,6 @@ async function excluirReivindicacao(profileId, claimId="") {
   if (!profileId && !claimId) return;
   if (!confirm("Excluir a reivindicação deste perfil? O vínculo com a conta também será removido, mas o cadastro do atleta continuará no sistema.")) return;
   try {
-    // Localiza o perfil pelo ID do documento e remove o vínculo.
     if (profileId) {
       const athleteRef = doc(db, "atletas", profileId);
       const athleteSnap = await getDoc(athleteRef);
@@ -124,175 +132,261 @@ async function excluirReivindicacao(profileId, claimId="") {
         });
       }
     }
-
-    // Exclui todos os registros de reivindicação desse perfil, evitando
-    // que uma solicitação antiga continue marcando o perfil como reivindicado.
     const claimsSnap = await getDocs(collection(db, "reivindicacoes_perfis"));
     const related = claimsSnap.docs.filter(d => {
-      const data=d.data()||{};
-      return (profileId && String(data.perfilId||"")===String(profileId)) || (claimId && d.id===claimId);
+      const data = d.data() || {};
+      return (profileId && String(data.perfilId||"") === String(profileId)) ||
+             (claimId && d.id === claimId);
     });
-    for (const d of related) await deleteDoc(d.ref);
-
+    for (const claimDoc of related) await deleteDoc(claimDoc.ref);
     await loadReivindicacoes();
     status($("reivindicacoesStatus"), "Reivindicação excluída e vínculo removido. O perfil voltou para 'Não reivindicados'.");
   } catch (error) {
     console.error("Erro ao excluir reivindicação:", error);
-    status($("reivindicacoesStatus"), "Não foi possível excluir a reivindicação ("+(error.code||"erro")+").","erro");
+    status($("reivindicacoesStatus"), "Não foi possível excluir a reivindicação ("+(error.code||"erro")+").", "erro");
   }
 }
 
 async function loadReivindicacoes() {
-  const lista=$("reivindicacoesLista"), badge=$("reivindicacoesBadge"); if(!lista)return;
+  const lista = $("reivindicacoesLista");
+  const badge = $("reivindicacoesBadge");
+  if (!lista) return;
+
   try {
-    const [claimsSnapshot,athletesSnapshot,profilesSnapshot,usersSnapshot]=await Promise.all([
-      getDocs(collection(db,"reivindicacoes_perfis")),
-      getDocs(collection(db,"atletas")),
-      getDocs(collection(db,"perfis")),
-      getDocs(collection(db,"usuarios"))
+    const [claimsSnapshot, athletesSnapshot, profilesSnapshot, usersSnapshot] = await Promise.all([
+      getDocs(collection(db, "reivindicacoes_perfis")),
+      getDocs(collection(db, "atletas")),
+      getDocs(collection(db, "perfis")),
+      getDocs(collection(db, "usuarios"))
     ]);
 
-    const claims=claimsSnapshot.docs.map(d=>({id:d.id,...d.data()}));
-    const athletes=athletesSnapshot.docs.map(d=>({id:d.id,...d.data()}));
-    const profiles=profilesSnapshot.docs.map(d=>({id:d.id,...d.data()}));
-    const users=usersSnapshot.docs.map(d=>({id:d.id,...d.data()}));
-    const userByUid=new Map(users.map(u=>[String(u.id),u]));
+    const claims = claimsSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    const athletes = athletesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    const profiles = profilesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    const users = usersSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
+    const userByUid = new Map(users.map(u => [String(u.id), u]));
 
-    // Uma reivindicação aprovada por perfil. Se houver lixo/duplicação histórica,
-    // o perfil continua sendo exibido uma única vez.
-    const approvedClaimsByProfile=new Map();
-    claims.filter(x=>x.status==="aprovada").forEach(x=>{
-      if (x.perfilId && !approvedClaimsByProfile.has(String(x.perfilId))) {
-        approvedClaimsByProfile.set(String(x.perfilId),x);
-      }
-    });
-
-    // A lista principal tem como fonte de verdade a coleção "atletas".
-    // Contas/coleções auxiliares só entram se não corresponderem a um atleta.
-    const athleteByOwnerUid=new Map();
-    athletes.forEach(a=>{
-      if(a.ownerUid) athleteByOwnerUid.set(String(a.ownerUid),a);
-    });
-
-    const claimed=athletes.filter(a=>!!a.ownerUid || approvedClaimsByProfile.has(String(a.id)));
-    const unclaimed=athletes
-      .filter(a=>!a.ownerUid && !approvedClaimsByProfile.has(String(a.id)))
-      .sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
-
-    const all=[];
-    const seenProfileIds=new Set();
-    const seenOwnerUids=new Set();
-
-    athletes.forEach(a=>{
-      const claim=approvedClaimsByProfile.get(String(a.id));
-      const ownerUid=String(a.ownerUid||claim?.solicitanteUid||"");
-      const u=ownerUid?(userByUid.get(ownerUid)||{}):{};
-      all.push({
-        kind:"atleta",
-        id:a.id,
-        nome:a.nome||"Sem nome",
-        profileUid:a.uid||a.id,
-        uid:ownerUid||a.id,
-        email:a.ownerEmail||u.email||claim?.solicitanteEmail||"Sem e-mail",
-        claimed:!!a.ownerUid || !!claim,
-        location:[a.cidade,a.uf].filter(Boolean).join(" · "),
-        claim
+    const approvedByProfile = new Map();
+    claims
+      .filter(c => c.status === "aprovada" && c.perfilId)
+      .sort((a,b) => String(a.id).localeCompare(String(b.id)))
+      .forEach(c => {
+        const key = String(c.perfilId);
+        if (!approvedByProfile.has(key)) approvedByProfile.set(key, c);
       });
-      seenProfileIds.add(String(a.id));
-      if(ownerUid) seenOwnerUids.add(ownerUid);
+
+    // A coleção atletas é a fonte canônica. Cada atleta entra exatamente uma vez.
+    const athleteRows = [];
+    const athleteIds = new Set();
+    const athleteUids = new Set();
+    const athleteEmails = new Set();
+
+    athletes.forEach(a => {
+      const id = String(a.id);
+      if (athleteIds.has(id)) return;
+
+      const approvedClaim = approvedByProfile.get(id);
+      const ownerUid = String(a.ownerUid || approvedClaim?.solicitanteUid || "");
+      const ownerUser = ownerUid ? (userByUid.get(ownerUid) || {}) : {};
+      const email = String(a.ownerEmail || ownerUser.email || approvedClaim?.solicitanteEmail || "");
+
+      const row = {
+        kind: "atleta",
+        id: a.id,
+        nome: a.nome || "Sem nome",
+        profileUid: a.uid || a.id,
+        uid: ownerUid || a.id,
+        email: email || "Sem e-mail",
+        claimed: !!a.ownerUid || !!approvedClaim,
+        location: [a.cidade, a.uf].filter(Boolean).join(" · "),
+        claim: approvedClaim
+      };
+
+      athleteRows.push(row);
+      athleteIds.add(id);
+      if (a.uid) athleteUids.add(String(a.uid));
+      if (ownerUid) athleteUids.add(ownerUid);
+      if (email) athleteEmails.add(email.toLowerCase());
     });
 
-    // Só adiciona contas auxiliares que não representam um atleta já listado.
-    profiles.forEach(p=>{
-      const pUid=String(p.uid||p.id||"");
-      if(seenProfileIds.has(String(p.id)) || (pUid && seenOwnerUids.has(pUid))) return;
-      const u=userByUid.get(pUid)||{};
+    // Estas duas listas são derivadas somente do estado real do atleta.
+    const claimed = athleteRows
+      .filter(x => x.claimed)
+      .sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+
+    const unclaimed = athleteRows
+      .filter(x => !x.claimed)
+      .sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+
+    // A aba Todos pode incluir perfis auxiliares, mas somente se não corresponderem
+    // a um atleta por ID, UID ou e-mail. Isso elimina a duplicação histórica.
+    const all = [...athleteRows];
+    const seenExtraKeys = new Set();
+
+    profiles.forEach(p => {
+      const pId = String(p.id || "");
+      const pUid = String(p.uid || p.ownerUid || "");
+      const pEmail = String(p.email || "").trim().toLowerCase();
+
+      const matchesAthlete =
+        athleteIds.has(pId) ||
+        (pUid && athleteUids.has(pUid)) ||
+        (pEmail && athleteEmails.has(pEmail));
+
+      if (matchesAthlete) return;
+
+      const extraKey = "profile:" + (pId || pUid || pEmail);
+      if (seenExtraKeys.has(extraKey)) return;
+      seenExtraKeys.add(extraKey);
+
+      const user = pUid ? (userByUid.get(pUid) || {}) : {};
       all.push({
-        kind:"conta",
-        id:p.id,
-        nome:p.nome||u.nome||"Sem nome",
-        profileUid:pUid||p.id,
-        uid:pUid||p.id,
-        email:p.email||u.email||"Sem e-mail",
-        claimed:!!pUid,
-        location:[p.cidade,p.uf].filter(Boolean).join(" · ")
+        kind: "conta",
+        id: p.id,
+        nome: p.nome || user.nome || "Sem nome",
+        profileUid: p.uid || p.id,
+        uid: pUid || p.id,
+        email: p.email || user.email || "Sem e-mail",
+        claimed: !!p.ownerUid || !!pUid,
+        location: [p.cidade, p.uf].filter(Boolean).join(" · ")
       });
-      if(pUid) seenOwnerUids.add(pUid);
     });
 
-    all.sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
-    if(badge) badge.textContent=String(claims.filter(x=>x.status==="pendente").length);
+    all.sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
 
-    const actionForClaimed = (a, base) => {
-      const profileClaims=claims.filter(x=>String(x.perfilId||"")===String(a.id));
-      const activeClaim=profileClaims.find(x=>x.status==="aprovada") || profileClaims[0];
-      return '<button type="button" class="claim-delete" data-delete-profile="'+esc(a.id)+'" data-delete-claim="'+esc(activeClaim?.id||"")+'">🗑️ EXCLUIR REIVINDICAÇÃO</button>';
+    if (badge) badge.textContent = String(claims.filter(c => c.status === "pendente").length);
+
+    const claimAction = row => {
+      if (!row.claimed || row.kind !== "atleta") return "";
+      const profileClaims = claims.filter(c => String(c.perfilId||"") === String(row.id));
+      const activeClaim = profileClaims.find(c => c.status === "aprovada") || profileClaims[0];
+      return '<button type="button" class="claim-delete" data-delete-profile="'+esc(row.id)+'" data-delete-claim="'+esc(activeClaim?.id||"")+'">🗑️ EXCLUIR REIVINDICAÇÃO</button>';
     };
 
-    $("claimTodosPerfis").innerHTML=all.length
-      ? all.map(x=>renderClaimProfile(x, x.kind==="atleta" && x.claimed ? actionForClaimed(x,x) : "")).join("")
-      : '<p class="subtitulo">Nenhum perfil encontrado.</p>';
+    const todos = $("claimTodosPerfis");
+    const reivindicados = $("claimReivindicados");
+    const naoReivindicados = $("claimNaoReivindicados");
 
-    $("claimReivindicados").innerHTML=claimed.length
-      ? claimed.map(a=>{
-          const base=all.find(x=>x.id===a.id)||{
-            nome:a.nome,profileUid:a.uid||a.id,uid:a.ownerUid||a.id,
-            email:a.ownerEmail||"Sem e-mail",claimed:true,kind:"atleta",
-            location:[a.cidade,a.uf].filter(Boolean).join(" · ")
-          };
-          return renderClaimProfile(base, actionForClaimed(a,base));
-        }).join("")
-      : '<p class="subtitulo">Nenhum perfil reivindicado.</p>';
+    if (todos) {
+      todos.innerHTML = all.length
+        ? all.map(row => renderClaimProfile(row, claimAction(row))).join("")
+        : '<p class="subtitulo">Nenhum perfil encontrado.</p>';
+    }
 
-    $("claimNaoReivindicados").innerHTML=unclaimed.length
-      ? unclaimed.map(a=>renderClaimProfile({
-          kind:"atleta",id:a.id,nome:a.nome,profileUid:a.uid||a.id,
-          uid:a.id,email:a.ownerEmail||"Sem e-mail",claimed:false,
-          location:[a.cidade,a.uf].filter(Boolean).join(" · ")
-        })).join("")
-      : '<p class="subtitulo">Não existem mais perfis disponíveis para reivindicação.</p>';
+    if (reivindicados) {
+      reivindicados.innerHTML = claimed.length
+        ? claimed.map(row => renderClaimProfile(row, claimAction(row))).join("")
+        : '<p class="subtitulo">Nenhum perfil reivindicado.</p>';
+    }
 
-    // Solicitações pendentes continuam separadas abaixo das três abas.
-    const pending=claims.filter(x=>x.status==="pendente").filter(x=>athletes.some(a=>String(a.id)===String(x.perfilId)&&!a.ownerUid));
-    const rejected=claims.filter(x=>x.status==="recusada");
-    const pendingHtml=pending.length
-      ? pending.map(claim=>'<article class="atleta-admin claim-card"><div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong><span>Solicitante: '+esc(claim.solicitanteNome||"Nome não informado")+'</span><small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small></div><div class="atleta-actions"><button class="btn-primary claim-approve" data-id="'+esc(claim.id)+'" type="button">Vincular e aprovar</button><button class="btn-danger claim-reject" data-id="'+esc(claim.id)+'" type="button">Recusar</button><button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button></div></article>').join("")
+    if (naoReivindicados) {
+      naoReivindicados.innerHTML = unclaimed.length
+        ? unclaimed.map(row => renderClaimProfile(row)).join("")
+        : '<p class="subtitulo">Não existem mais perfis disponíveis para reivindicação.</p>';
+    }
+
+    // Solicitações pendentes ficam fora das três listas. Enquanto pendente,
+    // o atleta continua disponível na aba Não reivindicados.
+    const pending = claims
+      .filter(c => c.status === "pendente")
+      .filter(c => athleteIds.has(String(c.perfilId)))
+      .filter(c => {
+        const athlete = athleteRows.find(a => String(a.id) === String(c.perfilId));
+        return athlete && !athlete.claimed;
+      });
+
+    const rejected = claims.filter(c => c.status === "recusada");
+
+    const pendingHtml = pending.length
+      ? pending.map(claim =>
+          '<article class="atleta-admin claim-card">'+
+          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong>'+
+          '<span>Solicitante: '+esc(claim.solicitanteNome||"Nome não informado")+'</span>'+
+          '<small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small></div>'+
+          '<div class="atleta-actions">'+
+          '<button class="btn-primary claim-approve" data-id="'+esc(claim.id)+'" type="button">Vincular e aprovar</button>'+
+          '<button class="btn-danger claim-reject" data-id="'+esc(claim.id)+'" type="button">Recusar</button>'+
+          '<button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button>'+
+          '</div></article>'
+        ).join("")
       : '<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
 
-    const rejectedHtml=rejected.length
-      ? '<div class="claim-rejected-list"><h3>Solicitações recusadas</h3>'+rejected.map(claim=>'<article class="atleta-admin claim-card"><div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong><span>'+esc(claim.solicitanteNome||"Solicitante não informado")+' · '+esc(claim.solicitanteEmail||"E-mail não informado")+'</span></div><div class="atleta-actions"><button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button></div></article>').join("")+'</div>'
+    const rejectedHtml = rejected.length
+      ? '<div class="claim-rejected-list"><h3>Solicitações recusadas</h3>'+
+        rejected.map(claim =>
+          '<article class="atleta-admin claim-card">'+
+          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong>'+
+          '<span>'+esc(claim.solicitanteNome||"Solicitante não informado")+' · '+esc(claim.solicitanteEmail||"E-mail não informado")+'</span></div>'+
+          '<div class="atleta-actions"><button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button></div>'+
+          '</article>'
+        ).join("")+
+        '</div>'
       : "";
 
-    lista.innerHTML='<div class="pending-claims"><h3>Solicitações aguardando análise ('+pending.length+')</h3>'+pendingHtml+rejectedHtml+'</div>';
+    lista.innerHTML =
+      '<div class="pending-claims"><h3>Solicitações aguardando análise ('+pending.length+')</h3>'+
+      pendingHtml+rejectedHtml+'</div>';
 
-    document.querySelectorAll("[data-delete-profile]").forEach(b=>{
-      b.onclick=()=>excluirReivindicacao(b.dataset.deleteProfile,b.dataset.deleteClaim||"");
+    document.querySelectorAll("[data-delete-profile]").forEach(button => {
+      button.onclick = () => excluirReivindicacao(button.dataset.deleteProfile, button.dataset.deleteClaim || "");
     });
-    lista.querySelectorAll(".claim-approve").forEach(b=>b.onclick=()=>aprovarReivindicacao(pending.find(x=>x.id===b.dataset.id)));
-    lista.querySelectorAll(".claim-reject").forEach(b=>b.onclick=()=>recusarReivindicacao(pending.find(x=>x.id===b.dataset.id)));
 
-    status($("reivindicacoesStatus"),pending.length+" solicitação"+(pending.length===1?"":"ões")+" pendente"+(pending.length===1?"":"s")+"; "+unclaimed.length+" perfil"+(unclaimed.length===1?"":"is")+" ainda não reivindicado"+(unclaimed.length===1?"":"s")+".");
+    lista.querySelectorAll(".claim-approve").forEach(button => {
+      const claim = pending.find(c => c.id === button.dataset.id);
+      button.onclick = () => aprovarReivindicacao(claim);
+    });
+
+    lista.querySelectorAll(".claim-reject").forEach(button => {
+      const claim = pending.find(c => c.id === button.dataset.id);
+      button.onclick = () => recusarReivindicacao(claim);
+    });
+
+    status(
+      $("reivindicacoesStatus"),
+      pending.length+" solicitação"+(pending.length===1?"":"ões")+" pendente"+(pending.length===1?"":"s")+
+      "; "+unclaimed.length+" perfil"+(unclaimed.length===1?"":"is")+" ainda não reivindicado"+(unclaimed.length===1?"":"s")+"."
+    );
+
     bindClaimTabs();
-    const active=document.querySelector("[data-claim-tab].active")||document.querySelector('[data-claim-tab="todosPerfis"]');
-    if(active) active.click();
-  } catch(error) {
-    console.error("Erro ao carregar reivindicações:",error);
-    if(badge) badge.textContent="!";
-    status($("reivindicacoesStatus"),"Não foi possível carregar os perfis ("+(error.code||"erro")+").","erro");
+
+    const current = document.querySelector("[data-claim-tab].active");
+    const target = current?.dataset.claimTab || "todosPerfis";
+    const targetButton = document.querySelector('[data-claim-tab="'+target+'"]') ||
+                         document.querySelector('[data-claim-tab="todosPerfis"]');
+    if (targetButton) targetButton.click();
+
+  } catch (error) {
+    console.error("Erro ao carregar reivindicações:", error);
+    if (badge) badge.textContent = "!";
+    status($("reivindicacoesStatus"), "Não foi possível carregar os perfis ("+(error.code||"erro")+").", "erro");
   }
 }
 
 async function aprovarReivindicacao(claim) {
   if (!claim) return;
-  if (!confirm(`Vincular o perfil “${claim.perfilNome || "Atleta"}” à conta ${claim.solicitanteEmail || claim.solicitanteUid}?`)) return;
+  if (!confirm("Vincular o perfil “"+(claim.perfilNome||"Atleta")+"” à conta "+(claim.solicitanteEmail||claim.solicitanteUid)+"?")) return;
+
   try {
     const athleteRef = doc(db, "atletas", claim.perfilId);
     const athleteSnapshot = await getDoc(athleteRef);
     if (!athleteSnapshot.exists()) throw new Error("Perfil não encontrado.");
+
     const athlete = athleteSnapshot.data();
     if (athlete.ownerUid) throw new Error("Este perfil já possui uma conta vinculada.");
-    await updateDoc(athleteRef, { ownerUid: claim.solicitanteUid, ownerEmail: claim.solicitanteEmail || "", ownerDisplayName: claim.solicitanteNome || "", atualizadoEm: serverTimestamp() });
-    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), { status: "aprovada", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() });
+
+    await updateDoc(athleteRef, {
+      ownerUid: claim.solicitanteUid,
+      ownerEmail: claim.solicitanteEmail || "",
+      ownerDisplayName: claim.solicitanteNome || "",
+      atualizadoEm: serverTimestamp()
+    });
+
+    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), {
+      status: "aprovada",
+      analisadoPorUid: auth.currentUser.uid,
+      analisadoEm: serverTimestamp()
+    });
+
     await loadReivindicacoes();
     status($("reivindicacoesStatus"), "Perfil vinculado e reivindicação aprovada.");
   } catch (error) {
@@ -304,7 +398,11 @@ async function aprovarReivindicacao(claim) {
 async function recusarReivindicacao(claim) {
   if (!claim || !confirm("Recusar esta solicitação de reivindicação?")) return;
   try {
-    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), { status: "recusada", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() });
+    await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), {
+      status: "recusada",
+      analisadoPorUid: auth.currentUser.uid,
+      analisadoEm: serverTimestamp()
+    });
     await loadReivindicacoes();
   } catch (error) {
     console.error("Erro ao recusar reivindicação:", error);
@@ -313,29 +411,60 @@ async function recusarReivindicacao(claim) {
 }
 
 $("btnAtualizarReivindicacoes")?.addEventListener("click", loadReivindicacoes);
+
 $("vinculoManualForm")?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const profileId = $("vinculoPerfilId").value.trim();
   const uid = $("vinculoUid").value.trim();
   const output = $("vinculoManualStatus");
+
   if (!profileId || !uid) return status(output, "Informe o ID do perfil e o UID da conta.", "erro");
+
   const button = event.currentTarget.querySelector("button[type=submit]");
   button.disabled = true;
+
   try {
     const athleteRef = doc(db, "atletas", profileId);
     const athleteSnapshot = await getDoc(athleteRef);
     if (!athleteSnapshot.exists()) throw new Error("Perfil não encontrado.");
+
     const athlete = athleteSnapshot.data();
     if (athlete.ownerUid) throw new Error("Este perfil já está vinculado a uma conta.");
+
     const userSnapshot = await getDoc(doc(db, "usuarios", uid));
     const user = userSnapshot.exists() ? userSnapshot.data() : {};
-    await updateDoc(athleteRef, { ownerUid: uid, ownerEmail: user.email || "", ownerDisplayName: user.nome || "", atualizadoEm: serverTimestamp() });
-    await setDoc(doc(db, "reivindicacoes_perfis", `manual_${profileId}_${uid}`), { perfilId: profileId, perfilNome: athlete.nome || "Atleta", solicitanteUid: uid, solicitanteEmail: user.email || "", solicitanteNome: user.nome || "", status: "aprovada", origem: "manual_admin", analisadoPorUid: auth.currentUser.uid, analisadoEm: serverTimestamp() }, { merge: true });
+
+    await updateDoc(athleteRef, {
+      ownerUid: uid,
+      ownerEmail: user.email || "",
+      ownerDisplayName: user.nome || "",
+      atualizadoEm: serverTimestamp()
+    });
+
+    await setDoc(
+      doc(db, "reivindicacoes_perfis", "manual_"+profileId+"_"+uid),
+      {
+        perfilId,
+        perfilNome: athlete.nome || "Atleta",
+        solicitanteUid: uid,
+        solicitanteEmail: user.email || "",
+        solicitanteNome: user.nome || "",
+        status: "aprovada",
+        origem: "manual_admin",
+        analisadoPorUid: auth.currentUser.uid,
+        analisadoEm: serverTimestamp()
+      },
+      { merge: true }
+    );
+
     event.currentTarget.reset();
     status(output, "Perfil vinculado manualmente com sucesso.");
     await loadReivindicacoes();
   } catch (error) {
     console.error("Erro no vínculo manual:", error);
     status(output, error.message || "Não foi possível vincular o perfil.", "erro");
-  } finally { button.disabled = false; }
+  } finally {
+    button.disabled = false;
+  }
 });
+
