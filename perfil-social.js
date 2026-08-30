@@ -189,98 +189,76 @@ async function publishSelectedMedia(){
  button.disabled=true;
  status.hidden=false;
  status.className="upload-status";
- status.textContent="Preparando envio...";
  let uploadedRef=null;
  try{
   const mediaKind=selectedFile.type.startsWith("video/")?"video":"image";
-  const safeName=(selectedFile.name||"midia").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100);
-  const extension=safeName.includes(".")?safeName.split(".").pop().toLowerCase():(mediaKind==="video"?"mp4":"jpg");
-  const fileName=Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+extension;
-  const path="usuarios/"+uid+"/publicacoes/"+fileName;
-  uploadedRef=ref(storage,path);
 
-  // Para fotos, usamos uploadBytes direto e otimizamos a imagem no navegador.
-  // Isso evita ficar preso em 0% aguardando o primeiro evento de progresso.
-  let fileToUpload=selectedFile;
   if(mediaKind==="image"){
-   try{fileToUpload=await prepareImageForUpload(selectedFile)}
-   catch(err){console.warn("Otimização da imagem falhou; usando original.",err);fileToUpload=selectedFile}
-  }
-  if(fileToUpload.size>49*1024*1024)throw new Error("A mídia ficou maior que o limite permitido pelo Firebase Storage.");
+   status.textContent="Preparando foto...";
+   const dataUrl=await prepareImageDataUrl(selectedFile);
+   if(dataUrl.length>850000)throw new Error("A foto não pôde ser reduzida para um tamanho seguro para publicação. Escolha outra foto.");
 
-  status.textContent=mediaKind==="image"?"Conectando ao Firebase Storage... 0%":"Enviando vídeo... 0%";
-
-  await new Promise((resolve,reject)=>{
-   const task=uploadBytesResumable(uploadedRef,fileToUpload,{
-    contentType:fileToUpload.type||selectedFile.type||"application/octet-stream",
-    cacheControl:"public,max-age=31536000"
-   });
-   let finished=false;
-   let sawProgress=false;
-   const timeoutMs=mediaKind==="image"?45000:120000;
-   const timer=setTimeout(()=>{
-    if(finished)return;
-    try{task.cancel()}catch{}
-    reject(new Error(mediaKind==="image"
-      ?"O Firebase Storage não iniciou o envio da foto. Verifique se as regras do Storage foram publicadas e se a sessão está autenticada."
-      :"O envio do vídeo demorou mais de 120 segundos. Verifique a conexão com o Firebase Storage."
-    ));
-   },timeoutMs);
-
-   task.on("state_changed",
-    snap=>{
-     if(snap.totalBytes){
-      sawProgress=true;
-      const pct=Math.min(99,Math.round(snap.bytesTransferred/snap.totalBytes*100));
-      status.textContent=(mediaKind==="image"?"Enviando foto... ":"Enviando vídeo... ")+pct+"%";
-     }
-    },
-    err=>{
-     if(finished)return;
-     finished=true;clearTimeout(timer);reject(err);
-    },
-    ()=>{
-     if(finished)return;
-     finished=true;clearTimeout(timer);
-     status.textContent="Upload concluído. 100%";
-     resolve();
-    }
-   );
-  });
-
-  status.textContent="Obtendo endereço da mídia...";
-  const url=await getDownloadURL(uploadedRef);
-  if(!url)throw new Error("O Firebase Storage não retornou o endereço da imagem.");
-
-  status.textContent="Salvando publicação...";
-  if(publishType==="story"){
-   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,mediaType:mediaKind,mediaPath:path,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
-  }else if(mediaKind==="image"){
+   status.textContent="Salvando publicação...";
    const postRef=doc(collection(db,"publicacoes"));
    await setDoc(postRef,{
     ownerUid:uid,
     ownerEmail:String(currentUser.email||""),
     nome:String(profile?.nome||currentUser.displayName||"Atleta"),
     texto:String(caption),
-    imagem:url,
-    imagemUrl:url,
-    imagemPath:path,
-    imagemMime:String(selectedFile.type||"image/jpeg"),
+    imagem:dataUrl,
+    imagemUrl:dataUrl,
+    imagemPath:"firestore-inline/"+postRef.id,
+    imagemMime:"image/jpeg",
     imagemTamanho:Number(selectedFile.size||0),
     legenda:String(caption),
     tipo:"imagem",
+    armazenamento:"firestore-inline",
     aprovado:true,
     status:"publicado",
     criadoEm:serverTimestamp()
    });
    const verify=await getDoc(postRef);
    if(!verify.exists())throw new Error("O banco não confirmou a criação da publicação.");
+
+   status.className="upload-status ok";
+   status.textContent="Foto publicada com sucesso!";
+   await loadMedia();
+   setTimeout(()=>closeMediaModal(),1000);
+   return;
+  }
+
+  const safeName=(selectedFile.name||"video").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100);
+  const extension=safeName.includes(".")?safeName.split(".").pop().toLowerCase():"mp4";
+  const fileName=Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+extension;
+  const path="usuarios/"+uid+"/publicacoes/"+fileName;
+  uploadedRef=ref(storage,path);
+  if(selectedFile.size>49*1024*1024)throw new Error("O vídeo deve ter no máximo 49 MB.");
+
+  status.textContent="Enviando vídeo... 0%";
+  await new Promise((resolve,reject)=>{
+   const task=uploadBytesResumable(uploadedRef,selectedFile,{contentType:selectedFile.type||"video/mp4",cacheControl:"public,max-age=31536000"});
+   let finished=false;
+   const timer=setTimeout(()=>{if(finished)return;try{task.cancel()}catch{}reject(new Error("O Firebase Storage não respondeu ao envio do vídeo. Verifique as regras do Storage e sua conexão."))},120000);
+   task.on("state_changed",
+    snap=>{if(snap.totalBytes){const pct=Math.min(99,Math.round(snap.bytesTransferred/snap.totalBytes*100));status.textContent="Enviando vídeo... "+pct+"%"}},
+    err=>{if(finished)return;finished=true;clearTimeout(timer);reject(err)},
+    ()=>{if(finished)return;finished=true;clearTimeout(timer);status.textContent="Upload concluído. 100%";resolve()}
+   );
+  });
+
+  status.textContent="Obtendo endereço do vídeo...";
+  const url=await getDownloadURL(uploadedRef);
+  if(!url)throw new Error("O Firebase Storage não retornou o endereço do vídeo.");
+
+  status.textContent="Salvando publicação...";
+  if(publishType==="story"){
+   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:"video",mediaType:"video",mediaPath:path,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
   }else{
    await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(selectedFile.type||"video/mp4"),videoTamanho:Number(selectedFile.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
   }
 
   status.className="upload-status ok";
-  status.textContent=publishType==="story"?"Story publicado com sucesso!":"Foto publicada com sucesso!";
+  status.textContent=publishType==="story"?"Story publicado com sucesso!":"Vídeo publicado com sucesso!";
   await loadMedia();
   setTimeout(()=>closeMediaModal(),1000);
  }catch(e){
@@ -291,7 +269,6 @@ async function publishSelectedMedia(){
   else if(code.includes("storage/unauthenticated"))message="Firebase: sua sessão não está autenticada. Entre novamente na conta.";
   else if(code.includes("storage/canceled"))message="O envio da mídia foi cancelado.";
   else if(code.includes("storage/retry-limit-exceeded"))message="Firebase Storage: limite de tentativas atingido. Tente novamente.";
-  else if(code.includes("storage/unknown"))message="Firebase Storage: erro desconhecido durante o upload.";
   else if(code.includes("permission-denied"))message="Firestore: publicação recusada pelas regras da coleção publicacoes.";
   else if(e?.message)message=e.message;
   status.className="upload-status error";
@@ -304,6 +281,40 @@ async function publishSelectedMedia(){
   if(button.textContent==="PUBLICANDO..."||button.textContent==="PUBLICAR")button.textContent="PUBLICAR";
  }
 }
+
+async function prepareImageDataUrl(file){
+ return new Promise((resolve,reject)=>{
+  if(!file||!file.type.startsWith("image/"))return reject(new Error("Arquivo de imagem inválido."));
+  const reader=new FileReader();
+  reader.onerror=()=>reject(reader.error||new Error("Não foi possível ler a foto."));
+  reader.onload=()=>{
+   const image=new Image();
+   image.onerror=()=>reject(new Error("Não foi possível preparar a foto."));
+   image.onload=()=>{
+    const sourceW=image.naturalWidth||image.width,sourceH=image.naturalHeight||image.height;
+    const attempts=[[1200,.72],[1200,.62],[1100,.55],[1000,.48],[900,.42],[800,.36]];
+    let index=0;
+    const attempt=()=>{
+     if(index>=attempts.length)return reject(new Error("A foto é muito grande para publicação. Escolha uma imagem menor."));
+     const [max,quality]=attempts[index++],scale=Math.min(1,max/Math.max(sourceW,sourceH));
+     const canvas=document.createElement("canvas");
+     canvas.width=Math.max(1,Math.round(sourceW*scale));
+     canvas.height=Math.max(1,Math.round(sourceH*scale));
+     const ctx=canvas.getContext("2d");
+     if(!ctx)return reject(new Error("Seu navegador não conseguiu processar a foto."));
+     ctx.drawImage(image,0,0,canvas.width,canvas.height);
+     const dataUrl=canvas.toDataURL("image/jpeg",quality);
+     if(dataUrl.length<=850000)return resolve(dataUrl);
+     setTimeout(attempt,0);
+    };
+    attempt();
+   };
+   image.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+ });
+}
+
 $("cameraInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
 $("galleryInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
 $("changeMediaBtn")?.addEventListener("click",resetComposer);
