@@ -180,6 +180,7 @@ async function loadReivindicacoes() {
     const athleteIds = new Set();
     const athleteUids = new Set();
     const athleteEmails = new Set();
+    const athleteNameLocations = new Set();
 
     athletes.forEach(a => {
       const id = String(a.id);
@@ -207,6 +208,8 @@ async function loadReivindicacoes() {
       if (a.uid) athleteUids.add(String(a.uid));
       if (ownerUid) athleteUids.add(ownerUid);
       if (email) athleteEmails.add(email.toLowerCase());
+      const nameLocation = String((a.nome||"") + "|" + (a.cidade||"") + "|" + (a.uf||"")).trim().toLowerCase();
+      if (nameLocation !== "||") athleteNameLocations.add(nameLocation);
     });
 
     // Estas duas listas são derivadas somente do estado real do atleta.
@@ -228,10 +231,12 @@ async function loadReivindicacoes() {
       const pUid = String(p.uid || p.ownerUid || "");
       const pEmail = String(p.email || "").trim().toLowerCase();
 
+      const profileNameLocation = String((p.nome||"") + "|" + (p.cidade||"") + "|" + (p.uf||"")).trim().toLowerCase();
       const matchesAthlete =
         athleteIds.has(pId) ||
         (pUid && athleteUids.has(pUid)) ||
-        (pEmail && athleteEmails.has(pEmail));
+        (pEmail && athleteEmails.has(pEmail)) ||
+        (profileNameLocation !== "||" && athleteNameLocations.has(profileNameLocation));
 
       if (matchesAthlete) return;
 
