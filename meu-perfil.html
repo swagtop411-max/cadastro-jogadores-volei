@@ -66,13 +66,61 @@
  .profile-grid{grid-template-columns:1fr!important;padding:20px 18px 24px!important}
  .upload-grid,.gallery{grid-template-columns:1fr!important}
 }
+</style><style id="meu-perfil-site-shell">
+/* ===== MESMO SHELL DO SITE PRINCIPAL ===== */
+.profile-page{padding-left:225px!important;padding-right:225px!important;box-sizing:border-box!important}
+.profile-page .header{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;height:64px!important;min-height:64px!important;z-index:10000!important;box-sizing:border-box!important;background:#080d0a!important;border-bottom:1px solid rgba(217,169,63,.18)!important;padding:8px 238px!important;display:flex!important;align-items:center!important;gap:18px!important}
+.profile-page .header-brand{display:flex!important;align-items:center!important;gap:9px!important;flex:0 1 390px!important;min-width:0!important}
+.profile-page .header-brand strong{font-size:18px!important;line-height:1!important;letter-spacing:1px!important;white-space:nowrap!important}
+.profile-page .header-brand span{display:block!important;font-size:7px!important;letter-spacing:2px!important;color:#f2cc72!important;margin-top:3px!important}
+.profile-page .brand-ball{width:38px!important;height:38px!important;display:grid!important;place-items:center!important;border-radius:50%!important;background:linear-gradient(145deg,#f2cc72,#bd8425)!important;font-size:20px!important;flex:0 0 auto!important}
+.profile-page .header-center{flex:1 1 360px!important;max-width:520px!important;height:38px!important;display:flex!important;align-items:center!important;padding:0 16px!important;border:1px solid rgba(217,169,63,.2)!important;border-radius:22px!important;background:#101512!important;color:#737c74!important;font:900 8px Montserrat,sans-serif!important;letter-spacing:1px!important;white-space:nowrap!important}
+.profile-page .header-actions{display:flex!important;align-items:center!important;gap:6px!important;flex:0 0 auto!important}
+.profile-page .header-actions a{height:38px!important;padding:0 12px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:10px!important;font-size:8px!important;letter-spacing:.8px!important}
+.profile-side-left,.profile-side-right{position:fixed!important;top:64px!important;bottom:0!important;z-index:9000!important;box-sizing:border-box!important;overflow-y:auto!important}
+.profile-side-left{left:0!important;width:225px!important;padding:18px 9px!important;background:linear-gradient(180deg,#0c120f,#080c0a)!important;border-right:1px solid rgba(217,169,63,.16)!important}
+.profile-side-right{right:0!important;width:225px!important;padding:15px 9px!important;background:#080c0a!important;border-left:1px solid rgba(217,169,63,.16)!important}
+.profile-side-left .side-kicker,.profile-side-right .side-kicker{display:block;color:#f2cc72;font:900 8px Montserrat,sans-serif;letter-spacing:2px;margin:7px 4px}
+.profile-side-left h2{margin:5px 4px 6px;color:#f5f0e4;font:400 30px 'Bebas Neue',sans-serif}
+.profile-side-left p{margin:0 4px 14px;color:#7d877f;font-size:8px;line-height:1.45}
+.profile-nav-links{display:grid;gap:6px}
+.profile-nav-links a,.profile-nav-links button{min-height:45px;box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;width:100%;padding:0 11px;border:1px solid rgba(217,169,63,.13);border-radius:9px;background:#111714;color:#e5e1d7;text-decoration:none;font:900 8px Montserrat,sans-serif;cursor:pointer}
+.profile-nav-links a:hover,.profile-nav-links button:hover{border-color:rgba(217,169,63,.4);background:#151d18}
+.profile-side-register{margin-top:12px;padding:12px 10px;border:1px solid rgba(217,169,63,.2);border-radius:10px;background:linear-gradient(145deg,#111714,#18221b)}
+.profile-side-register strong{display:block;font-size:9px;color:#f5f0e4}.profile-side-register span{display:block;margin:5px 0 10px;color:#7f8981;font-size:7px;line-height:1.4}
+.profile-side-register a{display:flex;align-items:center;justify-content:center;min-height:34px;border-radius:8px;background:linear-gradient(135deg,#f2cc72,#bd8425);color:#15130e;text-decoration:none;font-size:7px;font-weight:900}
+.profile-side-right h3{margin:6px 4px 12px;color:#f5f0e4;font:400 22px 'Bebas Neue',sans-serif}
+.profile-side-right .sponsors-list{display:grid;gap:8px}
+.profile-side-right .sponsors-list>*{max-width:100%!important}
+.profile-side-right .apoio-cta{margin-top:10px}
+.profile-side-right .apoio-cta button{width:100%;min-height:40px;border:1px solid rgba(217,169,63,.35);border-radius:9px;background:linear-gradient(135deg,#f2cc72,#bd8425);color:#15130e;font-size:8px;font-weight:900}
+.profile-shell{max-width:1160px!important;margin:0 auto!important;padding:92px 18px 70px!important}
+.profile-nav{margin-bottom:14px!important}
+.profile-card,.media-card{width:100%!important;box-sizing:border-box!important}
+@media(max-width:1200px) and (min-width:901px){
+ .profile-page{padding-left:190px!important;padding-right:190px!important}
+ .profile-page .header{padding-left:202px!important;padding-right:202px!important}
+ .profile-side-left{width:190px!important}.profile-side-right{width:190px!important}
+ .profile-page .header-brand strong{font-size:15px!important}
+ .profile-page .header-center{max-width:360px!important}
+ .profile-page .header-actions a{padding:0 8px!important;font-size:7px!important}
+}
+@media(max-width:900px){
+ .profile-page{padding-left:0!important;padding-right:0!important}
+ .profile-page .header{position:sticky!important;top:0!important;height:auto!important;min-height:58px!important;padding:7px 10px!important;flex-wrap:wrap!important}
+ .profile-page .header-brand{flex:1 1 180px!important}.profile-page .header-brand strong{font-size:13px!important;white-space:normal!important}
+ .profile-page .header-center{order:3!important;flex:1 1 100%!important;max-width:none!important;height:32px!important}
+ .profile-page .header-actions{margin-left:auto!important}.profile-page .header-actions a{display:none!important}.profile-page .header-actions a:first-child{display:inline-flex!important}
+ .profile-side-left,.profile-side-right{display:none!important}
+ .profile-shell{padding:18px 10px 55px!important}
+}
 </style></head><body class="profile-page">
 <header class="header"><a class="header-brand" href="index.html" style="text-decoration:none;color:inherit"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a><div class="header-center">👤 &nbsp; MEU PERFIL</div><div class="header-actions"><a class="championship-cta" href="index.html">🏠 FEED</a><a class="championship-cta" href="conta.html">◉ CONTA</a></div></header>
-<main class="profile-shell"><div class="profile-nav"><span class="kicker">REDE ESPORTIVA • SEU ESPAÇO</span><a href="index.html">← VOLTAR AO FEED</a></div>
+<aside class="profile-side-left" aria-label="Navegação"><span class="side-kicker">REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p><nav class="profile-nav-links"><a href="index.html#feed">🏠 INÍCIO / FEED <span>›</span></a><a href="atletas.html">🏐 TODOS OS ATLETAS <span>›</span></a><a href="ranking.html">🏆 RANKING DOS ATLETAS <span>›</span></a><a href="equipes.html">👥 EQUIPES CADASTRADAS <span>›</span></a><a href="proximos-campeonatos.html">🏆 CAMPEONATOS <span>›</span></a><a href="comunidade.html">💬 COMUNIDADE <span>›</span></a><a href="conta.html">◉ MINHA CONTA <span>›</span></a></nav><div class="profile-side-register"><strong>Faça parte da rede</strong><span>Publique, siga atletas, curta e participe da comunidade.</span><a href="conta.html?tab=register">CRIAR MINHA CONTA →</a></div></aside><main class="profile-shell"><div class="profile-nav"><span class="kicker">REDE ESPORTIVA • SEU ESPAÇO</span><a href="index.html">← VOLTAR AO FEED</a></div>
 <section class="profile-card"><div class="cover-editor"><div id="coverPreview" class="cover-preview"></div><label class="btn">🖼️ TROCAR CAPA<input id="coverInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label></div><div class="profile-top"><img id="avatar" class="avatar" alt="Sua foto de perfil"><div><span class="kicker">PERFIL DO ATLETA</span><h1 id="displayName">Carregando...</h1><p id="profileSummary" class="empty">Complete seu perfil para aparecer na rede.</p><div class="actions"><label class="btn primary">📷 TROCAR FOTO<input id="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" hidden></label><button id="saveProfile" class="btn">SALVAR PERFIL</button><a id="publicProfileLink" class="btn" href="#" target="_blank" rel="noopener">👁 VER PERFIL PÚBLICO</a></div><div id="profileStatus" class="status"></div></div></div>
 <div class="profile-grid"><div class="field"><label>NOME COMPLETO / NOME ESPORTIVO *</label><input id="name" maxlength="100"></div><div class="field"><label>DATA DE NASCIMENTO</label><input id="birth" type="date"></div><div class="field"><label>ESTADO *</label><select id="uf"><option value="">Selecione</option><option>SP</option><option>MG</option><option>RJ</option><option>PR</option><option>SC</option><option>RS</option><option>GO</option><option>BA</option><option>PE</option><option>CE</option><option>DF</option><option>ES</option><option>MT</option><option>MS</option><option>PA</option><option>AM</option><option>Outros</option></select></div><div class="field"><label>CIDADE *</label><input id="city" maxlength="80"></div><div class="field"><label>MODALIDADE</label><input id="modalidade" placeholder="Vôlei de praia / quadra"></div><div class="field"><label>POSIÇÃO</label><input id="posicao" placeholder="Ponteiro, levantador..."></div><div class="field"><label>CATEGORIA</label><select id="categoria"><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div><div class="field"><label>EQUIPE / TIME</label><input id="time" maxlength="100"></div><div class="field"><label>WHATSAPP / CONTATO</label><input id="contato" maxlength="30"></div><div class="field full"><label>SOBRE VOCÊ</label><textarea id="bio" maxlength="1000" placeholder="Conte sua história no vôlei, conquistas, objetivos..."></textarea></div></div></section>
 <section class="media-card"><span class="kicker">PUBLICAR NA REDE</span><h2>Compartilhe seus momentos</h2><div class="upload-grid" id="publicar"><div class="upload-box"><h3>✍️ Legenda</h3><p>Opcional para fotos e vídeos.</p><textarea id="captionInput" maxlength="2200" placeholder="Conte o que está acontecendo..."></textarea></div><div class="upload-box"><h3>📸 Foto no feed</h3><p>Publique quantas fotos quiser.</p><input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp"></div><div class="upload-box"><h3>🎥 Vídeo no feed</h3><p>Publique vídeos sem limite de quantidade.</p><input id="videoInput" type="file" accept="video/mp4,video/webm,video/quicktime"></div><div class="upload-box"><h3>⭕ Story</h3><p>Stories aparecem na área de Stories.</p><input id="storyInput" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"></div></div><div id="mediaStatus" class="status"></div><div id="gallery" class="gallery"></div><div id="stories" class="story-list"></div></section>
-</main><script type="module" src="meu-perfil.js?v=20260830-1"></script></body></html><style>
+</main><aside class="profile-side-right" aria-label="Apoiadores"><span class="side-kicker">QUEM ACREDITA NO ESPORTE</span><h3>APOIADORES</h3><div id="apoiadoresLista" class="sponsors-list"><div class="empty">Carregando apoiadores...</div></div><div class="apoio-cta"><button type="button" data-abrir-apoio>🤝 SEJA UM APOIADOR</button></div></aside><script type="module" src="meu-perfil.js?v=20260830-2"></script><script type="module" src="apoio.js?v=20260830-2"></script></body></html><style>
 /* Galeria do proprietário: sem crop e sem quadrado forçado */
 .gallery img,.gallery video{width:100%;height:auto!important;max-height:none!important;object-fit:contain!important;display:block}
 </style>
