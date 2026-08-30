@@ -4,12 +4,12 @@ const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app);
 function atualizarMeuPerfilMenu(user){
  document.querySelectorAll("[data-menu-account]").forEach(el=>{
    if(user){
-     el.textContent="👤 MEU PERFIL";
+     el.innerHTML="👤 MEU PERFIL <span>›</span>";
      el.setAttribute("href","perfil-social.html?uid="+encodeURIComponent(user.uid));
      el.setAttribute("aria-label","Abrir meu perfil público");
      el.dataset.loggedIn="true";
    }else{
-     el.textContent="◉ MINHA CONTA";
+     el.innerHTML="◉ MINHA CONTA <span>›</span>";
      el.setAttribute("href","conta.html");
      el.removeAttribute("aria-label");
      delete el.dataset.loggedIn;
