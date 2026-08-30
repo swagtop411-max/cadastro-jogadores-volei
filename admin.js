@@ -259,7 +259,7 @@ async function loadReivindicacoes() {
 
     all.sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
 
-    if (badge) badge.textContent = String(claims.filter(c => c.status === "pendente").length);
+    if (badge) badge.textContent = String(claims.filter(c => String(c.status || "").trim().toLowerCase() === "pendente").length);
 
     const claimAction = row => {
       if (!row.claimed || row.kind !== "atleta") return "";
@@ -290,28 +290,40 @@ async function loadReivindicacoes() {
         : '<p class="subtitulo">Não existem mais perfis disponíveis para reivindicação.</p>';
     }
 
-    // Solicitações pendentes ficam fora das três listas. Enquanto pendente,
-    // o atleta continua disponível na aba Não reivindicados.
-    const pending = claims
-      .filter(c => c.status === "pendente")
-      .filter(c => athleteIds.has(String(c.perfilId)))
-      .filter(c => {
-        const athlete = athleteRows.find(a => String(a.id) === String(c.perfilId));
-        return athlete && !athlete.claimed;
-      });
+    // Solicitações pendentes são exibidas mesmo quando o cadastro antigo
+    // guardou o UID do perfil em vez do ID do documento.
+    const athleteById = new Map(athletes.map(a => [String(a.id), a]));
+    const athleteByUid = new Map(athletes.map(a => [String(a.uid || ""), a]).filter(([k]) => k));
+    const profileById = new Map(profiles.map(p => [String(p.id), p]));
+    const profileByUid = new Map(profiles.map(p => [String(p.uid || ""), p]).filter(([k]) => k));
 
-    const rejected = claims.filter(c => c.status === "recusada");
+    const resolveClaimAthlete = claim => {
+      const key = String(claim.perfilId || claim.profileId || claim.uid || "");
+      return athleteById.get(key)
+        || athleteByUid.get(key)
+        || athletes.find(a => String(a.nome || "").trim().toLowerCase() === String(claim.perfilNome || "").trim().toLowerCase())
+        || null;
+    };
+
+    const pending = claims
+      .filter(c => String(c.status || "").trim().toLowerCase() === "pendente")
+      .map(c => ({...c, athlete: resolveClaimAthlete(c)}))
+      .filter(c => c.athlete && !c.athlete.ownerUid)
+      .map(c => ({...c, resolvedPerfilId: String(c.athlete.id)}));
+
+    const rejected = claims.filter(c => String(c.status || "").trim().toLowerCase() === "recusada");
 
     const pendingHtml = pending.length
       ? pending.map(claim =>
           '<article class="atleta-admin claim-card">'+
-          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong>'+
+          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||claim.athlete?.nome||"Perfil sem nome")+'</strong>'+
           '<span>Solicitante: '+esc(claim.solicitanteNome||"Nome não informado")+'</span>'+
-          '<small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small></div>'+
+          '<small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small>'+ 
+          '<small>Perfil: '+esc(claim.resolvedPerfilId||claim.perfilId||"não informado")+'</small></div>'+
           '<div class="atleta-actions">'+
           '<button class="btn-primary claim-approve" data-id="'+esc(claim.id)+'" type="button">Vincular e aprovar</button>'+
           '<button class="btn-danger claim-reject" data-id="'+esc(claim.id)+'" type="button">Recusar</button>'+
-          '<button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button>'+
+          '<button class="claim-delete" data-delete-profile="'+esc(claim.resolvedPerfilId||claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button>'+
           '</div></article>'
         ).join("")
       : '<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
@@ -372,7 +384,8 @@ async function aprovarReivindicacao(claim) {
   if (!confirm("Vincular o perfil “"+(claim.perfilNome||"Atleta")+"” à conta "+(claim.solicitanteEmail||claim.solicitanteUid)+"?")) return;
 
   try {
-    const athleteRef = doc(db, "atletas", claim.perfilId);
+    const resolvedProfileId = String(claim.resolvedPerfilId || claim.perfilId || "");
+    const athleteRef = doc(db, "atletas", resolvedProfileId);
     const athleteSnapshot = await getDoc(athleteRef);
     if (!athleteSnapshot.exists()) throw new Error("Perfil não encontrado.");
 
