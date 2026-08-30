@@ -1,6 +1,6 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import{getStorage,ref,uploadBytes,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
@@ -152,6 +152,36 @@ function mediaSelected(file){
  }
  $("captionInput")?.focus();
 }
+async function prepareImageForUpload(file){
+ return new Promise((resolve,reject)=>{
+  if(!file||!file.type.startsWith("image/"))return resolve(file);
+  const reader=new FileReader();
+  reader.onerror=()=>reject(reader.error||new Error("Não foi possível ler a imagem."));
+  reader.onload=()=>{
+   const image=new Image();
+   image.onerror=()=>reject(new Error("Não foi possível preparar a imagem."));
+   image.onload=()=>{
+    const max=2200;
+    const scale=Math.min(1,max/Math.max(image.naturalWidth||image.width,image.naturalHeight||image.height));
+    const w=Math.max(1,Math.round((image.naturalWidth||image.width)*scale));
+    const h=Math.max(1,Math.round((image.naturalHeight||image.height)*scale));
+    const canvas=document.createElement("canvas");
+    canvas.width=w;canvas.height=h;
+    const ctx=canvas.getContext("2d");
+    if(!ctx)return reject(new Error("Seu navegador não conseguiu preparar a imagem."));
+    ctx.drawImage(image,0,0,w,h);
+    canvas.toBlob(blob=>{
+     if(!blob)return reject(new Error("Não foi possível converter a imagem."));
+     const name=(file.name||"foto").replace(/\.[^.]+$/,"")+".jpg";
+     resolve(new File([blob],name,{type:"image/jpeg",lastModified:Date.now()}));
+    },"image/jpeg",.86);
+   };
+   image.src=reader.result;
+  };
+  reader.readAsDataURL(file);
+ });
+}
+
 async function publishSelectedMedia(){
  if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
  const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";
@@ -169,17 +199,32 @@ async function publishSelectedMedia(){
   const path="usuarios/"+uid+"/publicacoes/"+fileName;
   uploadedRef=ref(storage,path);
 
-  status.textContent="Enviando mídia... 0%";
-  await new Promise((resolve,reject)=>{
-   const task=uploadBytesResumable(uploadedRef,selectedFile,{contentType:selectedFile.type});
-   let finished=false;
-   const timer=setTimeout(()=>{if(!finished){try{task.cancel()}catch{};reject(new Error("O envio demorou mais de 90 segundos. Verifique a conexão com o Firebase Storage."))}},90000);
-   task.on("state_changed",
-    snap=>{const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;status.textContent="Enviando mídia... "+pct+"%";},
-    err=>{if(finished)return;finished=true;clearTimeout(timer);reject(err);},
-    ()=>{if(finished)return;finished=true;clearTimeout(timer);resolve();}
-   );
-  });
+  // Para fotos, usamos uploadBytes direto e otimizamos a imagem no navegador.
+  // Isso evita ficar preso em 0% aguardando o primeiro evento de progresso.
+  let fileToUpload=selectedFile;
+  if(mediaKind==="image"){
+   try{fileToUpload=await prepareImageForUpload(selectedFile)}
+   catch(err){console.warn("Otimização da imagem falhou; usando original.",err);fileToUpload=selectedFile}
+  }
+  if(fileToUpload.size>49*1024*1024)throw new Error("A mídia ficou maior que o limite permitido pelo Firebase Storage.");
+
+  status.textContent=mediaKind==="image"?"Enviando foto... 10%":"Enviando vídeo... 0%";
+
+  if(mediaKind==="image"){
+   await uploadBytes(uploadedRef,fileToUpload,{contentType:fileToUpload.type||selectedFile.type});
+   status.textContent="Upload concluído. 100%";
+  }else{
+   await new Promise((resolve,reject)=>{
+    const task=uploadBytesResumable(uploadedRef,fileToUpload,{contentType:fileToUpload.type||selectedFile.type});
+    let finished=false;
+    const timer=setTimeout(()=>{if(!finished){try{task.cancel()}catch{};reject(new Error("O envio demorou mais de 120 segundos. Verifique a conexão com o Firebase Storage."))}},120000);
+    task.on("state_changed",
+     snap=>{const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;status.textContent="Enviando vídeo... "+pct+"%";},
+     err=>{if(finished)return;finished=true;clearTimeout(timer);reject(err);},
+     ()=>{if(finished)return;finished=true;clearTimeout(timer);status.textContent="Upload concluído. 100%";resolve();}
+    );
+   });
+  }
 
   status.textContent="Obtendo endereço da mídia...";
   const url=await getDownloadURL(uploadedRef);
