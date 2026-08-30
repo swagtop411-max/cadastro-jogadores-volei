@@ -302,7 +302,7 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.imagemUrl is string
-        && request.resource.data.imagemUrl.size() <= 5000
+        && request.resource.data.imagemUrl.size() <= 850000
         && request.resource.data.legenda is string
         && request.resource.data.legenda.size() <= 2200
         && request.resource.data.tipo == 'imagem'
