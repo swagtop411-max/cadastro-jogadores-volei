@@ -189,3 +189,18 @@ body{background:#070908!important;color:#f5f0e4!important}
   .site-menu-drawer{width:190px!important}
   .public-layout>.sponsors-sidebar{width:190px!important}
 }
+
+@media(max-width:699px){
+  .header{padding:7px 5px!important;gap:5px!important;min-height:58px!important;height:58px!important}
+  .site-menu-trigger{min-height:30px!important;padding:0 5px!important;font-size:12px!important;gap:3px!important}
+  .site-menu-trigger span{font-size:5px!important}
+  .header-brand{gap:4px!important;min-width:76px!important}
+  .brand-ball{width:27px!important;height:27px!important;font-size:14px!important}
+  .header-brand strong{font-size:10px!important;line-height:.9!important;letter-spacing:.7px!important}
+  .header-brand span{font-size:4px!important;letter-spacing:1px!important;margin-top:2px!important}
+  .header-center{display:flex!important;flex:1!important;min-width:0!important;max-width:none!important;height:30px!important;padding:0 7px!important;font-size:6px!important;border-radius:8px!important}
+  .header-actions{display:flex!important;flex:0 0 auto!important;gap:3px!important}
+  .header-actions a{display:none!important}
+  .header-actions .account-top-cta{display:inline-flex!important;min-height:30px!important;padding:0 5px!important;font-size:5px!important;border-radius:6px!important}
+  .home-social{margin-top:6px!important}
+}
