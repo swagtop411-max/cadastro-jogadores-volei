@@ -94,31 +94,35 @@ $("btnAdicionarCampeonato").onclick=()=>addCampeonato();$("btnAdicionarHistorico
 
 
 async function loadReivindicacoes() {
-  const lista = $("reivindicacoesLista");
-  const badge = $("reivindicacoesBadge");
-  if (!lista) return;
+  const lista=$("reivindicacoesLista"), badge=$("reivindicacoesBadge"); if(!lista)return;
   try {
-    const [claimsSnapshot, athletesSnapshot] = await Promise.all([
-      getDocs(query(collection(db, "reivindicacoes_perfis"), where("status", "==", "pendente"))),
-      getDocs(collection(db, "atletas")),
-    ]);
-    const athletes = athletesSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }));
-    const claims = claimsSnapshot.docs.map((item) => ({ id: item.id, ...item.data() })).filter((claim) => athletes.some((athlete) => athlete.id === claim.perfilId && !athlete.ownerUid));
-    const unlinked = athletes.filter((athlete) => !athlete.ownerUid).sort((a, b) => String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR"));
-    if (badge) badge.textContent = String(claims.length);
-    const claimsHtml = claims.length ? claims.map((claim) => `<article class="atleta-admin claim-card"><div class="atleta-info"><strong>${esc(claim.perfilNome || "Perfil sem nome")}</strong><span>Solicitante: ${esc(claim.solicitanteNome || "Nome não informado")}</span><small>${esc(claim.solicitanteEmail || "E-mail não informado")} · UID: ${esc(claim.solicitanteUid || "não informado")}</small></div><div class="atleta-actions"><button class="btn-primary claim-approve" data-id="${esc(claim.id)}" type="button">Vincular e aprovar</button><button class="btn-danger claim-reject" data-id="${esc(claim.id)}" type="button">Recusar</button></div></article>`).join("") : '<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
-    const unlinkedHtml = unlinked.length ? `<div class="legacy-profiles"><h3>Perfis sem login vinculado (${unlinked.length})</h3><p class="subtitulo">Selecione um perfil para preencher o ID no vínculo manual abaixo.</p>${unlinked.slice(0, 100).map((athlete) => `<div class="atleta-admin"><div class="atleta-info"><strong>${esc(athlete.nome || "Sem nome")}</strong><span>${esc(athlete.cidade || "Cidade não informada")} · ${esc(athlete.categoria || "Categoria não informada")}</span><small>ID: ${esc(athlete.id)}</small></div><div class="atleta-actions"><button class="btn-secondary choose-profile" data-profile-id="${esc(athlete.id)}" type="button">Usar este ID</button></div></div>`).join("")}</div>` : '<p class="subtitulo">Não há perfis legados sem vínculo.</p>';
-    lista.innerHTML = `<div class="pending-claims"><h3>Solicitações aguardando análise (${claims.length})</h3>${claimsHtml}</div>${unlinkedHtml}`;
-    lista.querySelectorAll(".claim-approve").forEach((button) => button.onclick = () => aprovarReivindicacao(claims.find((claim) => claim.id === button.dataset.id)));
-    lista.querySelectorAll(".claim-reject").forEach((button) => button.onclick = () => recusarReivindicacao(claims.find((claim) => claim.id === button.dataset.id)));
-    lista.querySelectorAll(".choose-profile").forEach((button) => button.onclick = () => { $("vinculoPerfilId").value = button.dataset.profileId; $("vinculoUid")?.focus(); });
-    status($("reivindicacoesStatus"), `${claims.length} solicitação${claims.length === 1 ? "" : "ões"} pendente${claims.length === 1 ? "" : "s"}; ${unlinked.length} perfil${unlinked.length === 1 ? "" : "is"} sem vínculo.`);
-  } catch (error) {
-    console.error("Erro ao carregar reivindicações:", error);
-    if (badge) badge.textContent = "!";
-    status($("reivindicacoesStatus"), `Não foi possível carregar as reivindicações (${error.code || "erro"}).`, "erro");
-  }
+    const [claimsSnapshot,athletesSnapshot,profilesSnapshot,usersSnapshot]=await Promise.all([getDocs(collection(db,"reivindicacoes_perfis")),getDocs(collection(db,"atletas")),getDocs(collection(db,"perfis")),getDocs(collection(db,"usuarios"))]);
+    const claims=claimsSnapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const athletes=athletesSnapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const profiles=profilesSnapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const users=usersSnapshot.docs.map(d=>({id:d.id,...d.data()}));
+    const userByUid=new Map(users.map(u=>[u.id,u]));
+    const approvedByProfile=new Map(claims.filter(x=>x.status==="aprovada").map(x=>[x.perfilId,x]));
+    const claimed=athletes.filter(a=>!!a.ownerUid);
+    const unclaimed=athletes.filter(a=>!a.ownerUid).sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+    const all=[],seen=new Set();
+    athletes.forEach(a=>{const u=a.ownerUid?(userByUid.get(a.ownerUid)||{}):{},claim=approvedByProfile.get(a.id);all.push({kind:"atleta",id:a.id,nome:a.nome||"Sem nome",uid:a.ownerUid||"Sem UID",email:a.ownerEmail||u.email||claim?.solicitanteEmail||"Sem e-mail",claimed:!!a.ownerUid,location:[a.cidade,a.uf].filter(Boolean).join(" · ")});seen.add(a.id)});
+    profiles.forEach(p=>{if(seen.has(p.id))return;const u=userByUid.get(p.id)||{};all.push({kind:"conta",id:p.id,nome:p.nome||u.nome||"Sem nome",uid:p.uid||p.id,email:p.email||u.email||"Sem e-mail",claimed:true,location:[p.cidade,p.uf].filter(Boolean).join(" · ")})});
+    all.sort((a,b)=>String(a.nome).localeCompare(String(b.nome),"pt-BR"));
+    if(badge)badge.textContent=String(claims.filter(x=>x.status==="pendente").length);
+    const row=x=>'<article class="claim-profile-row"><div><strong>'+esc(x.nome)+'</strong><span>'+esc(x.location||"Local não informado")+' · '+esc(x.kind==="atleta"?"Perfil atleta":"Conta da rede")+'</span><small>UID do perfil: '+esc(x.uid)+'<br>E-mail: '+esc(x.email)+'</small></div><span class="claim-badge">'+(x.claimed?"REIVINDICADO":"NÃO REIVINDICADO")+'</span></article>';
+    $("claimTodosPerfis").innerHTML=all.length?all.map(row).join(""):'<p class="subtitulo">Nenhum perfil encontrado.</p>';
+    $("claimReivindicados").innerHTML=claimed.length?claimed.map(a=>row(all.find(x=>x.id===a.id)||{nome:a.nome,uid:a.ownerUid,email:a.ownerEmail,claimed:true,kind:"atleta",location:[a.cidade,a.uf].filter(Boolean).join(" · ")})).join(""):'<p class="subtitulo">Nenhum perfil reivindicado.</p>';
+    $("claimNaoReivindicados").innerHTML=unclaimed.length?unclaimed.map(a=>row({nome:a.nome,uid:"Sem UID",email:"Sem e-mail",claimed:false,kind:"atleta",location:[a.cidade,a.uf].filter(Boolean).join(" · ")})).join(""):'<p class="subtitulo">Não existem mais perfis disponíveis para reivindicação.</p>';
+    const pending=claims.filter(x=>x.status==="pendente").filter(x=>athletes.some(a=>a.id===x.perfilId&&!a.ownerUid));
+    const pendingHtml=pending.length?pending.map(claim=>'<article class="atleta-admin claim-card"><div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong><span>Solicitante: '+esc(claim.solicitanteNome||"Nome não informado")+'</span><small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small></div><div class="atleta-actions"><button class="btn-primary claim-approve" data-id="'+esc(claim.id)+'" type="button">Vincular e aprovar</button><button class="btn-danger claim-reject" data-id="'+esc(claim.id)+'" type="button">Recusar</button></div></article>').join(""):'<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
+    lista.innerHTML='<div class="pending-claims"><h3>Solicitações aguardando análise ('+pending.length+')</h3>'+pendingHtml+'</div>';
+    lista.querySelectorAll(".claim-approve").forEach(b=>b.onclick=()=>aprovarReivindicacao(pending.find(x=>x.id===b.dataset.id)));
+    lista.querySelectorAll(".claim-reject").forEach(b=>b.onclick=()=>recusarReivindicacao(pending.find(x=>x.id===b.dataset.id)));
+    status($("reivindicacoesStatus"),pending.length+" solicitação"+(pending.length===1?"":"ões")+" pendente"+(pending.length===1?"":"s")+"; "+unclaimed.length+" perfil"+(unclaimed.length===1?"":"is")+" ainda não reivindicado"+(unclaimed.length===1?"":"s")+".");
+  } catch(error){console.error("Erro ao carregar reivindicações:",error);if(badge)badge.textContent="!";status($("reivindicacoesStatus"),"Não foi possível carregar os perfis ("+(error.code||"erro")+").","erro")}
 }
+document.addEventListener("click",e=>{const b=e.target.closest?.("[data-claim-tab]");if(!b)return;document.querySelectorAll("[data-claim-tab]").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".claim-admin-pane").forEach(x=>x.hidden=true);const target={todosPerfis:"claimTodosPerfis",reivindicados:"claimReivindicados",naoReivindicados:"claimNaoReivindicados"}[b.dataset.claimTab];if(target)$(target).hidden=false});
 
 async function aprovarReivindicacao(claim) {
   if (!claim) return;
