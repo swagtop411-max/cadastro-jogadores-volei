@@ -277,5 +277,136 @@ service cloud.firestore {
       allow delete: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
+    // ============================================================
+    // REDE SOCIAL
+    // ============================================================
+    match /publicacoes/{publicacaoId} {
+      allow read: if resource.data.aprovado == true || isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail is string
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 3
+        && request.resource.data.texto.size() <= 2200
+        && request.resource.data.imagem is string
+        && request.resource.data.imagem.size() <= 700000
+        && request.resource.data.aprovado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly([
+          'ownerUid','ownerEmail','nome','texto','imagem',
+          'imagemUrl','imagemPath','imagemMime','imagemTamanho',
+          'aprovado','status','criadoEm'
+        ]);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin()
+        || (request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && resource.data.aprovado == false);
+    }
+
+    match /comentarios_publicacoes/{comentarioId} {
+      allow read: if resource.data.aprovado == true || isAdmin();
+
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail is string
+        && request.resource.data.publicacaoId is string
+        && exists(/databases/$(database)/documents/publicacoes/$(request.resource.data.publicacaoId))
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.texto is string
+        && request.resource.data.texto.size() >= 3
+        && request.resource.data.texto.size() <= 500
+        && request.resource.data.aprovado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly([
+          'ownerUid','ownerEmail','publicacaoId','nome','texto',
+          'parentCommentId','aprovado','status','criadoEm'
+        ]);
+
+      allow update: if isAdmin();
+      allow delete: if isAdmin()
+        || (request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && resource.data.aprovado == false);
+    }
+
+    match /curtidas_publicacoes/{publicacaoId}/usuarios/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid','criadoEm'])
+        && request.resource.data.uid == uid
+        && request.resource.data.criadoEm is timestamp
+        && exists(/databases/$(database)/documents/publicacoes/$(publicacaoId))
+        && get(/databases/$(database)/documents/publicacoes/$(publicacaoId)).data.aprovado == true;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if false;
+    }
+
+    match /curtidas_perfis/{perfilId}/usuarios/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid','criadoEm'])
+        && request.resource.data.uid == uid
+        && request.resource.data.criadoEm is timestamp
+        && exists(/databases/$(database)/documents/atletas/$(perfilId));
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      allow update: if false;
+    }
+
+    match /denuncias/{denunciaId} {
+      allow create: if request.auth != null
+        && request.resource.data.reportadoPorUid == request.auth.uid
+        && request.resource.data.alvoTipo in ['publicacao','comentario','perfil','equipe']
+        && request.resource.data.alvoId is string
+        && request.resource.data.alvoId.size() >= 1
+        && request.resource.data.motivo is string
+        && request.resource.data.motivo.size() >= 3
+        && request.resource.data.motivo.size() <= 300
+        && request.resource.data.detalhes is string
+        && request.resource.data.detalhes.size() <= 1000
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly([
+          'alvoTipo','alvoId','motivo','detalhes',
+          'reportadoPorUid','criadoEm','status'
+        ]);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /reivindicacoes_perfis/{claimId} {
+      allow create: if request.auth != null
+        && request.resource.data.solicitanteUid == request.auth.uid
+        && request.resource.data.perfilId is string
+        && request.resource.data.perfilId.size() >= 1
+        && request.resource.data.perfilNome is string
+        && request.resource.data.perfilNome.size() >= 2
+        && request.resource.data.perfilNome.size() <= 100
+        && request.resource.data.solicitanteEmail is string
+        && request.resource.data.solicitanteNome is string
+        && request.resource.data.solicitanteNome.size() <= 100
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.atualizadoEm is timestamp
+        && request.resource.data.keys().hasOnly([
+          'perfilId','perfilNome','solicitanteUid','solicitanteEmail',
+          'solicitanteNome','status','criadoEm','atualizadoEm'
+        ]);
+      allow read: if isAdmin()
+        || (request.auth != null && resource.data.solicitanteUid == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+
   }
 }
