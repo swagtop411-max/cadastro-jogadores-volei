@@ -44,7 +44,8 @@ service cloud.firestore {
           && request.resource.data.ownerUid == resource.data.ownerUid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
             'nome','nascimento','cidade','uf','modalidades','posicoes','modalidade','posicao',
-            'categoria','time','historicoEquipes','historicoCampeonatos','observacoes','foto'
+            'categoria','time','historicoEquipes','historicoCampeonatos','observacoes','foto',
+            'ownerUid','ownerEmail','ownerDisplayName','atualizadoEm'
           ]));
     }
 
