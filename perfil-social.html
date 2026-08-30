@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="style.css?v=20260830-3">
 <link rel="stylesheet" href="home-social.css?v=20260830-4">
 <style>
+.publish-card{position:relative}.publish-card h2{font-size:24px;margin:6px 0 18px}.publish-options{display:grid;gap:10px}.publish-options .pp-btn{width:100%;padding:13px 14px;font-size:10px}.publish-choice{cursor:pointer}.publish-card .pp-kicker{display:block;margin-bottom:3px}.publish-card input{display:none}
 :root{--gold:#f2cc72;--gold2:#bd8425;--bg:#070908;--card:#0b100d;--line:rgba(217,169,63,.2)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#070908!important;color:#f5f0e4!important;overflow-x:hidden!important}
@@ -57,6 +58,29 @@ body{font-family:Arial,Helvetica,sans-serif}
 <section class="pp-profile"><div id="cover" class="pp-cover"></div><div class="pp-head"><img id="avatar" class="pp-avatar" alt="Foto do atleta"><div class="pp-info"><span class="pp-kicker">PERFIL DO ATLETA</span><h1 id="name">Carregando...</h1><p id="meta" class="pp-meta"></p><p id="bio" class="pp-bio"></p><div id="stats" class="pp-stats"><span class="pp-stat"><strong id="photos">0</strong>fotos</span><span class="pp-stat"><strong id="videos">0</strong>vídeos</span><span class="pp-stat"><strong id="stories">0</strong>stories</span><span id="followersStat" class="pp-stat clickable"><strong id="followers">0</strong>seguidores</span><span id="followingStat" class="pp-stat clickable"><strong id="following">0</strong>seguindo</span></div><div id="actions" class="pp-actions"></div></div></div></section>
 <section class="pp-section"><div class="pp-tabs"><button class="pp-tab active" data-tab="posts">▦ PUBLICAÇÕES</button><button class="pp-tab" data-tab="stories">◉ STORIES</button></div><div id="gallery" class="pp-grid"></div><div id="storyList" class="pp-stories" hidden></div></section>
 </div></main>
+<div id="publishModal" class="pp-modal" aria-hidden="true">
+<div class="pp-modal-card publish-card">
+<button id="closePublish" class="pp-close" type="button">×</button>
+<span class="pp-kicker">CRIAR CONTEÚDO</span>
+<h2>O que você quer publicar?</h2>
+<div class="publish-options">
+<button type="button" class="pp-btn primary publish-choice" data-publish-type="feed">▦ POSTAR NO FEED</button>
+<button type="button" class="pp-btn publish-choice" data-publish-type="story">◉ POSTAR NOS STORIES</button>
+</div>
+</div></div>
+<div id="mediaModal" class="pp-modal" aria-hidden="true">
+<div class="pp-modal-card publish-card">
+<button id="closeMedia" class="pp-close" type="button">×</button>
+<span class="pp-kicker">ADICIONAR MÍDIA</span>
+<h2 id="mediaTitle">Escolha como adicionar</h2>
+<div class="publish-options">
+<button type="button" class="pp-btn primary" id="cameraBtn">📷 ABRIR CÂMERA</button>
+<button type="button" class="pp-btn" id="galleryBtn">🖼️ ABRIR GALERIA</button>
+</div>
+<input id="cameraInput" type="file" accept="image/*,video/*" capture="environment" hidden>
+<input id="galleryInput" type="file" accept="image/*,video/*" hidden>
+<div id="selectedMedia" class="pp-empty" hidden></div>
+</div></div>
 <div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
 <script type="module" src="perfil-social.js?v=20260830-6"></script>
 <script type="module" src="ranking.js?v=20260830-1"></script>
