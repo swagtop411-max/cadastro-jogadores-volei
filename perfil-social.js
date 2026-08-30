@@ -4,7 +4,7 @@ import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"http
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
-let profile=null,currentUser=null,following=false,publishType="feed";
+let profile=null,currentUser=null,following=false,publishType="feed",selectedFile=null,selectedPreviewUrl=null;
 const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
 const img=v=>v||fallback;
 async function safeDocs(ref,...constraints){try{return await getDocs(query(ref,...constraints,orderBy("criadoEm","desc")))}catch{return await getDocs(query(ref,...constraints))}}
