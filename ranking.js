@@ -1,4 +1,4 @@
-import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getFirestore,collection,getDocs}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getFirestore,collection,getDocs,query,limit}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9CO",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app);
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML},norm=v=>String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 /* HISTORICO-RANKING-DEDUPE-V1 */
@@ -58,8 +58,8 @@ async function garantirCarregamento(){if(carregamentoRanking)return carregamento
 async function carregar(){
   try{
     const [atletasSnap, perfisSnap] = await Promise.all([
-      getDocs(collection(db,"atletas")),
-      getDocs(collection(db,"perfis"))
+      getDocs(query(collection(db,"atletas"),limit(200))),
+      getDocs(query(collection(db,"perfis"),limit(200)))
     ]);
     const perfis=perfisSnap.docs.map(d=>({id:d.id,...(d.data()||{})}));
     const perfilByUid=new Map(perfis.map(p=>[String(p.uid||p.id),p]));

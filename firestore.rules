@@ -1,5 +1,4 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
     function isAdmin() {
@@ -301,14 +300,20 @@ service cloud.firestore {
 
       allow create: if request.auth != null
         && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.keys().hasAll(['ownerUid','imagemUrl','legenda','tipo','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly([
+          'ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath',
+          'imagemMime','imagemTamanho','legenda','tipo','armazenamento','aprovado',
+          'status','criadoEm'
+        ])
         && request.resource.data.imagemUrl is string
-        && request.resource.data.imagemUrl.size() <= 850000
+        && request.resource.data.imagemUrl.size() <= 2000
         && request.resource.data.legenda is string
         && request.resource.data.legenda.size() <= 2200
         && request.resource.data.tipo == 'imagem'
-        && request.resource.data.aprovado == true
-        && request.resource.data.status == 'publicado'
-        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.aprovado == false
+        && request.resource.data.status == 'pendente'
+        && request.resource.data.criadoEm == request.time
         && request.resource.data.get('ownerEmail','') is string
         && request.resource.data.get('nome','Atleta') is string
         && request.resource.data.get('texto','') is string
@@ -320,7 +325,10 @@ service cloud.firestore {
       allow update: if isAdmin()
         || (request.auth != null
           && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid);
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.aprovado == resource.data.aprovado
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
 
       allow delete: if isAdmin()
         || (request.auth != null && resource.data.ownerUid == request.auth.uid);
@@ -391,9 +399,15 @@ service cloud.firestore {
         && request.resource.data.legenda is string
         && request.resource.data.legenda.size() <= 2200
         && request.resource.data.tipo in ['image','video']
-        && request.resource.data.criadoEm is timestamp
-        && request.resource.data.expiraEm is timestamp;
-      allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+        && request.resource.data.criadoEm == request.time
+        && request.resource.data.expiraEm > request.time
+        && request.resource.data.expiraEm <= request.time + duration.value(25, 'h');
+      allow update: if isAdmin()
+        || (request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
+      allow delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
     match /videos/{videoId} {
@@ -402,9 +416,14 @@ service cloud.firestore {
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.videoUrl is string
         && request.resource.data.videoUrl.size() <= 1000
-        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.criadoEm == request.time
         && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho','legenda','criadoEm']);
-      allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin()
+        || (request.auth != null
+          && resource.data.ownerUid == request.auth.uid
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
+      allow delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
     match /denuncias/{denunciaId} {

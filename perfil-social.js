@@ -121,8 +121,8 @@ function resetComposer(){
 function mediaSelected(file){
  if(!file)return;
  if(!currentUser||currentUser.uid!==uid){alert("Entre na sua conta para publicar.");return}
- if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){alert("Selecione uma imagem ou vídeo válido.");return}
- if(file.size>45*1024*1024){alert("A mídia deve ter no máximo 45 MB.");return}
+ if(!/^(image\/(jpeg|png|webp)|video\/(mp4|webm))$/i.test(file.type)){alert("Use JPG, PNG, WEBP, MP4 ou WEBM.");return}
+ if(file.size>24*1024*1024){alert("A mídia deve ter no máximo 24 MB.");return}
  if(selectedPreviewUrl)URL.revokeObjectURL(selectedPreviewUrl);
  selectedFile=file;selectedPreviewUrl=URL.createObjectURL(file);
  $("mediaChooser").hidden=true;$("composer").hidden=false;
@@ -194,11 +194,11 @@ async function publishSelectedMedia(){
    await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
   }else if(isImage){
    const postRef=doc(collection(db,"publicacoes"));
-   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
   }else{
    await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
   }
-  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":isImage?"Foto publicada com sucesso!":"Vídeo publicado com sucesso!";await loadMedia();setTimeout(closeMediaModal,900)
+  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":isImage?"Foto enviada para moderação!":"Vídeo publicado com sucesso!";if(publishType!=="story")await loadMedia();setTimeout(closeMediaModal,1200)
  }catch(e){
   console.error("ERRO AO PUBLICAR:",e);const code=String(e?.code||"");let message="Não foi possível publicar a mídia.";
   if(code.includes("storage/unauthorized"))message="Firebase Storage: envio não autorizado. Publique as regras do Storage e tente novamente.";
