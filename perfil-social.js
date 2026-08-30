@@ -208,23 +208,45 @@ async function publishSelectedMedia(){
   }
   if(fileToUpload.size>49*1024*1024)throw new Error("A mídia ficou maior que o limite permitido pelo Firebase Storage.");
 
-  status.textContent=mediaKind==="image"?"Enviando foto... 10%":"Enviando vídeo... 0%";
+  status.textContent=mediaKind==="image"?"Conectando ao Firebase Storage... 0%":"Enviando vídeo... 0%";
 
-  if(mediaKind==="image"){
-   await uploadBytes(uploadedRef,fileToUpload,{contentType:fileToUpload.type||selectedFile.type});
-   status.textContent="Upload concluído. 100%";
-  }else{
-   await new Promise((resolve,reject)=>{
-    const task=uploadBytesResumable(uploadedRef,fileToUpload,{contentType:fileToUpload.type||selectedFile.type});
-    let finished=false;
-    const timer=setTimeout(()=>{if(!finished){try{task.cancel()}catch{};reject(new Error("O envio demorou mais de 120 segundos. Verifique a conexão com o Firebase Storage."))}},120000);
-    task.on("state_changed",
-     snap=>{const pct=snap.totalBytes?Math.round(snap.bytesTransferred/snap.totalBytes*100):0;status.textContent="Enviando vídeo... "+pct+"%";},
-     err=>{if(finished)return;finished=true;clearTimeout(timer);reject(err);},
-     ()=>{if(finished)return;finished=true;clearTimeout(timer);status.textContent="Upload concluído. 100%";resolve();}
-    );
+  await new Promise((resolve,reject)=>{
+   const task=uploadBytesResumable(uploadedRef,fileToUpload,{
+    contentType:fileToUpload.type||selectedFile.type||"application/octet-stream",
+    cacheControl:"public,max-age=31536000"
    });
-  }
+   let finished=false;
+   let sawProgress=false;
+   const timeoutMs=mediaKind==="image"?45000:120000;
+   const timer=setTimeout(()=>{
+    if(finished)return;
+    try{task.cancel()}catch{}
+    reject(new Error(mediaKind==="image"
+      ?"O Firebase Storage não iniciou o envio da foto. Verifique se as regras do Storage foram publicadas e se a sessão está autenticada."
+      :"O envio do vídeo demorou mais de 120 segundos. Verifique a conexão com o Firebase Storage."
+    ));
+   },timeoutMs);
+
+   task.on("state_changed",
+    snap=>{
+     if(snap.totalBytes){
+      sawProgress=true;
+      const pct=Math.min(99,Math.round(snap.bytesTransferred/snap.totalBytes*100));
+      status.textContent=(mediaKind==="image"?"Enviando foto... ":"Enviando vídeo... ")+pct+"%";
+     }
+    },
+    err=>{
+     if(finished)return;
+     finished=true;clearTimeout(timer);reject(err);
+    },
+    ()=>{
+     if(finished)return;
+     finished=true;clearTimeout(timer);
+     status.textContent="Upload concluído. 100%";
+     resolve();
+    }
+   );
+  });
 
   status.textContent="Obtendo endereço da mídia...";
   const url=await getDownloadURL(uploadedRef);
