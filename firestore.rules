@@ -24,6 +24,8 @@ service cloud.firestore {
     }
 
     match /perfis/{uid} {
+      // Documento estritamente público. Dados de contato, nascimento,
+      // pagamento e identidade administrativa ficam fora desta coleção.
       allow read: if true;
 
       allow create: if request.auth != null
@@ -31,8 +33,7 @@ service cloud.firestore {
         && request.resource.data.uid == uid
         && request.resource.data.keys().hasOnly([
           'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
-          'fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId','valorPlano',
-          'planoStatus','pagamentoConfirmado','status','historicoCampeonatos'
+          'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos'
         ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
@@ -52,8 +53,7 @@ service cloud.firestore {
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.keys().hasOnly([
             'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
-            'fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId','valorPlano',
-            'planoStatus','pagamentoConfirmado','status','historicoCampeonatos'
+            'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos'
           ])
           && request.resource.data.historicoCampeonatos is list
           && request.resource.data.historicoCampeonatos.size() <= 30);
