@@ -19,6 +19,6 @@ $("homeFeed")?.addEventListener("click",async e=>{const b=e.target.closest("butt
 $("siteMenuTrigger")?.addEventListener("click",()=>{const d=$("siteMenuDrawer");d.classList.add("open");d.setAttribute("aria-hidden","false");$("siteMenuTrigger").setAttribute("aria-expanded","true")});
 document.querySelectorAll("[data-fechar-menu]").forEach(x=>x.addEventListener("click",()=>{$("siteMenuDrawer").classList.remove("open");$("siteMenuDrawer").setAttribute("aria-hidden","true");$("siteMenuTrigger")?.setAttribute("aria-expanded","false")}));
 $("menuRanking")?.addEventListener("click",()=>{document.querySelector("[data-fechar-ranking]")?.click();$("btnAbrirRanking")?.click();$("siteMenuDrawer").classList.remove("open")});
-$("menuEquipes")?.addEventListener("click",()=>{ $("btnAbrirEquipes")?.click();$("siteMenuDrawer").classList.remove("open")});
+$("menuEquipes")?.addEventListener("click",(e)=>{e.preventDefault();e.stopPropagation();if(window.abrirEquipes)window.abrirEquipes();else $("btnAbrirEquipes")?.click();$("siteMenuDrawer").classList.remove("open");$("siteMenuDrawer").setAttribute("aria-hidden","true")});
 onAuthStateChanged(auth,async u=>{user=u;profileComplete=false;if(u){try{const p=await getDoc(doc(db,"perfis",u.uid));profileComplete=p.exists()&&!!p.data()?.nome&&!!p.data()?.cidade&&!!p.data()?.uf}catch(e){console.warn("Perfil:",e)}}});
 load();
