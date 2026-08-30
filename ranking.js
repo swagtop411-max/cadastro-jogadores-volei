@@ -103,3 +103,15 @@ async function carregar(){
 }
 function iniciar(){const b=$("btnAbrirRanking"),x=$("btnFecharRanking"),d=$("rankingDrawer");if(!b||!d)return;b.addEventListener("click",abrir);x&&x.addEventListener("click",fechar);d.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fechar()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});const h=document.querySelector(".ranking-panel-head");if(h&&!$("rankingFiltros"))h.insertAdjacentHTML("afterend","<div id=\"rankingFiltros\" class=\"ranking-filtros\" aria-label=\"Filtros do ranking\"></div>")}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",iniciar,{once:true});else iniciar();
+
+/* AUTO-OPEN-RANKING-FIX-V1 */
+// Abre automaticamente o painel quando o usuário chega pelo menu Ranking.
+function abrirRankingSolicitado(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("abrir")==="ranking" || window.location.hash==="#ranking"){
+    setTimeout(()=>abrir(),0);
+  }
+}
+const iniciarOriginal=iniciar;
+// iniciarOriginal já registra os eventos; em seguida respeitamos o destino solicitado.
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",abrirRankingSolicitado,{once:true});else abrirRankingSolicitado();
