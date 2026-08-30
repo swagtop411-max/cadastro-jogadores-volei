@@ -11,8 +11,8 @@ service firebase.storage {
       allow write: if isAdmin() || (request.auth != null
         && request.auth.uid == uid
         && request.resource != null
-        && request.resource.size < 8 * 1024 * 1024
-        && request.resource.contentType.matches('image/(jpeg|png|webp)'));
+        && request.resource.size < 50 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)|video/(mp4|webm|quicktime)'));
       allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
     }
   }
