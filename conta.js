@@ -36,7 +36,7 @@ const loginForm = $("loginForm");
 const registerForm = $("registerForm");
 const logged = $("accountLogged");
 const tabs = [...document.querySelectorAll("[data-account-tab]")];
-const returnTarget = new URLSearchParams(location.search).get("return");
+const urlParams = new URLSearchParams(location.search);\nconst returnTarget = urlParams.get("return");\nconst requestedTab = urlParams.get("tab");
 
 function redirectAfterLogin() {
   if (!returnTarget) return;
@@ -296,7 +296,7 @@ $("logoutButton").addEventListener("click", async () => {
   }
 });
 
-onAuthStateChanged(auth, (user) => {
+if (requestedTab === "register") showTab("register");\n\nonAuthStateChanged(auth, (user) => {
   if (user) {
     showLogged(user);
     redirectAfterLogin();
