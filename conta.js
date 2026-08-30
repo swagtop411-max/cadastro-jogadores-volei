@@ -40,14 +40,30 @@ const urlParams = new URLSearchParams(location.search);
 const returnTarget = urlParams.get("return");
 const requestedTab = urlParams.get("tab");
 
-function redirectAfterLogin() {
-  if (!returnTarget) return;
-  try {
-    const target = decodeURIComponent(returnTarget);
-    if (target.startsWith("/") && !target.startsWith("//")) location.href = target;
-  } catch {
-    // destino inválido
+async function getLoginDestination(user) {
+  if (returnTarget) {
+    try {
+      const target = decodeURIComponent(returnTarget);
+      if (target.startsWith("/") && !target.startsWith("//")) return target;
+    } catch {}
   }
+  if ((user.email || "").toLowerCase() === "swagtop411@gmail.com") return "index.html";
+  try {
+    const snap = await getDoc(doc(db, "perfis", user.uid));
+    const p = snap.exists() ? snap.data() : {};
+    const complete = !!(p.nome && p.cidade && p.uf);
+    return complete ? "index.html" : "meu-perfil.html?novo=1";
+  } catch {
+    return "index.html";
+  }
+}
+
+let loginRedirecting = false;
+async function goAfterLogin(user) {
+  if (loginRedirecting) return;
+  loginRedirecting = true;
+  const destination = await getLoginDestination(user);
+  location.replace(destination);
 }
 
 function setStatus(message, type = "") {
@@ -187,7 +203,7 @@ loginForm.addEventListener("submit", async (event) => {
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     setStatus(`Login realizado. Bem-vindo, ${credential.user.displayName || "atleta"}!`, "success");
-    redirectAfterLogin();
+    await goAfterLogin(credential.user);
   } catch (error) {
     setStatus(friendlyError(error, "login"), "error");
   } finally {
@@ -303,8 +319,8 @@ if (requestedTab === "register") showTab("register");
 onAuthStateChanged(auth, (user) => {
   if (user) {
     showLogged(user);
-    redirectAfterLogin();
-    if (!location.pathname.endsWith("/meu-perfil.html")) redirectToProfileIfNeeded(user);
+    if (!location.pathname.endsWith("/conta.html")) return;
+    // O redirecionamento do login é controlado pelo submit acima. O observer apenas atualiza a interface.
   } else {
     showSignedOut();
   }
