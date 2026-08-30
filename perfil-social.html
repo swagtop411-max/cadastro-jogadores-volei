@@ -1,1 +1,49 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Perfil do atleta | Banco de Dados de Atletas</title><link rel="stylesheet" href="style.css?v=20260830-3"><link rel="stylesheet" href="home-social.css?v=20260830-4"><style>.public-profile{max-width:1000px;margin:0 auto;padding:24px 18px 70px}.pp-head{display:grid;grid-template-columns:170px 1fr;gap:22px;align-items:center;background:#0b100d;border:1px solid rgba(217,169,63,.2);border-radius:18px;padding:22px}.pp-avatar{width:170px;height:170px;border-radius:50%;object-fit:cover;border:2px solid #d9a93f;background:#18221d}.pp-kicker{font-size:9px;letter-spacing:2px;color:#f2cc72;font-weight:900}.pp-head h1{font-size:42px;margin:5px 0}.pp-meta{color:#9aa39b;font-size:11px}.pp-stats{display:flex;gap:18px;margin-top:12px}.pp-stats strong{color:#f2cc72}.pp-section{margin-top:16px;background:#0b100d;border:1px solid rgba(217,169,63,.16);border-radius:16px;padding:18px}.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.pp-grid img,.pp-grid video{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px;background:#050706}.pp-stories{display:flex;gap:9px;overflow:auto}.pp-story{width:95px;height:125px;object-fit:cover;border-radius:10px;border:1px solid rgba(217,169,63,.3)}.pp-bio{white-space:pre-wrap;line-height:1.5;color:#c7cec8}.pp-back{color:#f2cc72;text-decoration:none;font-size:10px;font-weight:900;display:inline-block;margin-bottom:12px}@media(max-width:650px){.pp-head{grid-template-columns:1fr;text-align:center}.pp-avatar{margin:auto}.pp-stats{justify-content:center}.pp-grid{grid-template-columns:repeat(2,1fr)}} </style></head><body class="profile-page"><header class="header"><a class="header-brand" href="index.html" style="text-decoration:none;color:inherit"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a><div class="header-center">👤 &nbsp; PERFIL DO ATLETA</div><div class="header-actions"><a class="championship-cta" href="index.html">🏠 FEED</a><a class="championship-cta" href="conta.html">◉ CONTA</a></div></header><main class="public-profile"><a class="pp-back" href="index.html">← VOLTAR AO FEED</a><section class="pp-head"><img id="avatar" class="pp-avatar" alt="Foto do atleta"><div><span class="pp-kicker">REDE ESPORTIVA</span><h1 id="name">Carregando...</h1><p id="meta" class="pp-meta"></p><div class="pp-stats"><span><strong id="photos">0</strong> fotos</span><span><strong id="videos">0</strong> vídeos</span><span><strong id="stories">0</strong> stories</span></div><p id="bio" class="pp-bio"></p></div></section><section class="pp-section"><span class="pp-kicker">PUBLICAÇÕES</span><div id="gallery" class="pp-grid" style="margin-top:12px"></div></section><section class="pp-section"><span class="pp-kicker">STORIES ATIVOS</span><div id="storyList" class="pp-stories"></div></section></main><script type="module" src="perfil-social.js?v=20260830-1"></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perfil do atleta | Banco de Dados de Atletas</title>
+<link rel="stylesheet" href="style.css?v=20260830-3">
+<link rel="stylesheet" href="home-social.css?v=20260830-4">
+<style>
+:root{--gold:#f2cc72;--gold2:#bd8425;--bg:#070908;--card:#0b100d;--line:rgba(217,169,63,.2)}
+.profile-page{min-height:100vh;background:var(--bg);color:#f5f0e4}.public-profile{max-width:1050px;margin:0 auto;padding:22px 18px 80px}
+.pp-back{color:var(--gold);text-decoration:none;font-size:10px;font-weight:900;display:inline-block;margin-bottom:12px}
+.pp-profile{overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 20px 60px rgba(0,0,0,.32)}
+.pp-cover{height:220px;background:#111713 center/cover no-repeat;position:relative}.pp-cover:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%,rgba(7,9,8,.88))}
+.pp-head{position:relative;display:grid;grid-template-columns:150px 1fr;gap:20px;padding:0 24px 24px;align-items:end}
+.pp-avatar{width:150px;height:150px;border-radius:50%;object-fit:cover;border:4px solid #0b100d;outline:2px solid var(--gold);background:#18221d;margin-top:-70px;position:relative;z-index:2}
+.pp-info{padding-top:16px}.pp-kicker{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:900}.pp-head h1{font-size:38px;line-height:1;margin:5px 0}.pp-meta{color:#9aa39b;font-size:11px;margin:6px 0}.pp-bio{white-space:pre-wrap;line-height:1.5;color:#c7cec8;max-width:680px}
+.pp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pp-btn{border:1px solid rgba(217,169,63,.32);background:#121914;color:var(--gold);padding:10px 14px;border-radius:10px;font-size:10px;font-weight:900;text-decoration:none;cursor:pointer}.pp-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}.pp-btn.following{background:#19221c;color:#fff}
+.pp-stats{display:flex;gap:22px;margin-top:14px}.pp-stat{font-size:11px;color:#aeb5ae}.pp-stat strong{display:block;color:#fff;font-size:18px}.pp-stat.clickable{cursor:pointer}
+.pp-section{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}.pp-tabs{display:flex;gap:6px;border-bottom:1px solid rgba(217,169,63,.12);margin:-2px -2px 14px;padding-bottom:10px}.pp-tab{border:0;background:transparent;color:#777f78;font-size:10px;font-weight:900;padding:9px 13px;border-radius:8px;cursor:pointer}.pp-tab.active{background:#18221d;color:var(--gold)}
+.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.pp-grid-item{position:relative;aspect-ratio:1;overflow:hidden;border-radius:9px;background:#050706}.pp-grid-item img,.pp-grid-item video{width:100%;height:100%;object-fit:cover}.pp-grid-item .type{position:absolute;right:7px;top:7px;background:rgba(0,0,0,.65);border-radius:99px;padding:5px 7px;font-size:10px}
+.pp-stories{display:flex;gap:9px;overflow:auto}.pp-story{width:95px;height:125px;object-fit:cover;border-radius:11px;border:1px solid rgba(217,169,63,.3);flex:0 0 auto}.pp-empty{padding:28px;text-align:center;color:#8f9891;font-size:11px}
+.pp-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:20px}.pp-modal.open{display:flex}.pp-modal-card{width:min(460px,100%);background:#0b100d;border:1px solid var(--line);border-radius:16px;padding:20px}.pp-modal-card h2{margin:0 0 14px;color:var(--gold)}.pp-user-list{display:grid;gap:8px;max-height:55vh;overflow:auto}.pp-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:#111713}.pp-user img{width:40px;height:40px;border-radius:50%;object-fit:cover}.pp-user strong{font-size:11px}.pp-close{float:right;background:transparent;border:0;color:var(--gold);font-size:20px;cursor:pointer}
+@media(max-width:700px){.public-profile{padding:12px}.pp-cover{height:160px}.pp-head{grid-template-columns:1fr;text-align:center;padding:0 15px 20px}.pp-avatar{margin:-58px auto 0}.pp-info{padding-top:10px}.pp-head h1{font-size:31px}.pp-actions{justify-content:center}.pp-stats{justify-content:center}.pp-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body class="profile-page">
+<header class="header">
+<a class="header-brand" href="index.html" style="text-decoration:none;color:inherit"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a>
+<div class="header-center">👤 &nbsp; PERFIL DO ATLETA</div>
+<div class="header-actions"><a class="championship-cta" href="index.html">🏠 FEED</a><a class="championship-cta" href="conta.html">◉ CONTA</a></div>
+</header>
+<main class="public-profile">
+<a class="pp-back" href="index.html">← VOLTAR AO FEED</a>
+<section class="pp-profile">
+<div id="cover" class="pp-cover"></div>
+<div class="pp-head">
+<img id="avatar" class="pp-avatar" alt="Foto do atleta">
+<div class="pp-info"><span class="pp-kicker">REDE ESPORTIVA</span><h1 id="name">Carregando...</h1><p id="meta" class="pp-meta"></p><p id="bio" class="pp-bio"></p>
+<div id="stats" class="pp-stats"><span class="pp-stat"><strong id="photos">0</strong>fotos</span><span class="pp-stat"><strong id="videos">0</strong>vídeos</span><span class="pp-stat"><strong id="stories">0</strong>stories</span><span id="followersStat" class="pp-stat clickable"><strong id="followers">0</strong>seguidores</span><span id="followingStat" class="pp-stat clickable"><strong id="following">0</strong>seguindo</span></div>
+<div id="actions" class="pp-actions"></div></div>
+</div></section>
+<section class="pp-section">
+<div class="pp-tabs"><button class="pp-tab active" data-tab="posts">▦ PUBLICAÇÕES</button><button class="pp-tab" data-tab="stories">◉ STORIES</button></div>
+<div id="gallery" class="pp-grid"></div><div id="storyList" class="pp-stories" hidden></div>
+</section>
+</main>
+<div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
+<script type="module" src="perfil-social.js?v=20260830-2"></script>
+</body></html>
