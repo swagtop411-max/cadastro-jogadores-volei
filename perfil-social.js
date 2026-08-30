@@ -155,31 +155,47 @@ function mediaSelected(file){
 async function publishSelectedMedia(){
  if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
  const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";
+ if(!button||!status)return;
  button.disabled=true;button.textContent="PUBLICANDO...";
- status.hidden=false;status.className="upload-status";status.textContent="Enviando mídia...";
+ status.hidden=false;status.className="upload-status";status.textContent="Preparando envio...";
  try{
-  const safeName=selectedFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const safeName=(selectedFile.name||"midia").replace(/[^a-zA-Z0-9._-]/g,"_").slice(-120);
   const mediaKind=selectedFile.type.startsWith("video/")?"video":"image";
-  const path="usuarios/"+uid+"/publicacoes/"+Date.now()+"_"+safeName;
-  const snap=await uploadBytes(ref(storage,path),selectedFile,{contentType:selectedFile.type});
+  const extension=safeName.includes(".")?safeName.split(".").pop():(mediaKind==="video"?"mp4":"jpg");
+  const fileName=Date.now()+"_"+crypto.randomUUID()+"."+extension;
+  const path="usuarios/"+uid+"/publicacoes/"+fileName;
+  const storageRef=ref(storage,path);
+  status.textContent="Enviando mídia...";
+  const snap=await uploadBytes(storageRef,selectedFile,{contentType:selectedFile.type});
+  status.textContent="Finalizando publicação...";
   const url=await getDownloadURL(snap.ref);
+  if(!url)throw new Error("O Firebase não retornou a URL da mídia.");
+
   if(publishType==="story"){
    await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,mediaType:mediaKind,mediaPath:path,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
   }else if(mediaKind==="image"){
-   await setDoc(doc(collection(db,"publicacoes")),{ownerUid:uid,ownerEmail:currentUser.email||"",nome:profile?.nome||currentUser.displayName||"Atleta",texto:caption||" ",imagem:url,imagemUrl:url,imagemPath:path,imagemMime:selectedFile.type,imagemTamanho:selectedFile.size,legenda:caption,tipo:"imagem",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+   const postRef=doc(collection(db,"publicacoes"));
+   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(selectedFile.type||"image/jpeg"),imagemTamanho:Number(selectedFile.size||0),legenda:String(caption),tipo:"imagem",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+   const verify=await getDoc(postRef);
+   if(!verify.exists())throw new Error("A publicação não foi confirmada pelo banco de dados.");
   }else{
-   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:profile?.nome||currentUser.displayName||"Atleta",videoUrl:url,videoPath:path,videoMime:selectedFile.type,videoTamanho:selectedFile.size,legenda:caption,criadoEm:serverTimestamp()});
+   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(selectedFile.type||"video/mp4"),videoTamanho:Number(selectedFile.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
   }
   status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":"Publicação realizada com sucesso!";
   await loadMedia();
-  setTimeout(()=>{closeMediaModal();resetComposer()},700);
+  setTimeout(()=>{closeMediaModal();resetComposer()},900);
  }catch(e){
-  console.error("Falha ao publicar:",e);
-  status.className="upload-status error";
-  status.textContent=e?.code==="storage/unauthorized"?"Sem permissão para enviar esta mídia.":e?.code==="permission-denied"?"O Firebase recusou a gravação da publicação. Atualize as regras do Firestore.":(e?.message||"Não foi possível publicar agora.");
- }finally{
-  button.disabled=false;button.textContent="PUBLICAR";
- }
+  console.error("Falha ao publicar mídia:",e);
+  const code=String(e?.code||"");
+  let message="Não foi possível publicar a mídia.";
+  if(code.includes("storage/unauthorized"))message="O Storage recusou o upload. Verifique as regras do Firebase Storage.";
+  else if(code.includes("storage/unauthenticated"))message="Sua sessão expirou. Entre novamente na conta.";
+  else if(code.includes("storage/quota-exceeded"))message="O armazenamento do Firebase atingiu o limite.";
+  else if(code.includes("storage/canceled"))message="O envio foi cancelado.";
+  else if(code.includes("permission-denied"))message="O Firestore recusou a publicação. Verifique as regras da coleção publicacoes.";
+  else if(e?.message)message=e.message;
+  status.className="upload-status error";status.textContent=message;alert(message);
+ }finally{button.disabled=false;button.textContent="PUBLICAR";}
 }
 $("cameraInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
 $("galleryInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
