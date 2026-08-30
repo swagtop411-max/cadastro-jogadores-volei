@@ -101,7 +101,7 @@ async function carregar(){
     render();
   }catch(e){console.error(e);$("rankingLista").innerHTML="<p class=\"ranking-vazio\">Não foi possível carregar o ranking.</p>"}
 }
-function iniciar(){const b=$("btnAbrirRanking"),x=$("btnFecharRanking"),d=$("rankingDrawer");if(!b||!d)return;b.addEventListener("click",abrir);x&&x.addEventListener("click",fechar);d.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fechar()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});const h=document.querySelector(".ranking-panel-head");if(h&&!$("rankingFiltros"))h.insertAdjacentHTML("afterend","<div id=\"rankingFiltros\" class=\"ranking-filtros\" aria-label=\"Filtros do ranking\"></div>")}
+function iniciar(){const b=$("btnAbrirRanking"),d=$("rankingDrawer")||garantirRankingDrawer(),x=$("btnFecharRanking");if(b)b.addEventListener("click",abrir);if(x)x.addEventListener("click",fechar);if(d)d.addEventListener("click",e=>{if(e.target.matches("[data-fechar-ranking]"))fechar()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fechar()});const h=document.querySelector(".ranking-panel-head");if(h&&!$("rankingFiltros"))h.insertAdjacentHTML("afterend","<div id=\"rankingFiltros\" class=\"ranking-filtros\" aria-label=\"Filtros do ranking\"></div>")}
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",iniciar,{once:true});else iniciar();
 
 
