@@ -164,11 +164,11 @@ async function publishSelectedMedia(){
   const snap=await uploadBytes(ref(storage,path),selectedFile,{contentType:selectedFile.type});
   const url=await getDownloadURL(snap.ref);
   if(publishType==="story"){
-   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
+   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,mediaType:mediaKind,mediaPath:path,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
   }else if(mediaKind==="image"){
-   await setDoc(doc(collection(db,"publicacoes")),{ownerUid:uid,imagemUrl:url,legenda:caption,tipo:"imagem",aprovado:true,criadoEm:serverTimestamp()});
+   await setDoc(doc(collection(db,"publicacoes")),{ownerUid:uid,ownerEmail:currentUser.email||"",nome:profile?.nome||currentUser.displayName||"Atleta",texto:caption||" ",imagem:url,imagemUrl:url,imagemPath:path,imagemMime:selectedFile.type,imagemTamanho:selectedFile.size,legenda:caption,tipo:"imagem",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
   }else{
-   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,videoUrl:url,legenda:caption,tipo:"video",aprovado:true,criadoEm:serverTimestamp()});
+   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:profile?.nome||currentUser.displayName||"Atleta",videoUrl:url,videoPath:path,videoMime:selectedFile.type,videoTamanho:selectedFile.size,legenda:caption,criadoEm:serverTimestamp()});
   }
   status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":"Publicação realizada com sucesso!";
   await loadMedia();
@@ -176,7 +176,7 @@ async function publishSelectedMedia(){
  }catch(e){
   console.error("Falha ao publicar:",e);
   status.className="upload-status error";
-  status.textContent=e?.code==="storage/unauthorized"?"Sem permissão para enviar esta mídia.":(e?.message||"Não foi possível publicar agora.");
+  status.textContent=e?.code==="storage/unauthorized"?"Sem permissão para enviar esta mídia.":e?.code==="permission-denied"?"O Firebase recusou a gravação da publicação. Atualize as regras do Firestore.":(e?.message||"Não foi possível publicar agora.");
  }finally{
   button.disabled=false;button.textContent="PUBLICAR";
  }
