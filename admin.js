@@ -153,119 +153,75 @@ async function loadReivindicacoes() {
   if (!lista) return;
 
   try {
-    const [claimsSnapshot, athletesSnapshot, profilesSnapshot, usersSnapshot] = await Promise.all([
+    // Fonte canônica: somente "atletas". Isso evita duplicação histórica
+    // causada pela mistura com coleções auxiliares.
+    const [claimsSnapshot, athletesSnapshot] = await Promise.all([
       getDocs(collection(db, "reivindicacoes_perfis")),
-      getDocs(collection(db, "atletas")),
-      getDocs(collection(db, "perfis")),
-      getDocs(collection(db, "usuarios"))
+      getDocs(collection(db, "atletas"))
     ]);
 
-    const claims = claimsSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
-    const athletes = athletesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
-    const profiles = profilesSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
-    const users = usersSnapshot.docs.map(d => ({id:d.id, ...d.data()}));
-    const userByUid = new Map(users.map(u => [String(u.id), u]));
+    const claims = claimsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const athletes = athletesSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    const norm = v => String(v || "").trim().toLowerCase();
 
     const approvedByProfile = new Map();
     claims
-      .filter(c => c.status === "aprovada" && c.perfilId)
+      .filter(c => norm(c.status) === "aprovada" && c.perfilId)
       .sort((a,b) => String(a.id).localeCompare(String(b.id)))
       .forEach(c => {
         const key = String(c.perfilId);
         if (!approvedByProfile.has(key)) approvedByProfile.set(key, c);
       });
 
-    // A coleção atletas é a fonte canônica. Cada atleta entra exatamente uma vez.
-    const athleteRows = [];
-    const athleteIds = new Set();
-    const athleteUids = new Set();
-    const athleteEmails = new Set();
-    const athleteNameLocations = new Set();
+    // Cada documento de "atletas" aparece exatamente uma vez.
+    const uniqueAthletes = [];
+    const seenIds = new Set();
 
     athletes.forEach(a => {
-      const id = String(a.id);
-      if (athleteIds.has(id)) return;
+      const id = String(a.id || "");
+      if (!id || seenIds.has(id)) return;
+      seenIds.add(id);
 
       const approvedClaim = approvedByProfile.get(id);
-      const ownerUid = String(a.ownerUid || approvedClaim?.solicitanteUid || "");
-      const ownerUser = ownerUid ? (userByUid.get(ownerUid) || {}) : {};
-      const email = String(a.ownerEmail || ownerUser.email || approvedClaim?.solicitanteEmail || "");
+      const ownerUid = String(a.ownerUid || "");
+      const ownerEmail = String(a.ownerEmail || approvedClaim?.solicitanteEmail || "");
 
-      const row = {
+      uniqueAthletes.push({
         kind: "atleta",
-        id: a.id,
+        id,
         nome: a.nome || "Sem nome",
-        profileUid: a.uid || a.id,
-        uid: ownerUid || a.id,
-        email: email || "Sem e-mail",
-        claimed: !!a.ownerUid || !!approvedClaim,
+        profileUid: a.uid || id,
+        uid: ownerUid || id,
+        email: ownerEmail || "Sem e-mail",
+        claimed: Boolean(ownerUid) || Boolean(approvedClaim),
         location: [a.cidade, a.uf].filter(Boolean).join(" · "),
-        claim: approvedClaim
-      };
-
-      athleteRows.push(row);
-      athleteIds.add(id);
-      if (a.uid) athleteUids.add(String(a.uid));
-      if (ownerUid) athleteUids.add(ownerUid);
-      if (email) athleteEmails.add(email.toLowerCase());
-      const nameLocation = String((a.nome||"") + "|" + (a.cidade||"") + "|" + (a.uf||"")).trim().toLowerCase();
-      if (nameLocation !== "||") athleteNameLocations.add(nameLocation);
-    });
-
-    // Estas duas listas são derivadas somente do estado real do atleta.
-    const claimed = athleteRows
-      .filter(x => x.claimed)
-      .sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
-
-    const unclaimed = athleteRows
-      .filter(x => !x.claimed)
-      .sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
-
-    // A aba Todos pode incluir perfis auxiliares, mas somente se não corresponderem
-    // a um atleta por ID, UID ou e-mail. Isso elimina a duplicação histórica.
-    const all = [...athleteRows];
-    const seenExtraKeys = new Set();
-
-    profiles.forEach(p => {
-      const pId = String(p.id || "");
-      const pUid = String(p.uid || p.ownerUid || "");
-      const pEmail = String(p.email || "").trim().toLowerCase();
-
-      const profileNameLocation = String((p.nome||"") + "|" + (p.cidade||"") + "|" + (p.uf||"")).trim().toLowerCase();
-      const matchesAthlete =
-        athleteIds.has(pId) ||
-        (pUid && athleteUids.has(pUid)) ||
-        (pEmail && athleteEmails.has(pEmail)) ||
-        (profileNameLocation !== "||" && athleteNameLocations.has(profileNameLocation));
-
-      if (matchesAthlete) return;
-
-      const extraKey = "profile:" + (pId || pUid || pEmail);
-      if (seenExtraKeys.has(extraKey)) return;
-      seenExtraKeys.add(extraKey);
-
-      const user = pUid ? (userByUid.get(pUid) || {}) : {};
-      all.push({
-        kind: "conta",
-        id: p.id,
-        nome: p.nome || user.nome || "Sem nome",
-        profileUid: p.uid || p.id,
-        uid: pUid || p.id,
-        email: p.email || user.email || "Sem e-mail",
-        claimed: !!p.ownerUid || !!pUid,
-        location: [p.cidade, p.uf].filter(Boolean).join(" · ")
+        ownerUid,
+        claim: approvedClaim,
+        raw: a
       });
     });
 
-    all.sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
+    uniqueAthletes.sort((a,b) => String(a.nome).localeCompare(String(b.nome), "pt-BR"));
 
-    if (badge) badge.textContent = String(claims.filter(c => String(c.status || "").trim().toLowerCase() === "pendente").length);
+    const claimed = uniqueAthletes.filter(x => x.claimed);
+    const unclaimed = uniqueAthletes.filter(x => !x.claimed);
+    const all = uniqueAthletes;
+
+    const pending = claims
+      .filter(c => norm(c.status) === "pendente")
+      .map(c => ({...c, resolvedPerfilId: String(c.perfilId || "")}));
+
+    if (badge) badge.textContent = String(pending.length);
 
     const claimAction = row => {
-      if (!row.claimed || row.kind !== "atleta") return "";
-      const profileClaims = claims.filter(c => String(c.perfilId||"") === String(row.id));
-      const activeClaim = profileClaims.find(c => c.status === "aprovada") || profileClaims[0];
-      return '<button type="button" class="claim-delete" data-delete-profile="'+esc(row.id)+'" data-delete-claim="'+esc(activeClaim?.id||"")+'">🗑️ EXCLUIR REIVINDICAÇÃO</button>';
+      if (!row.claimed) return "";
+      const profileClaims = claims
+        .filter(c => String(c.perfilId || "") === String(row.id))
+        .sort((a,b) => norm(a.status) === "aprovada" ? -1 : norm(b.status) === "aprovada" ? 1 : String(a.id).localeCompare(String(b.id)));
+      const activeClaim = profileClaims[0];
+      return '<button type="button" class="claim-delete" data-delete-profile="' +
+        esc(row.id) + '" data-delete-claim="' + esc(activeClaim?.id || "") +
+        '">🗑️ EXCLUIR REIVINDICAÇÃO</button>';
     };
 
     const todos = $("claimTodosPerfis");
@@ -277,105 +233,146 @@ async function loadReivindicacoes() {
         ? all.map(row => renderClaimProfile(row, claimAction(row))).join("")
         : '<p class="subtitulo">Nenhum perfil encontrado.</p>';
     }
-
     if (reivindicados) {
       reivindicados.innerHTML = claimed.length
         ? claimed.map(row => renderClaimProfile(row, claimAction(row))).join("")
         : '<p class="subtitulo">Nenhum perfil reivindicado.</p>';
     }
-
     if (naoReivindicados) {
       naoReivindicados.innerHTML = unclaimed.length
         ? unclaimed.map(row => renderClaimProfile(row)).join("")
         : '<p class="subtitulo">Não existem mais perfis disponíveis para reivindicação.</p>';
     }
 
-    // Solicitações pendentes são exibidas mesmo quando o cadastro antigo
-    // guardou o UID do perfil em vez do ID do documento.
-    const athleteById = new Map(athletes.map(a => [String(a.id), a]));
-    const athleteByUid = new Map(athletes.map(a => [String(a.uid || ""), a]).filter(([k]) => k));
-    const profileById = new Map(profiles.map(p => [String(p.id), p]));
-    const profileByUid = new Map(profiles.map(p => [String(p.uid || ""), p]).filter(([k]) => k));
-
+    // Índices para resolver a solicitação mesmo se o sistema antigo
+    // tiver gravado UID em vez do ID do documento.
+    const athleteById = new Map(uniqueAthletes.map(a => [String(a.id), a]));
+    const athleteByUid = new Map(
+      uniqueAthletes.filter(a => a.raw?.uid).map(a => [String(a.raw.uid), a])
+    );
     const resolveClaimAthlete = claim => {
-      const key = String(claim.perfilId || claim.profileId || claim.uid || "");
+      const key = String(
+        claim.perfilId || claim.profileId || claim.uid || claim.perfilUid || ""
+      ).trim();
       return athleteById.get(key)
         || athleteByUid.get(key)
-        || athletes.find(a => String(a.nome || "").trim().toLowerCase() === String(claim.perfilNome || "").trim().toLowerCase())
+        || uniqueAthletes.find(a =>
+          String(a.nome || "").trim().toLowerCase() ===
+          String(claim.perfilNome || "").trim().toLowerCase()
+        )
         || null;
     };
 
-    const pending = claims
-      .filter(c => String(c.status || "").trim().toLowerCase() === "pendente")
-      .map(c => ({...c, athlete: resolveClaimAthlete(c)}))
-      .filter(c => c.athlete && !c.athlete.ownerUid)
-      .map(c => ({...c, resolvedPerfilId: String(c.athlete.id)}));
+    // TODA solicitação pendente aparece para o administrador.
+    // Não filtramos por ownerUid, pois isso fazia o contador mostrar 1
+    // enquanto a solicitação desaparecia da lista.
+    const pendingResolved = pending.map(c => ({
+      ...c,
+      athlete: resolveClaimAthlete(c),
+      resolvedPerfilId: resolveClaimAthlete(c)?.id || c.perfilId || ""
+    }));
 
-    const rejected = claims.filter(c => String(c.status || "").trim().toLowerCase() === "recusada");
+    const rejected = claims.filter(c => norm(c.status) === "recusada");
 
-    const pendingHtml = pending.length
-      ? pending.map(claim =>
-          '<article class="atleta-admin claim-card">'+
-          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||claim.athlete?.nome||"Perfil sem nome")+'</strong>'+
-          '<span>Solicitante: '+esc(claim.solicitanteNome||"Nome não informado")+'</span>'+
-          '<small>'+esc(claim.solicitanteEmail||"E-mail não informado")+' · UID: '+esc(claim.solicitanteUid||"não informado")+'</small>'+ 
-          '<small>Perfil: '+esc(claim.resolvedPerfilId||claim.perfilId||"não informado")+'</small></div>'+
-          '<div class="atleta-actions">'+
-          '<button class="btn-primary claim-approve" data-id="'+esc(claim.id)+'" type="button">Vincular e aprovar</button>'+
-          '<button class="btn-danger claim-reject" data-id="'+esc(claim.id)+'" type="button">Recusar</button>'+
-          '<button class="claim-delete" data-delete-profile="'+esc(claim.resolvedPerfilId||claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button>'+
-          '</div></article>'
-        ).join("")
+    const pendingHtml = pendingResolved.length
+      ? pendingResolved.map(claim => {
+          const athlete = claim.athlete;
+          const conflict = Boolean(athlete?.ownerUid);
+          const approve = athlete
+            ? (conflict
+              ? '<button class="btn-secondary" type="button" disabled>⚠️ PERFIL JÁ VINCULADO</button>'
+              : '<button class="btn-primary claim-approve" data-id="' + esc(claim.id) + '" type="button">✅ VINCULAR E APROVAR</button>')
+            : '<button class="btn-secondary" type="button" disabled>⚠️ PERFIL NÃO ENCONTRADO</button>';
+
+          return '<article class="atleta-admin claim-card">' +
+            '<div class="atleta-info">' +
+              '<strong>' + esc(claim.perfilNome || athlete?.nome || "Perfil sem nome") + '</strong>' +
+              '<span>Solicitante: ' + esc(claim.solicitanteNome || "Nome não informado") + '</span>' +
+              '<small>E-mail: ' + esc(claim.solicitanteEmail || "E-mail não informado") + '</small>' +
+              '<small>UID da conta: ' + esc(claim.solicitanteUid || "não informado") + '</small>' +
+              '<small>UID/ID do perfil: ' + esc(claim.resolvedPerfilId || "não encontrado") + '</small>' +
+              (conflict ? '<small style="color:#f2a48f;font-weight:800">⚠️ Este perfil já possui ownerUid. Confira antes de aprovar.</small>' : '') +
+            '</div>' +
+            '<div class="atleta-actions">' +
+              approve +
+              '<button class="btn-danger claim-reject" data-id="' + esc(claim.id) + '" type="button">❌ RECUSAR</button>' +
+              '<button class="claim-delete" data-delete-profile="' + esc(claim.resolvedPerfilId || "") + '" data-delete-claim="' + esc(claim.id) + '" type="button">🗑️ EXCLUIR SOLICITAÇÃO</button>' +
+            '</div>' +
+          '</article>';
+        }).join("")
       : '<p class="subtitulo">Nenhuma reivindicação pendente.</p>';
 
     const rejectedHtml = rejected.length
-      ? '<div class="claim-rejected-list"><h3>Solicitações recusadas</h3>'+
+      ? '<div class="claim-rejected-list"><h3>Solicitações recusadas</h3>' +
         rejected.map(claim =>
-          '<article class="atleta-admin claim-card">'+
-          '<div class="atleta-info"><strong>'+esc(claim.perfilNome||"Perfil sem nome")+'</strong>'+
-          '<span>'+esc(claim.solicitanteNome||"Solicitante não informado")+' · '+esc(claim.solicitanteEmail||"E-mail não informado")+'</span></div>'+
-          '<div class="atleta-actions"><button class="claim-delete" data-delete-profile="'+esc(claim.perfilId||"")+'" data-delete-claim="'+esc(claim.id)+'" type="button">🗑️ EXCLUIR REIVINDICAÇÃO</button></div>'+
+          '<article class="atleta-admin claim-card">' +
+            '<div class="atleta-info">' +
+              '<strong>' + esc(claim.perfilNome || "Perfil sem nome") + '</strong>' +
+              '<span>' + esc(claim.solicitanteNome || "Solicitante não informado") + ' · ' + esc(claim.solicitanteEmail || "E-mail não informado") + '</span>' +
+              '<small>UID da conta: ' + esc(claim.solicitanteUid || "não informado") + '</small>' +
+            '</div>' +
+            '<div class="atleta-actions"><button class="claim-delete" data-delete-profile="' + esc(claim.perfilId || "") + '" data-delete-claim="' + esc(claim.id) + '" type="button">🗑️ EXCLUIR SOLICITAÇÃO</button></div>' +
           '</article>'
-        ).join("")+
+        ).join("") +
         '</div>'
       : "";
 
     lista.innerHTML =
-      '<div class="pending-claims"><h3>Solicitações aguardando análise ('+pending.length+')</h3>'+
-      pendingHtml+rejectedHtml+'</div>';
+      '<div class="pending-claims">' +
+        '<h3>🔔 Solicitações aguardando análise (' + pendingResolved.length + ')</h3>' +
+        '<p class="subtitulo">Solicitações feitas pelos atletas para análise e aprovação do administrador.</p>' +
+        pendingHtml +
+        rejectedHtml +
+      '</div>';
 
-    document.querySelectorAll("[data-delete-profile]").forEach(button => {
-      button.onclick = () => excluirReivindicacao(button.dataset.deleteProfile, button.dataset.deleteClaim || "");
+    lista.querySelectorAll("[data-delete-profile]").forEach(button => {
+      button.onclick = () => excluirReivindicacao(
+        button.dataset.deleteProfile || "",
+        button.dataset.deleteClaim || ""
+      );
     });
 
     lista.querySelectorAll(".claim-approve").forEach(button => {
-      const claim = pending.find(c => c.id === button.dataset.id);
+      const claim = pendingResolved.find(c => c.id === button.dataset.id);
       button.onclick = () => aprovarReivindicacao(claim);
     });
 
     lista.querySelectorAll(".claim-reject").forEach(button => {
-      const claim = pending.find(c => c.id === button.dataset.id);
+      const claim = pendingResolved.find(c => c.id === button.dataset.id);
       button.onclick = () => recusarReivindicacao(claim);
+    });
+
+    document.querySelectorAll("[data-delete-profile]").forEach(button => {
+      if (button.closest("#reivindicacoesLista")) return;
+      button.onclick = () => excluirReivindicacao(
+        button.dataset.deleteProfile || "",
+        button.dataset.deleteClaim || ""
+      );
     });
 
     status(
       $("reivindicacoesStatus"),
-      pending.length+" solicitação"+(pending.length===1?"":"ões")+" pendente"+(pending.length===1?"":"s")+
-      "; "+unclaimed.length+" perfil"+(unclaimed.length===1?"":"is")+" ainda não reivindicado"+(unclaimed.length===1?"":"s")+"."
+      pendingResolved.length + " solicitação" + (pendingResolved.length === 1 ? "" : "ões") +
+      " pendente" + (pendingResolved.length === 1 ? "" : "s") +
+      "; " + unclaimed.length + " perfil" + (unclaimed.length === 1 ? "" : "is") +
+      " ainda não reivindicado" + (unclaimed.length === 1 ? "" : "s") + "."
     );
 
     bindClaimTabs();
 
-    const current = document.querySelector("[data-claim-tab].active");
-    const target = current?.dataset.claimTab || "todosPerfis";
-    const targetButton = document.querySelector('[data-claim-tab="'+target+'"]') ||
-                         document.querySelector('[data-claim-tab="todosPerfis"]');
+    const activeButton = document.querySelector(".claim-admin-tabs [data-claim-tab].active");
+    const currentTarget = activeButton?.dataset.claimTab || "claimTodosPerfis";
+    const targetButton = document.querySelector(
+      '.claim-admin-tabs [data-claim-tab="' + currentTarget + '"]'
+    ) || document.querySelector(
+      '.claim-admin-tabs [data-claim-tab="claimTodosPerfis"]'
+    );
     if (targetButton) targetButton.click();
 
   } catch (error) {
     console.error("Erro ao carregar reivindicações:", error);
     if (badge) badge.textContent = "!";
-    status($("reivindicacoesStatus"), "Não foi possível carregar os perfis ("+(error.code||"erro")+").", "erro");
+    status($("reivindicacoesStatus"), "Não foi possível carregar os perfis (" + (error.code || "erro") + ").", "erro");
   }
 }
 
