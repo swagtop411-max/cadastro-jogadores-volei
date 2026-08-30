@@ -47,3 +47,15 @@ const btnEquipes=$("btnAbrirEquipes"),btnFecharEquipes=$("btnFecharEquipes"),equ
 function abrirEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.add("aberto");equipesDrawer.setAttribute("aria-hidden","false");btnEquipes?.setAttribute("aria-expanded","true");document.body.classList.add("equipes-open");if(!equipes.length)carregarEquipes()}
 function fecharEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.remove("aberto");equipesDrawer.setAttribute("aria-hidden","true");btnEquipes?.setAttribute("aria-expanded","false");document.body.classList.remove("equipes-open")}
 btnEquipes?.addEventListener("click",abrirEquipes);window.abrirEquipes=abrirEquipes;window.fecharEquipes=fecharEquipes;btnFecharEquipes?.addEventListener("click",fecharEquipes);equipesDrawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-equipes]"))fecharEquipes()});document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharEquipes()});
+
+
+/* HISTORICO-CAMPEONATOS-DEDUPE-V1 */
+(()=>{
+const normHistorico=v=>String(v??"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ");
+const pontosHistorico=v=>{const s=normHistorico(v);if(/(^|\s)(1[ºo°]?|primeiro|campeao)/.test(s))return 100;if(/(^|\s)(2[ºo°]?|segundo)/.test(s))return 80;if(/(^|\s)(3[ºo°]?|terceiro)/.test(s))return 65;if(/(^|\s)(4[ºo°]?|quarto)/.test(s))return 55;if(/(^|\s)[5-8][ºo°]?/.test(s))return 40;if(/(^|\s)(9|10|11|12|13|14|15|16|17|18|19|20)[ºo°]?/.test(s))return 25;return 10};
+const chave=row=>[...row.querySelectorAll(".campeonato-nome,.campeonato-colocacao,.campeonato-ano")].map(x=>normHistorico(x.value)).join("|");
+const limpar=()=>{const box=document.getElementById("campeonatosLista");if(!box)return;const rows=[...box.querySelectorAll(":scope > .campeonato-row")],seen=new Set();rows.forEach(row=>{const key=chave(row);if(seen.has(key))row.remove();else seen.add(key)});const remaining=[...box.querySelectorAll(":scope > .campeonato-row")];const total=remaining.reduce((sum,row)=>sum+pontosHistorico(row.querySelector(".campeonato-colocacao")?.value),0);const totalBox=document.getElementById("historicoPontosTotal");if(totalBox)totalBox.textContent=total+" PTS"};
+const observar=()=>{const box=document.getElementById("campeonatosLista");if(!box||box.dataset.historicoDedupeInit)return;box.dataset.historicoDedupeInit="1";new MutationObserver(()=>{queueMicrotask(limpar)}).observe(box,{childList:true,subtree:true});limpar()};
+document.addEventListener("click",e=>{if(e.target?.id==="saveProfile")limpar()},true);
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(observar,0),{once:true});else setTimeout(observar,0);setTimeout(observar,250);setTimeout(observar,1000);setTimeout(observar,2500);
+})();
