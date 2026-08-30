@@ -17,3 +17,33 @@ html,body{width:100%;max-width:100%;overflow-x:hidden!important}
 .equipes-panel{position:fixed!important;top:0!important;right:0!important;bottom:0!important;left:auto!important;width:min(720px,96vw)!important;height:100vh!important;max-height:100vh!important;transform:translateX(105%)!important;will-change:transform!important}
 .equipes-drawer.aberto .equipes-panel{transform:translateX(0)!important}
 @media(max-width:700px){.equipes-panel{width:100vw!important;max-width:100vw!important}}
+
+/* CORREÇÃO DEFINITIVA: a lateral de apoiadores não possui rolagem própria.
+   A página inteira é a única responsável pela rolagem vertical. */
+html,body{overflow-x:hidden!important}
+.public-layout,.public-layout>.sponsors-sidebar,.sponsors-sidebar,.sponsors-list,.sponsor-card,
+.apoiadores-sidebar,.apoiadores-list,.apoio-sponsor-list{
+  overflow-x:hidden!important;
+  overflow-y:visible!important;
+  max-height:none!important;
+  height:auto!important;
+  min-height:0!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.public-layout>.sponsors-sidebar,.sponsors-sidebar{
+  position:sticky!important;
+  top:92px!important;
+  align-self:start!important;
+}
+.sponsors-sidebar::-webkit-scrollbar,
+.sponsors-list::-webkit-scrollbar,
+.sponsor-card::-webkit-scrollbar,
+.apoiadores-sidebar::-webkit-scrollbar,
+.apoiadores-list::-webkit-scrollbar,
+.apoio-sponsor-list::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
+.sponsor-card,.sponsor-card img{max-width:100%!important;box-sizing:border-box!important}
