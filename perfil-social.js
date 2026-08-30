@@ -100,13 +100,21 @@ function openPublishModal(){const m=$("publishModal");if(!m)return;m.classList.a
 function closePublishModal(){const m=$("publishModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true")}
 function openMediaModal(type){publishType=type;closePublishModal();resetComposer();const m=$("mediaModal");if(!m)return;$("mediaTitle").textContent=type==="story"?"Adicionar mídia ao Story":"Adicionar mídia ao Feed";m.classList.add("open");m.setAttribute("aria-hidden","false")}
 function closeMediaModal(){const m=$("mediaModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true");resetComposer()}
-document.querySelectorAll(".publish-choice").forEach(b=>b.addEventListener("click",()=>openMediaModal(b.dataset.publishType)));
-$("closePublish")?.addEventListener("click",closePublishModal);
-$("closeMedia")?.addEventListener("click",closeMediaModal);
+document.addEventListener("click",e=>{
+ const b=e.target.closest?.(".publish-choice,#closePublish,#closeMedia,#cameraBtn,#galleryBtn");
+ if(!b)return;
+ if(b.classList.contains("publish-choice")){e.preventDefault();openMediaModal(b.dataset.publishType);return}
+ if(b.id==="closePublish"){e.preventDefault();closePublishModal();return}
+ if(b.id==="closeMedia"){e.preventDefault();closeMediaModal();return}
+ if(b.id==="cameraBtn"||b.id==="galleryBtn"){
+  e.preventDefault();e.stopPropagation();
+  const input=$(b.id==="cameraBtn"?"cameraInput":"galleryInput");
+  if(!input){console.error("Input de mídia não encontrado:",b.id);return}
+  try{if(typeof input.showPicker==="function")input.showPicker();else input.click()}catch(err){try{input.click()}catch(err2){console.error("Não foi possível abrir seletor de mídia:",err2)}}
+ }
+},true);
 $("publishModal")?.addEventListener("click",e=>{if(e.target.id==="publishModal")closePublishModal()});
 $("mediaModal")?.addEventListener("click",e=>{if(e.target.id==="mediaModal")closeMediaModal()});
-$("cameraBtn")?.addEventListener("click",()=>$("cameraInput")?.click());
-$("galleryBtn")?.addEventListener("click",()=>$("galleryInput")?.click());
 function resetComposer(){
  selectedFile=null;
  if(selectedPreviewUrl){URL.revokeObjectURL(selectedPreviewUrl);selectedPreviewUrl=null}
@@ -244,30 +252,9 @@ document.addEventListener("change",e=>{
  }
 });
 document.addEventListener("click",e=>{
- const button=e.target.closest?.("#cameraBtn,#galleryBtn,#changeMediaBtn,#postMediaBtn");
+ const button=e.target.closest?.("#changeMediaBtn,#postMediaBtn");
  if(!button)return;
- if(button.id==="cameraBtn"){
-   e.preventDefault();
-   e.stopPropagation();
-   const input=$("cameraInput");
-   if(input){try{input.click()}catch(err){console.error("Falha ao abrir câmera:",err)}}
-   return;
- }
- if(button.id==="galleryBtn"){
-   e.preventDefault();
-   e.stopPropagation();
-   const input=$("galleryInput");
-   if(input){try{input.click()}catch(err){console.error("Falha ao abrir galeria:",err)}}
-   return;
- }
- if(button.id==="changeMediaBtn"){
-   e.preventDefault();
-   resetComposer();
-   return;
- }
- if(button.id==="postMediaBtn"){
-   e.preventDefault();
-   if(button.disabled)return;
-   publishSelectedMedia();
- }
-},true);
+ e.preventDefault();
+ if(button.id==="changeMediaBtn"){resetComposer();return}
+ if(button.id==="postMediaBtn"){if(button.disabled)return;void publishSelectedMedia()}
+},false);
