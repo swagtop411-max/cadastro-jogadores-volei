@@ -3,7 +3,54 @@ const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9CO",authDomain:"jogadores
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML},norm=v=>String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 const pontos=v=>{const s=norm(v);if(/campe|(^|\s)1[ºo°]?|primeiro/.test(s))return 100;if(/(^|\s)2[ºo°]?|segundo/.test(s))return 80;if(/(^|\s)3[ºo°]?|terceiro/.test(s))return 65;if(/(^|\s)4[ºo°]?|quarto/.test(s))return 55;if(/(^|\s)[5-8][ºo°]?/.test(s))return 40;if(/(^|\s)(9|10|11|12|13|14|15|16)[ºo°]?/.test(s))return 25;return 10};
 let atletas=[],filtro={periodo:"geral",ano:"",categoria:"",modalidade:""},carregamentoRanking=null;
-function montar(){const mapa=new Map();atletas.forEach(a=>{let total=0,participacoes=0;const hist=Array.isArray(a.historicoCampeonatos)?a.historicoCampeonatos:[];hist.forEach(h=>{const ano=String(h.ano||"");if(filtro.ano&&ano!==filtro.ano)return;if(filtro.categoria&&norm(a.categoria)!==norm(filtro.categoria))return;if(filtro.modalidade&&!(Array.isArray(a.modalidades)?a.modalidades:[]).some(m=>norm(m)===norm(filtro.modalidade)))return;total+=pontos(h.colocacao);participacoes++});if(total)mapa.set(a.id,{...a,pontos:total,participacoes})});return[...mapa.values()].sort((a,b)=>b.pontos-a.pontos||b.participacoes-a.participacoes||a.nome.localeCompare(b.nome,"pt-BR"))}
+function chaveAtleta(a){
+  const nome=norm(a.nome);
+  const cidade=norm(a.cidade);
+  const nascimento=String(a.dataNascimento||a.nascimento||"").trim();
+  const uid=String(a.uid||a.ownerUid||"").trim();
+  const legado=String(a.legadoAtletaId||"").trim();
+  if(legado)return "legado:"+legado;
+  if(uid)return "uid:"+uid;
+  return "nome:"+nome+"|cidade:"+cidade+"|nascimento:"+nascimento;
+}
+function unificarAtletas(){
+  const mapa=new Map();
+  atletas.forEach(a=>{
+    const chave=chaveAtleta(a);
+    const existente=mapa.get(chave);
+    if(!existente){mapa.set(chave,{...a});return}
+    const historicoA=Array.isArray(existente.historicoCampeonatos)?existente.historicoCampeonatos:[];
+    const historicoB=Array.isArray(a.historicoCampeonatos)?a.historicoCampeonatos:[];
+    const historico=historicoB.length>=historicoA.length?historicoB:historicoA;
+    const modalidades=[...(Array.isArray(existente.modalidades)?existente.modalidades:[]),...(Array.isArray(a.modalidades)?a.modalidades:[])].filter(Boolean);
+    mapa.set(chave,{...existente,...a,
+      id:existente.id||a.id,
+      nome:existente.nome||a.nome,
+      cidade:existente.cidade||a.cidade,
+      categoria:existente.categoria||a.categoria,
+      historicoCampeonatos:historico,
+      modalidades:[...new Set(modalidades)]
+    });
+  });
+  return [...mapa.values()];
+}
+function montar(){
+  const mapa=new Map();
+  unificarAtletas().forEach(a=>{
+    let total=0,participacoes=0;
+    const hist=Array.isArray(a.historicoCampeonatos)?a.historicoCampeonatos:[];
+    hist.forEach(h=>{
+      const ano=String(h.ano||"");
+      if(filtro.ano&&ano!==filtro.ano)return;
+      if(filtro.categoria&&norm(a.categoria)!==norm(filtro.categoria))return;
+      if(filtro.modalidade&&!(Array.isArray(a.modalidades)?a.modalidades:[]).some(m=>norm(m)===norm(filtro.modalidade)))return;
+      total+=pontos(h.colocacao);
+      participacoes++;
+    });
+    if(total)mapa.set(chaveAtleta(a),{...a,pontos:total,participacoes});
+  });
+  return[...mapa.values()].sort((a,b)=>b.pontos-a.pontos||b.participacoes-a.participacoes||a.nome.localeCompare(b.nome,"pt-BR"));
+}
 function render(){const box=$("rankingLista"),arr=montar();if(!box)return;const top=arr.slice(0,3),rest=arr.slice(3);if(!arr.length){box.innerHTML="<p class=\"ranking-vazio\">Ainda não há pontuação para os filtros selecionados.</p>";return}const podio=top.map((a,i)=>"<article class=\"ranking-podio p"+(i+1)+"\"><div class=\"podio-lugar\">"+(i+1)+"º</div><div class=\"podio-nome\">"+esc(a.nome)+"</div><small>"+a.participacoes+" campeonato"+(a.participacoes===1?"":"s")+"</small><strong>"+a.pontos+"<em> PTS</em></strong></article>").join("");const lista=rest.map((a,i)=>"<article class=\"ranking-item\"><div class=\"ranking-posicao\">"+(i+4)+"º</div><div class=\"ranking-atleta\"><strong>"+esc(a.nome)+"</strong><small>"+esc(a.cidade||"Cidade não informada")+" · "+a.participacoes+" campeonato"+(a.participacoes===1?"":"s")+"</small></div><div class=\"ranking-pontos\">"+a.pontos+"<small>PONTOS</small></div></article>").join("");box.innerHTML="<div class=\"ranking-top3\">"+podio+"</div><div class=\"ranking-restante\">"+lista+"</div>"}
 async function garantirCarregamento(){if(carregamentoRanking)return carregamentoRanking;carregamentoRanking=carregar();return carregamentoRanking}async function abrir(){const d=$("rankingDrawer");if(!d)return;d.classList.add("aberto");d.setAttribute("aria-hidden","false");document.body.style.overflow="hidden";const box=$("rankingLista");if(box)box.innerHTML="<p class=\"ranking-loading\">Carregando ranking...</p>";await garantirCarregamento();render()}function fechar(){const d=$("rankingDrawer");if(!d)return;d.classList.remove("aberto");d.setAttribute("aria-hidden","true");document.body.style.overflow=""}
 async function carregar(){
