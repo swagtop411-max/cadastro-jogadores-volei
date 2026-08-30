@@ -11,6 +11,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   doc,
+  getDoc,
   getFirestore,
   serverTimestamp,
   setDoc
@@ -119,6 +120,21 @@ function showTab(name) {
   registerForm.classList.toggle("hidden", !isRegister);
   logged.classList.add("hidden");
   setStatus("");
+}
+
+async function redirectToProfileIfNeeded(user, forceOnRegister = false) {
+  if (forceOnRegister) {
+    location.href = "meu-perfil.html?novo=1";
+    return;
+  }
+  try {
+    const profileSnap = await getDoc(doc(db, "perfis", user.uid));
+    if (!profileSnap.exists() || !profileSnap.data()?.nome || !profileSnap.data()?.cidade || !profileSnap.data()?.uf) {
+      location.href = "meu-perfil.html?novo=1";
+    }
+  } catch (error) {
+    console.warn("Não foi possível verificar o perfil:", error);
+  }
 }
 
 function showLogged(user) {
@@ -243,8 +259,9 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Não foi possível enviar o e-mail de verificação agora:", verificationError);
     }
 
-    setStatus("Conta criada com sucesso! Você já pode acessar seus cadastros.", "success");
+    setStatus("Conta criada! Agora complete seu perfil para entrar na rede.", "success");
     showLogged(user);
+    await redirectToProfileIfNeeded(user, true);
   } catch (error) {
     console.error("Falha no cadastro da conta:", { code: error?.code, message: error?.message });
     setStatus(friendlyError(error, "register"), "error");
@@ -283,6 +300,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     showLogged(user);
     redirectAfterLogin();
+    if (!location.pathname.endsWith("/meu-perfil.html")) redirectToProfileIfNeeded(user);
   } else {
     showSignedOut();
   }
