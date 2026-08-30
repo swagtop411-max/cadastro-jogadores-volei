@@ -396,6 +396,9 @@ async function aprovarReivindicacao(claim) {
       atualizadoEm: serverTimestamp()
     });
 
+    const perfilConta={uid:claim.solicitanteUid,nome:athlete.nome||claim.perfilNome||"",nascimento:athlete.nascimento||"",cidade:athlete.cidade||"",uf:athlete.uf||"",modalidade:athlete.modalidade||"",posicao:athlete.posicao||"",categoria:athlete.categoria||"Iniciante",time:athlete.time||"",contato:athlete.contato||"",bio:athlete.bio||athlete.observacoes||"",fotoUrl:athlete.foto||"",plano:athlete.plano||"Gratuito",planoId:athlete.planoId||"gratuito",valorPlano:Number(athlete.valorPlano||0),planoStatus:athlete.planoStatus||"ativo",pagamentoConfirmado:athlete.pagamentoConfirmado===true,email:claim.solicitanteEmail||"",status:athlete.status||"ativo",legadoAtletaId:resolvedProfileId,atualizadoEm:serverTimestamp()};
+    await setDoc(doc(db,"perfis",claim.solicitanteUid),perfilConta,{merge:true});
+
     await updateDoc(doc(db, "reivindicacoes_perfis", claim.id), {
       status: "aprovada",
       analisadoPorUid: auth.currentUser.uid,
