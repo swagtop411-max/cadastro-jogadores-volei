@@ -18,3 +18,19 @@
 
 ## Regra de continuidade
 Preservar layout, dados, cadastro, comunidade, equipes, ranking e integrações existentes. Alterações devem ser incrementais e validadas antes de substituir arquivos inteiros.
+
+
+## CHECKPOINT 2026-08-30 — Auditoria e correções estruturais
+- Ranking consolidado em uma única fonte por UID/ID legado, com união e deduplicação do histórico de campeonatos.
+- Histórico de campeonatos do perfil deduplicado antes de salvar e antes de calcular pontuação.
+- Fluxo do menu de ranking mantido como drawer na página atual, sem redirecionamento para o feed.
+- Upload de fotos no perfil social passou a usar upload simples para imagens, evitando travamento da sessão resumable em 0%/10%.
+- Publicações, stories e vídeos novos passam a nascer como pendentes e entram na fila de moderação.
+- Painel Comunidade ampliado para moderar publicações, stories, vídeos e comentários.
+- Regras Firestore endurecidas para conteúdo social, incluindo campos permitidos e bloqueio de alteração de status/aprovação pelo proprietário.
+- Regras Storage separadas por finalidade e com limites de tamanho/tipo.
+- Perfil público passou a ser salvo com schema público, evitando novos campos privados no documento público.
+- Leituras públicas iniciais receberam limites e URLs de mídia passaram a usar allowlist básica.
+- Assets receberam versionamento de cache nas páginas principais.
+- JavaScript corrigido passou por validação de parsing; regras tiveram validação estrutural de delimitadores.
+- Importante: as regras do Firestore/Storage precisam ser publicadas no projeto Firebase para entrarem efetivamente em produção. O console remoto não foi autenticado durante a auditoria.

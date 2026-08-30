@@ -1,6 +1,6 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import{getStorage,ref,uploadBytes,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
@@ -51,8 +51,8 @@ async function loadMedia(){
  const empty={docs:[]};
  const [photos,videos,stories]=await Promise.all([
   safeDocs(collection(db,"publicacoes"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
-  safeDocs(collection(db,"videos"),where("ownerUid","==",uid)).catch(()=>empty),
-  safeDocs(collection(db,"stories"),where("ownerUid","==",uid)).catch(()=>empty)
+  safeDocs(collection(db,"videos"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
+  safeDocs(collection(db,"stories"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty)
  ]);
  const p=photos.docs.map(d=>({t:"img",url:d.data().imagemUrl||d.data().imagem})).filter(x=>x.url);
  const v=videos.docs.map(d=>({t:"video",url:d.data().videoUrl})).filter(x=>x.url);
@@ -100,13 +100,21 @@ function openPublishModal(){const m=$("publishModal");if(!m)return;m.classList.a
 function closePublishModal(){const m=$("publishModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true")}
 function openMediaModal(type){publishType=type;closePublishModal();resetComposer();const m=$("mediaModal");if(!m)return;$("mediaTitle").textContent=type==="story"?"Adicionar mídia ao Story":"Adicionar mídia ao Feed";m.classList.add("open");m.setAttribute("aria-hidden","false")}
 function closeMediaModal(){const m=$("mediaModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true");resetComposer()}
-document.querySelectorAll(".publish-choice").forEach(b=>b.addEventListener("click",()=>openMediaModal(b.dataset.publishType)));
-$("closePublish")?.addEventListener("click",closePublishModal);
-$("closeMedia")?.addEventListener("click",closeMediaModal);
+document.addEventListener("click",e=>{
+ const b=e.target.closest?.(".publish-choice,#closePublish,#closeMedia,#cameraBtn,#galleryBtn");
+ if(!b)return;
+ if(b.classList.contains("publish-choice")){e.preventDefault();openMediaModal(b.dataset.publishType);return}
+ if(b.id==="closePublish"){e.preventDefault();closePublishModal();return}
+ if(b.id==="closeMedia"){e.preventDefault();closeMediaModal();return}
+ if(b.id==="cameraBtn"||b.id==="galleryBtn"){
+  e.preventDefault();e.stopPropagation();
+  const input=$(b.id==="cameraBtn"?"cameraInput":"galleryInput");
+  if(!input){console.error("Input de mídia não encontrado:",b.id);return}
+  try{if(typeof input.showPicker==="function")input.showPicker();else input.click()}catch(err){try{input.click()}catch(err2){console.error("Não foi possível abrir seletor de mídia:",err2)}}
+ }
+},true);
 $("publishModal")?.addEventListener("click",e=>{if(e.target.id==="publishModal")closePublishModal()});
 $("mediaModal")?.addEventListener("click",e=>{if(e.target.id==="mediaModal")closeMediaModal()});
-$("cameraBtn")?.addEventListener("click",()=>$("cameraInput")?.click());
-$("galleryBtn")?.addEventListener("click",()=>$("galleryInput")?.click());
 function resetComposer(){
  selectedFile=null;
  if(selectedPreviewUrl){URL.revokeObjectURL(selectedPreviewUrl);selectedPreviewUrl=null}
@@ -121,8 +129,8 @@ function resetComposer(){
 function mediaSelected(file){
  if(!file)return;
  if(!currentUser||currentUser.uid!==uid){alert("Entre na sua conta para publicar.");return}
- if(!/^(image\/(jpeg|png|webp)|video\/(mp4|webm))$/i.test(file.type)){alert("Use JPG, PNG, WEBP, MP4 ou WEBM.");return}
- if(file.size>24*1024*1024){alert("A mídia deve ter no máximo 24 MB.");return}
+ if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){alert("Selecione uma imagem ou vídeo válido.");return}
+ if(file.size>45*1024*1024){alert("A mídia deve ter no máximo 45 MB.");return}
  if(selectedPreviewUrl)URL.revokeObjectURL(selectedPreviewUrl);
  selectedFile=file;selectedPreviewUrl=URL.createObjectURL(file);
  $("mediaChooser").hidden=true;$("composer").hidden=false;
@@ -168,13 +176,24 @@ function storagePathFor(file){
 }
 async function uploadWithProgress(file,path,status){
  const storageRef=ref(storage,path);
- return new Promise((resolve,reject)=>{
-  let settled=false;
-  status.textContent="Enviando mídia... 0%";
-  const task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
-  const timeout=setTimeout(()=>{if(settled)return;settled=true;try{task.cancel()}catch{}reject(new Error("O Firebase Storage não respondeu. Verifique as regras do Storage e tente novamente."))},120000);
-  task.on("state_changed",snap=>{const pct=snap.totalBytes?Math.min(99,Math.round(snap.bytesTransferred/snap.totalBytes*100)):0;status.textContent="Enviando mídia... "+pct+"%"},err=>{if(settled)return;settled=true;clearTimeout(timeout);reject(err)},()=>{if(settled)return;settled=true;clearTimeout(timeout);status.textContent="Upload concluído. 100%";resolve(storageRef)})
- })
+ status.textContent="Enviando mídia... 0%";
+ status.className="upload-status";
+ if(file.type.startsWith("image/")){
+   await uploadBytes(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
+   status.textContent="Upload concluído. 100%";
+   return storageRef;
+ }
+ return await new Promise((resolve,reject)=>{
+   let task;
+   const timeout=setTimeout(()=>{try{task?.cancel()}catch{};reject(new Error("O Firebase Storage demorou para responder. Tente novamente."))},120000);
+   try{
+     task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
+     task.on("state_changed",snap=>{
+       const total=Number(snap.totalBytes||0),sent=Number(snap.bytesTransferred||0),pct=total?Math.min(99,Math.round(sent/total*100)):0;
+       status.textContent="Enviando mídia... "+pct+"%";
+     },err=>{clearTimeout(timeout);reject(err)},()=>{clearTimeout(timeout);status.textContent="Upload concluído. 100%";resolve(storageRef)});
+   }catch(err){clearTimeout(timeout);reject(err)}
+ });
 }
 async function publishSelectedMedia(){
  if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
@@ -191,14 +210,14 @@ async function publishSelectedMedia(){
   status.textContent="Gerando endereço da mídia...";const url=await getDownloadURL(uploadedRef);if(!url)throw new Error("O Firebase Storage não retornou o endereço da mídia.");
   status.textContent="Salvando publicação...";
   if(publishType==="story"){
-   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
+   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",aprovado:false,status:"pendente",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
   }else if(isImage){
    const postRef=doc(collection(db,"publicacoes"));
    await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
   }else{
-   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
+   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
   }
-  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":isImage?"Foto enviada para moderação!":"Vídeo publicado com sucesso!";if(publishType!=="story")await loadMedia();setTimeout(closeMediaModal,1200)
+  status.className="upload-status ok";status.textContent=publishType==="story"?"Story enviado para aprovação!":isImage?"Foto enviada para aprovação!":"Vídeo enviado para aprovação!";setTimeout(closeMediaModal,1100)
  }catch(e){
   console.error("ERRO AO PUBLICAR:",e);const code=String(e?.code||"");let message="Não foi possível publicar a mídia.";
   if(code.includes("storage/unauthorized"))message="Firebase Storage: envio não autorizado. Publique as regras do Storage e tente novamente.";
@@ -211,7 +230,23 @@ async function publishSelectedMedia(){
   if(uploadedRef){try{await deleteObject(uploadedRef)}catch{}}
  }finally{button.disabled=false;if(button.textContent==="PUBLICANDO...")button.textContent="PUBLICAR"}
 }
-$("cameraInput")?.addEventListener("change",e=>{mediaSelected(e.target.files?.[0]);e.target.value=""});
-$("galleryInput")?.addEventListener("change",e=>{mediaSelected(e.target.files?.[0]);e.target.value=""});
-$("changeMediaBtn")?.addEventListener("click",resetComposer);
-$("postMediaBtn")?.addEventListener("click",publishSelectedMedia);
+/*
+ * CONTROLES DE PUBLICAÇÃO - V3
+ * Usa delegação de eventos para continuar funcionando mesmo após
+ * re-renderizações/alterações do DOM e impede duplo clique no publicar.
+ */
+document.addEventListener("change",e=>{
+ const input=e.target;
+ if(input?.id==="cameraInput"||input?.id==="galleryInput"){
+   const file=input.files?.[0];
+   if(file)mediaSelected(file);
+   input.value="";
+ }
+});
+document.addEventListener("click",e=>{
+ const button=e.target.closest?.("#changeMediaBtn,#postMediaBtn");
+ if(!button)return;
+ e.preventDefault();
+ if(button.id==="changeMediaBtn"){resetComposer();return}
+ if(button.id==="postMediaBtn"){if(button.disabled)return;void publishSelectedMedia()}
+},false);
