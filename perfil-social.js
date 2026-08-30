@@ -1,6 +1,6 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytes,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
@@ -172,27 +172,39 @@ async function prepareImageFile(file){
 }
 function storagePathFor(file){
  const ext=file.type.startsWith("image/")?"jpg":((file.name||"mp4").split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
- return"usuarios/"+uid+"/publicacoes/"+Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+ext
+ const pasta=publishType==="story"?"stories":file.type.startsWith("video/")?"videos":"publicacoes";
+ return"usuarios/"+uid+"/"+pasta+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+ext
 }
 async function uploadWithProgress(file,path,status){
  const storageRef=ref(storage,path);
  status.textContent="Enviando mídia... 0%";
  status.className="upload-status";
- if(file.type.startsWith("image/")){
-   await uploadBytes(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
-   status.textContent="Upload concluído. 100%";
-   return storageRef;
- }
  return await new Promise((resolve,reject)=>{
-   let task;
-   const timeout=setTimeout(()=>{try{task?.cancel()}catch{};reject(new Error("O Firebase Storage demorou para responder. Tente novamente."))},120000);
-   try{
-     task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
-     task.on("state_changed",snap=>{
-       const total=Number(snap.totalBytes||0),sent=Number(snap.bytesTransferred||0),pct=total?Math.min(99,Math.round(sent/total*100)):0;
-       status.textContent="Enviando mídia... "+pct+"%";
-     },err=>{clearTimeout(timeout);reject(err)},()=>{clearTimeout(timeout);status.textContent="Upload concluído. 100%";resolve(storageRef)});
-   }catch(err){clearTimeout(timeout);reject(err)}
+  let task=null,finished=false;
+  const timeout=setTimeout(()=>{
+   if(finished)return;
+   try{task?.cancel()}catch{}
+   reject(new Error("O Firebase Storage demorou mais de 120 segundos para responder. Verifique sua conexão e tente novamente."));
+  },120000);
+  try{
+   task=uploadBytesResumable(storageRef,file,{contentType:file.type||"application/octet-stream",cacheControl:"public,max-age=31536000"});
+   task.on("state_changed",snap=>{
+    const total=Number(snap.totalBytes||0),sent=Number(snap.bytesTransferred||0);
+    const pct=total?Math.min(99,Math.max(1,Math.round(sent/total*100))):1;
+    status.textContent="Enviando mídia... "+pct+"%";
+   },err=>{
+    if(finished)return;
+    finished=true;clearTimeout(timeout);reject(err);
+   },()=>{
+    if(finished)return;
+    finished=true;clearTimeout(timeout);
+    status.textContent="Upload concluído. 100%";
+    resolve(task.snapshot.ref);
+   });
+  }catch(err){
+   if(finished)return;
+   finished=true;clearTimeout(timeout);reject(err);
+  }
  });
 }
 async function publishSelectedMedia(){
