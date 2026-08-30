@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("
 let profile=null,currentUser=null,following=false;
 const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
 const img=v=>v||fallback;
-async function safeDocs(q1,q2){try{return await getDocs(query(q1,orderBy("criadoEm","desc")))}catch{return await getDocs(query(q1,q2))}}
+async function safeDocs(ref,...constraints){try{return await getDocs(query(ref,...constraints,orderBy("criadoEm","desc")))}catch{return await getDocs(query(ref,...constraints))}}
 async function getProfile(){
  if(!uid)return null;
  let snap=await getDoc(doc(db,"perfis",uid));
