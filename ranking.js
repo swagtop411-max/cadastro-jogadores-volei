@@ -1,6 +1,8 @@
 import{initializeApp,getApps,getApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getFirestore,collection,getDocs}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9CO",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app);
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v==null?"":String(v);return d.innerHTML},norm=v=>String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+/* HISTORICO-RANKING-DEDUPE-V1 */
+function dedupeHistorico(hist){const arr=Array.isArray(hist)?hist:[],seen=new Set();return arr.filter(h=>{const key=[h?.campeonato,h?.colocacao,h?.ano].map(v=>String(v??"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ")).join("|");if(seen.has(key))return false;seen.add(key);return true})}
 const pontos=v=>{const s=norm(v);if(/campe|(^|\s)1[ºo°]?|primeiro/.test(s))return 100;if(/(^|\s)2[ºo°]?|segundo/.test(s))return 80;if(/(^|\s)3[ºo°]?|terceiro/.test(s))return 65;if(/(^|\s)4[ºo°]?|quarto/.test(s))return 55;if(/(^|\s)[5-8][ºo°]?/.test(s))return 40;if(/(^|\s)(9|10|11|12|13|14|15|16)[ºo°]?/.test(s))return 25;return 10};
 let atletas=[],filtro={periodo:"geral",ano:"",categoria:"",modalidade:""},carregamentoRanking=null;
 function chaveAtleta(a){
@@ -28,7 +30,7 @@ function unificarAtletas(){
       nome:existente.nome||a.nome,
       cidade:existente.cidade||a.cidade,
       categoria:existente.categoria||a.categoria,
-      historicoCampeonatos:historico,
+      historicoCampeonatos:dedupeHistorico(historico),
       modalidades:[...new Set(modalidades)]
     });
   });
@@ -38,7 +40,7 @@ function montar(){
   const mapa=new Map();
   unificarAtletas().forEach(a=>{
     let total=0,participacoes=0;
-    const hist=Array.isArray(a.historicoCampeonatos)?a.historicoCampeonatos:[];
+    const hist=dedupeHistorico(a.historicoCampeonatos);
     hist.forEach(h=>{
       const ano=String(h.ano||"");
       if(filtro.ano&&ano!==filtro.ano)return;
@@ -84,7 +86,7 @@ async function carregar(){
       atletas.push({id:p.uid||p.id,uid:p.uid||p.id,ownerUid:p.uid||"",nome:p.nome||"Atleta",
         cidade:p.cidade||"",categoria:p.categoria||"",modalidade:p.modalidade||"",
         modalidades:Array.isArray(p.modalidades)?p.modalidades:(p.modalidade?[p.modalidade]:[]),
-        historicoCampeonatos:historico});
+        historicoCampeonatos:dedupeHistorico(historico)});
     });
 
     const anos=[...new Set(atletas.flatMap(a=>(Array.isArray(a.historicoCampeonatos)?a.historicoCampeonatos:[]).map(h=>String(h.ano||"")).filter(Boolean)))].sort().reverse();
