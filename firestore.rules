@@ -364,6 +364,29 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    match /stories/{storyId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.mediaUrl is string
+        && request.resource.data.mediaUrl.size() <= 1000
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.expiraEm is timestamp
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaType','criadoEm','expiraEm']);
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+    }
+
+    match /videos/{videoId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.videoUrl is string
+        && request.resource.data.videoUrl.size() <= 1000
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','legenda','criadoEm']);
+      allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
+    }
+
     match /denuncias/{denunciaId} {
       allow create: if request.auth != null
         && request.resource.data.reportadoPorUid == request.auth.uid
