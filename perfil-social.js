@@ -51,8 +51,8 @@ async function loadMedia(){
  const empty={docs:[]};
  const [photos,videos,stories]=await Promise.all([
   safeDocs(collection(db,"publicacoes"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
-  safeDocs(collection(db,"videos"),where("ownerUid","==",uid)).catch(()=>empty),
-  safeDocs(collection(db,"stories"),where("ownerUid","==",uid)).catch(()=>empty)
+  safeDocs(collection(db,"videos"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
+  safeDocs(collection(db,"stories"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty)
  ]);
  const p=photos.docs.map(d=>({t:"img",url:d.data().imagemUrl||d.data().imagem})).filter(x=>x.url);
  const v=videos.docs.map(d=>({t:"video",url:d.data().videoUrl})).filter(x=>x.url);
