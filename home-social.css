@@ -272,3 +272,33 @@ body{background:#070908!important;color:#f5f0e4!important}
   .site-menu-drawer{top:58px!important}
   .home-video-column{display:none!important}
 }
+
+/* MOBILE MENU FIX */
+@media(max-width:900px){
+.site-menu-trigger{position:relative!important;z-index:100002!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:62px!important;min-height:42px!important;padding:0 9px!important;border:1px solid rgba(242,204,114,.55)!important;border-radius:12px!important;background:linear-gradient(145deg,#111814,#18221b)!important;color:#f2cc72!important;box-shadow:0 5px 18px rgba(0,0,0,.25)!important;touch-action:manipulation!important}
+.site-menu-trigger span{display:inline!important;font-size:7px!important;font-weight:900!important;letter-spacing:1.2px!important}
+.site-menu-drawer{position:fixed!important;top:58px!important;right:0!important;bottom:0!important;left:0!important;width:100%!important;height:calc(100dvh - 58px)!important;z-index:100001!important;display:none!important;pointer-events:none!important}
+.site-menu-drawer.open{display:block!important;pointer-events:auto!important}
+.site-menu-overlay{position:absolute!important;inset:0!important;display:block!important;background:rgba(0,0,0,.72)!important;backdrop-filter:blur(5px)!important}
+.site-menu-panel{position:absolute!important;top:0!important;left:0!important;bottom:0!important;width:min(320px,86vw)!important;height:100%!important;padding:16px 12px 24px!important;overflow-y:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;background:linear-gradient(180deg,#0c120f,#080c0a)!important;border-right:1px solid rgba(242,204,114,.25)!important;border-radius:0 18px 18px 0!important;box-shadow:18px 0 55px rgba(0,0,0,.55)!important;pointer-events:auto!important}
+.site-menu-close{display:flex!important;align-items:center!important;justify-content:center!important;position:absolute!important;top:12px!important;right:12px!important;width:38px!important;height:38px!important;min-height:38px!important;padding:0!important;z-index:5!important;border:1px solid rgba(242,204,114,.3)!important;border-radius:50%!important;background:#121914!important;color:#f2cc72!important;font-size:24px!important;line-height:1!important;cursor:pointer!important;touch-action:manipulation!important}
+.site-menu-brand{padding:10px 48px 17px 5px!important;margin-bottom:3px!important}
+.site-menu-brand span{font-size:8px!important;letter-spacing:1.8px!important}
+.site-menu-brand h2{margin:5px 0 3px!important;font-size:34px!important;line-height:1!important}
+.site-menu-brand p{font-size:10px!important;line-height:1.45!important}
+.site-menu-nav{display:grid!important;gap:7px!important;padding:13px 0!important}
+.site-menu-nav>a,.site-menu-nav>button,.site-menu-group-title{min-height:48px!important;padding:0 12px!important;border:1px solid rgba(217,169,63,.13)!important;border-radius:10px!important;background:#111714!important;color:#e5e1d7!important;font-size:9px!important;font-weight:900!important;touch-action:manipulation!important}
+.site-menu-group{border:1px solid rgba(217,169,63,.18)!important;border-radius:12px!important;background:#0d130f!important;overflow:hidden!important}
+.site-menu-group-title{width:100%!important;border:0!important;border-radius:0!important;color:#f2cc72!important;background:linear-gradient(135deg,#17231b,#101611)!important}
+.site-menu-group-items{display:grid!important;gap:3px!important;padding:5px!important}
+.site-menu-group-items a,.site-menu-group-items button{min-height:57px!important;padding:7px 9px!important;border:0!important;border-radius:8px!important;font-size:8px!important;line-height:1.2!important}
+.site-menu-group-items small{display:block!important;grid-column:2!important;margin-top:2px!important;color:#8e9991!important;font-size:7px!important;line-height:1.25!important}
+.site-menu-register{margin-top:4px!important;padding:14px!important;border-radius:12px!important}
+.site-menu-register strong{font-size:12px!important}
+.site-menu-register span{font-size:8px!important;line-height:1.45!important}
+.site-menu-register a{min-height:40px!important;align-items:center!important;justify-content:center!important;font-size:8px!important}
+}
+@media(max-width:419px){
+.site-menu-drawer.open{display:block!important}
+.home-social{margin-left:0!important;margin-right:0!important;padding:10px!important}
+}
