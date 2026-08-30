@@ -1,7 +1,8 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import{getStorage,ref,uploadBytes,getDownloadURL}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),uid=new URLSearchParams(location.search).get("uid");
+const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
 let profile=null,currentUser=null,following=false,publishType="feed";
 const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
@@ -113,6 +114,7 @@ function openMediaModal(type){
 function closeMediaModal(){
  const m=$("mediaModal");if(!m)return;
  m.classList.remove("open");m.setAttribute("aria-hidden","true");
+ resetComposer();
 }
 document.querySelectorAll(".publish-choice").forEach(b=>b.addEventListener("click",()=>openMediaModal(b.dataset.publishType)));
 $("closePublish")?.addEventListener("click",closePublishModal);
@@ -121,11 +123,65 @@ $("publishModal")?.addEventListener("click",e=>{if(e.target.id==="publishModal")
 $("mediaModal")?.addEventListener("click",e=>{if(e.target.id==="mediaModal")closeMediaModal()});
 $("cameraBtn")?.addEventListener("click",()=>{ $("cameraInput")?.click(); });
 $("galleryBtn")?.addEventListener("click",()=>{ $("galleryInput")?.click(); });
+let selectedFile=null,selectedPreviewUrl=null;
+function resetComposer(){
+ selectedFile=null;
+ if(selectedPreviewUrl){URL.revokeObjectURL(selectedPreviewUrl);selectedPreviewUrl=null}
+ const chooser=$("mediaChooser"),composer=$("composer"),imgEl=$("mediaPreviewImage"),vidEl=$("mediaPreviewVideo"),caption=$("captionInput"),status=$("uploadStatus");
+ if(chooser)chooser.hidden=false;
+ if(composer)composer.hidden=true;
+ if(imgEl){imgEl.hidden=true;imgEl.removeAttribute("src")}
+ if(vidEl){vidEl.hidden=true;vidEl.removeAttribute("src");vidEl.load()}
+ if(caption)caption.value="";
+ if(status){status.hidden=true;status.textContent="";status.className="upload-status"}
+}
 function mediaSelected(file){
  if(!file)return;
- const box=$("selectedMedia");if(!box)return;
- box.hidden=false;
- box.textContent=(publishType==="story"?"Story selecionado: ":"Mídia selecionada: ")+file.name;
+ if(!currentUser||currentUser.uid!==uid){alert("Entre na sua conta para publicar.");return}
+ if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){alert("Selecione uma imagem ou vídeo válido.");return}
+ if(file.size>45*1024*1024){alert("A mídia deve ter no máximo 45 MB.");return}
+ selectedFile=file;
+ selectedPreviewUrl=URL.createObjectURL(file);
+ const chooser=$("mediaChooser"),composer=$("composer"),imgEl=$("mediaPreviewImage"),vidEl=$("mediaPreviewVideo");
+ if(chooser)chooser.hidden=true;
+ if(composer)composer.hidden=false;
+ if(file.type.startsWith("image/")){
+  imgEl.hidden=false;imgEl.src=selectedPreviewUrl;vidEl.hidden=true;
+ }else{
+  vidEl.hidden=false;vidEl.src=selectedPreviewUrl;imgEl.hidden=true;
+ }
+ $("captionInput")?.focus();
+}
+async function publishSelectedMedia(){
+ if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
+ const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";
+ button.disabled=true;button.textContent="PUBLICANDO...";
+ status.hidden=false;status.className="upload-status";status.textContent="Enviando mídia...";
+ try{
+  const safeName=selectedFile.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+  const mediaKind=selectedFile.type.startsWith("video/")?"video":"image";
+  const path="usuarios/"+uid+"/publicacoes/"+Date.now()+"_"+safeName;
+  const snap=await uploadBytes(ref(storage,path),selectedFile,{contentType:selectedFile.type});
+  const url=await getDownloadURL(snap.ref);
+  if(publishType==="story"){
+   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,mediaUrl:url,legenda:caption,tipo:mediaKind,criadoEm:serverTimestamp(),expiraEm:new Date(Date.now()+24*60*60*1000)});
+  }else if(mediaKind==="image"){
+   await setDoc(doc(collection(db,"publicacoes")),{ownerUid:uid,imagemUrl:url,legenda:caption,tipo:"imagem",aprovado:true,criadoEm:serverTimestamp()});
+  }else{
+   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,videoUrl:url,legenda:caption,tipo:"video",aprovado:true,criadoEm:serverTimestamp()});
+  }
+  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":"Publicação realizada com sucesso!";
+  await loadMedia();
+  setTimeout(()=>{closeMediaModal();resetComposer()},700);
+ }catch(e){
+  console.error("Falha ao publicar:",e);
+  status.className="upload-status error";
+  status.textContent=e?.code==="storage/unauthorized"?"Sem permissão para enviar esta mídia.":(e?.message||"Não foi possível publicar agora.");
+ }finally{
+  button.disabled=false;button.textContent="PUBLICAR";
+ }
 }
 $("cameraInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
 $("galleryInput")?.addEventListener("change",e=>mediaSelected(e.target.files?.[0]));
+$("changeMediaBtn")?.addEventListener("click",resetComposer);
+$("postMediaBtn")?.addEventListener("click",publishSelectedMedia);
