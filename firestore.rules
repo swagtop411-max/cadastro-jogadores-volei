@@ -446,5 +446,38 @@ service cloud.firestore {
     }
 
 
+    // ============================================================
+    // SEGUIDORES / SEGUINDO
+    // Cada documento de relacionamento usa o UID do usuário como ID.
+    // Leitura pública para contagens e listagens; criação/exclusão somente
+    // pelo usuário autenticado correspondente.
+    // ============================================================
+
+    match /seguidores/{perfilUid}/usuarios/{followerUid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == followerUid
+        && followerUid != perfilUid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['uid','criadoEm']);
+      allow delete: if request.auth != null
+        && request.auth.uid == followerUid;
+      allow update: if false;
+    }
+
+    match /seguindo/{perfilUid}/usuarios/{followedUid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == perfilUid
+        && followedUid != perfilUid
+        && request.resource.data.uid == followedUid
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['uid','criadoEm']);
+      allow delete: if request.auth != null
+        && request.auth.uid == perfilUid;
+      allow update: if false;
+    }
+
   }
 }
