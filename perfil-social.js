@@ -1,6 +1,6 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
+import{getStorage,ref,uploadBytes,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
 import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
 const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
@@ -178,30 +178,22 @@ async function uploadWithProgress(file,path,status){
  const storageRef=ref(storage,path);
  status.textContent="Enviando mídia... 0%";
  status.className="upload-status";
- return new Promise((resolve,reject)=>{
-  let settled=false;
-  let task=null;
-  const finish=(fn,value)=>{if(settled)return;settled=true;clearTimeout(timeout);fn(value)};
-  const timeout=setTimeout(()=>{try{task?.cancel()}catch{};finish(reject,new Error("O Firebase Storage não respondeu. Verifique se as regras do Storage foram publicadas e tente novamente."))},120000);
-  try{
-   /*
-    * Upload direto: evita o travamento do upload resumable em navegadores
-    * quando o Firebase Storage fica aguardando uma sessão resumable.
-    * A barra continua funcional e o usuário recebe feedback claro.
-    */
-   task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
-   task.on("state_changed",
-    snap=>{
-     const total=Number(snap.totalBytes||0);
-     const sent=Number(snap.bytesTransferred||0);
-     const pct=total?Math.min(99,Math.round(sent/total*100)):0;
-     status.textContent="Enviando mídia... "+pct+"%";
-    },
-    err=>finish(reject,err),
-    ()=>{status.textContent="Upload concluído. 100%";finish(resolve,storageRef)}
-   );
-  }catch(err){finish(reject,err)}
- })
+ if(file.type.startsWith("image/")){
+   await uploadBytes(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
+   status.textContent="Upload concluído. 100%";
+   return storageRef;
+ }
+ return await new Promise((resolve,reject)=>{
+   let task;
+   const timeout=setTimeout(()=>{try{task?.cancel()}catch{};reject(new Error("O Firebase Storage demorou para responder. Tente novamente."))},120000);
+   try{
+     task=uploadBytesResumable(storageRef,file,{contentType:file.type,cacheControl:"public,max-age=31536000"});
+     task.on("state_changed",snap=>{
+       const total=Number(snap.totalBytes||0),sent=Number(snap.bytesTransferred||0),pct=total?Math.min(99,Math.round(sent/total*100)):0;
+       status.textContent="Enviando mídia... "+pct+"%";
+     },err=>{clearTimeout(timeout);reject(err)},()=>{clearTimeout(timeout);status.textContent="Upload concluído. 100%";resolve(storageRef)});
+   }catch(err){clearTimeout(timeout);reject(err)}
+ });
 }
 async function publishSelectedMedia(){
  if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
@@ -218,14 +210,14 @@ async function publishSelectedMedia(){
   status.textContent="Gerando endereço da mídia...";const url=await getDownloadURL(uploadedRef);if(!url)throw new Error("O Firebase Storage não retornou o endereço da mídia.");
   status.textContent="Salvando publicação...";
   if(publishType==="story"){
-   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
+   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",aprovado:false,status:"pendente",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
   }else if(isImage){
    const postRef=doc(collection(db,"publicacoes"));
-   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
   }else{
-   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),criadoEm:serverTimestamp()});
+   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
   }
-  status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado com sucesso!":isImage?"Foto publicada com sucesso!":"Vídeo publicado com sucesso!";await loadMedia();setTimeout(closeMediaModal,900)
+  status.className="upload-status ok";status.textContent=publishType==="story"?"Story enviado para aprovação!":isImage?"Foto enviada para aprovação!":"Vídeo enviado para aprovação!";setTimeout(closeMediaModal,1100)
  }catch(e){
   console.error("ERRO AO PUBLICAR:",e);const code=String(e?.code||"");let message="Não foi possível publicar a mídia.";
   if(code.includes("storage/unauthorized"))message="Firebase Storage: envio não autorizado. Publique as regras do Storage e tente novamente.";
