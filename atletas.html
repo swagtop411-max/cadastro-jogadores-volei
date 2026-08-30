@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Atletas cadastrados | Banco de Dados de Atletas</title>
-<link rel="stylesheet" href="style.css?v=20260830-2">
-<link rel="stylesheet" href="home-social.css?v=20260830-3">
+<link rel="stylesheet" href="estilo.css?v=20260827-1">
+<link rel="stylesheet" href="home-social.css?v=20260830-5">
 <style>
 body.athletes-page{background:#070908!important;color:#f5f0e4!important}
 .athletes-page .header{position:sticky!important;top:0!important;z-index:1000!important}
@@ -46,13 +46,13 @@ body.athletes-page{background:#070908!important;color:#f5f0e4!important}
 </head>
 <body class="athletes-page">
 <header class="header">
-<button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button>
+<button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false" onclick="window.toggleSiteMenu&&window.toggleSiteMenu(event)">☰<span>MENU</span></button>
 <div class="header-brand"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></div>
 <div class="header-center">🔎 &nbsp; Buscar atletas, cidades, posições ou equipes...</div>
 <div class="header-actions"><a class="championship-cta community-top-cta" href="comunidade.html">✦ COMUNIDADE</a><a class="championship-cta account-top-cta" href="conta.html">◉ MINHA CONTA</a><a class="championship-cta" href="proximos-campeonatos.html">🏆 PRÓXIMOS CAMPEONATOS</a></div>
 </header>
 <div class="site-menu-drawer" id="siteMenuDrawer" aria-hidden="false">
-<div class="site-menu-overlay"></div>
+<div class="site-menu-overlay" data-fechar-menu></div>
 <aside class="site-menu-panel">
 <div class="site-menu-brand"><span>REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p></div>
 <nav class="site-menu-nav">
@@ -78,10 +78,36 @@ body.athletes-page{background:#070908!important;color:#f5f0e4!important}
 <section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section>
 </div></div>
 </main>
-<script type="module" src="public.js?v=20260830-7"></script>
+<script type="module" src="analytics.js?v=20260826-12"></script>
+<script type="module" src="public.js?v=20260828-6"></script>
+<script type="module" src="apoio.js?v=20260828-1"></script>
 <script>
 const d=document.getElementById('siteMenuDrawer'),t=document.getElementById('siteMenuTrigger');
 t?.addEventListener('click',()=>{d.classList.add('open');d.setAttribute('aria-hidden','false');t.setAttribute('aria-expanded','true')});
 d?.querySelectorAll('[data-fechar-menu]').forEach(x=>x.addEventListener('click',()=>d.classList.remove('open')));
 </script>
+<style>
+/* ATLETAS: alinhamento com a home */
+@media(max-width:900px){
+  body.athletes-page{overflow-x:hidden!important}
+  .athletes-page .header{position:relative!important;min-height:76px!important;padding:10px 12px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important}
+  .athletes-page .header-brand{min-width:0!important;display:flex!important;align-items:center!important}
+  .athletes-page .header-brand .brand-ball{width:42px!important;height:42px!important;flex:0 0 42px!important}
+  .athletes-page .header-brand strong{font-size:12px!important;line-height:1.1!important}
+  .athletes-page .header-brand span{font-size:6px!important}
+  .athletes-page .header-center{display:none!important}
+  .athletes-page .header-actions{display:flex!important;justify-content:flex-end!important}
+  .athletes-page .header-actions a{font-size:7px!important;padding:9px 7px!important}
+  .athletes-page .header-actions a:not(.account-top-cta){display:none!important}
+  .athletes-page .site-menu-trigger{display:inline-flex!important;position:relative!important;z-index:2147483647!important}
+  .athletes-page .container{padding:18px 12px 40px!important;max-width:none!important}
+  .athletes-page .athletes-shell{width:100%!important;max-width:none!important}
+  .athletes-page .section-heading{padding:4px 4px 18px!important}
+  .athletes-page .section-heading h2{font-size:34px!important;line-height:1.05!important}
+  .athletes-page .section-heading p{font-size:13px!important;line-height:1.5!important}
+  .athletes-page .athletes-content{padding:14px!important;border-radius:16px!important}
+  .athletes-page .filtros{display:grid!important;grid-template-columns:1fr!important}
+  .athletes-page .filtros input,.athletes-page .filtros select,.athletes-page .filtros .search-button{width:100%!important;min-width:0!important}
+}
+</style>
 </body></html>
