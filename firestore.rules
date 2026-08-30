@@ -20,6 +20,21 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /perfis/{uid} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.uid == uid
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100;
+      allow update: if isAdmin()
+        || (request.auth != null
+          && request.auth.uid == uid
+          && request.resource.data.uid == resource.data.uid);
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+    }
+
     match /atletas/{atletaId} {
       allow read: if true;
       allow create, delete: if isAdmin();
@@ -294,8 +309,8 @@ service cloud.firestore {
         && request.resource.data.texto.size() <= 2200
         && request.resource.data.imagem is string
         && request.resource.data.imagem.size() <= 700000
-        && request.resource.data.aprovado == false
-        && request.resource.data.status == 'pendente'
+        && ((request.resource.data.aprovado == false && request.resource.data.status == 'pendente')
+          || (request.resource.data.aprovado == true && request.resource.data.status == 'publicado'))
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.keys().hasOnly([
           'ownerUid','ownerEmail','nome','texto','imagem',
@@ -372,7 +387,7 @@ service cloud.firestore {
         && request.resource.data.mediaUrl.size() <= 1000
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.expiraEm is timestamp
-        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaType','criadoEm','expiraEm']);
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','criadoEm','expiraEm']);
       allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
@@ -383,7 +398,7 @@ service cloud.firestore {
         && request.resource.data.videoUrl is string
         && request.resource.data.videoUrl.size() <= 1000
         && request.resource.data.criadoEm is timestamp
-        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','legenda','criadoEm']);
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho','legenda','criadoEm']);
       allow update, delete: if isAdmin() || (request.auth != null && resource.data.ownerUid == request.auth.uid);
     }
 
