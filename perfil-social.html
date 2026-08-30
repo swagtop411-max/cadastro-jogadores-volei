@@ -7,51 +7,55 @@
 <link rel="stylesheet" href="home-social.css?v=20260830-4">
 <style>
 :root{--gold:#f2cc72;--gold2:#bd8425;--bg:#070908;--card:#0b100d;--line:rgba(217,169,63,.2)}
-.profile-page{min-height:100vh;background:linear-gradient(180deg,#070908 0%,#0b0f0c 100%);color:#f5f0e4}
-.public-profile{max-width:1160px;margin:0 auto;padding:28px 28px 80px}
-.pp-back{color:var(--gold);text-decoration:none;font-size:10px;font-weight:900;display:inline-block;margin-bottom:14px}
-.pp-profile{overflow:hidden;background:transparent;border:0;border-radius:0;box-shadow:none}
-.pp-cover{display:none}
-.pp-head{display:grid;grid-template-columns:190px 1fr;gap:34px;padding:18px 30px 28px;align-items:center;border-bottom:1px solid rgba(217,169,63,.16)}
-.pp-avatar{width:180px;height:180px;border-radius:50%;object-fit:cover;border:4px solid #0b100d;outline:3px solid var(--gold);background:#18221d;box-shadow:0 10px 35px rgba(0,0,0,.4)}
-.pp-info{min-width:0}.pp-kicker{font-size:9px;letter-spacing:2px;color:var(--gold);font-weight:900}
-.pp-head h1{font-size:34px;line-height:1;margin:0 0 12px;letter-spacing:.2px}
-.pp-meta{color:#aab1aa;font-size:11px;margin:0 0 8px}.pp-bio{white-space:pre-wrap;line-height:1.5;color:#d4d9d4;max-width:760px;margin:6px 0}
-.pp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.pp-btn{border:1px solid rgba(217,169,63,.32);background:#121914;color:var(--gold);padding:10px 16px;border-radius:9px;font-size:10px;font-weight:900;text-decoration:none;cursor:pointer}.pp-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}.pp-btn.following{background:#19221c;color:#fff}
-.pp-stats{display:flex;gap:28px;margin-top:15px}.pp-stat{font-size:10px;color:#aeb5ae}.pp-stat strong{display:inline;margin-right:5px;color:#fff;font-size:15px}.pp-stat.clickable{cursor:pointer}
-.pp-section{margin-top:18px;background:#0b100d;border:1px solid var(--line);border-radius:16px;padding:18px}.pp-tabs{display:flex;gap:8px;border-bottom:1px solid rgba(217,169,63,.12);margin:-2px -2px 14px;padding-bottom:10px}.pp-tab{border:0;background:transparent;color:#858d86;font-size:10px;font-weight:900;padding:9px 14px;border-radius:8px;cursor:pointer}.pp-tab.active{background:#18221d;color:var(--gold)}
-.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.pp-grid-item{position:relative;aspect-ratio:1;overflow:hidden;border-radius:7px;background:#050706}.pp-grid-item img,.pp-grid-item video{width:100%;height:100%;object-fit:cover}.pp-grid-item .type{position:absolute;right:7px;top:7px;background:rgba(0,0,0,.65);border-radius:99px;padding:5px 7px;font-size:10px}
-.pp-stories{display:flex;gap:10px;overflow:auto;padding-bottom:4px}.pp-story{width:92px;height:120px;object-fit:cover;display:block;border-radius:12px;border:2px solid var(--gold);flex:0 0 auto}.pp-empty{padding:28px;text-align:center;color:#8f9891;font-size:11px}
-.pp-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:20px}.pp-modal.open{display:flex}.pp-modal-card{width:min(460px,100%);background:#0b100d;border:1px solid var(--line);border-radius:16px;padding:20px}.pp-modal-card h2{margin:0 0 14px;color:var(--gold)}.pp-user-list{display:grid;gap:8px;max-height:55vh;overflow:auto}.pp-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:#111713}.pp-user img{width:40px;height:40px;border-radius:50%;object-fit:cover}.pp-user strong{font-size:11px}.pp-close{float:right;background:transparent;border:0;color:var(--gold);font-size:20px;cursor:pointer}
-@media(max-width:700px){.public-profile{padding:12px}.pp-head{grid-template-columns:1fr;text-align:center;padding:18px 15px 22px}.pp-avatar{margin:0 auto;width:145px;height:145px}.pp-info{padding-top:10px}.pp-head h1{font-size:30px}.pp-actions{justify-content:center}.pp-stats{justify-content:center;gap:15px;flex-wrap:wrap}.pp-grid{grid-template-columns:repeat(3,1fr);gap:3px}.pp-section{padding:10px}}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#070908!important;color:#f5f0e4!important;overflow-x:hidden!important}
+body{font-family:Arial,Helvetica,sans-serif}
+.header{position:fixed!important;left:0!important;right:0!important;top:0!important;width:100%!important;height:64px!important;min-height:64px!important;padding:7px 22px!important;display:grid!important;grid-template-columns:310px minmax(260px,1fr) auto!important;align-items:center!important;gap:22px!important;background:linear-gradient(180deg,#080d0b,#070a09)!important;border-bottom:1px solid rgba(217,169,63,.18)!important;box-shadow:0 8px 28px rgba(0,0,0,.3)!important;text-align:left!important;z-index:5000!important}
+.header-brand{display:flex!important;align-items:center!important;gap:10px!important;min-width:0!important;text-decoration:none!important;color:#fff!important}
+.header-brand .brand-ball{width:40px!important;height:40px!important;border-radius:50%!important;display:grid!important;place-items:center!important;background:linear-gradient(135deg,#f2cc72,#bd8425)!important;color:#111!important;font-size:21px!important;flex:0 0 40px!important}
+.header-brand>div:last-child{display:flex!important;flex-direction:column!important;min-width:0!important}
+.header-brand strong{font-size:16px!important;line-height:1!important;white-space:nowrap!important}
+.header-brand span{margin-top:4px!important;color:var(--gold)!important;font-size:8px!important;font-weight:900!important;letter-spacing:2px!important}
+.header-center{height:40px!important;display:flex!important;align-items:center!important;padding:0 18px!important;border:1px solid rgba(217,169,63,.22)!important;border-radius:22px!important;background:#0d1310!important;color:#aaa!important;font-size:10px!important;font-weight:900!important;letter-spacing:1.5px!important;text-decoration:none!important}
+.header-actions{display:flex!important;gap:8px!important;align-items:center!important}
+.header-actions a{color:var(--gold)!important;font-size:9px!important;font-weight:900!important;letter-spacing:1px!important}
+.public-profile{width:100%!important;max-width:1500px!important;margin:0 auto!important;padding:84px clamp(245px,17vw,280px) 55px clamp(245px,17vw,280px)!important}
+.pp-shell{max-width:980px;margin:0 auto}
+.pp-back{display:inline-block;color:var(--gold);text-decoration:none;font-size:9px;font-weight:900;letter-spacing:.7px;margin:0 0 12px}
+.pp-profile{overflow:hidden;background:#0a0f0c;border:1px solid rgba(217,169,63,.16);border-radius:18px;box-shadow:0 18px 55px rgba(0,0,0,.35)}
+.pp-cover{height:145px;background:linear-gradient(135deg,#10251b,#283326 50%,#111613);background-size:cover;background-position:center;display:block;border-bottom:1px solid rgba(217,169,63,.18)}
+.pp-head{display:grid;grid-template-columns:155px 1fr;gap:25px;padding:0 25px 24px;align-items:end}
+.pp-avatar{width:150px;height:150px;margin-top:-58px;border-radius:50%;object-fit:cover;border:4px solid #0b100d;outline:2px solid var(--gold);background:#18221d;box-shadow:0 12px 35px rgba(0,0,0,.5)}
+.pp-info{min-width:0;padding-top:17px}.pp-kicker{font-size:8px;letter-spacing:2.5px;color:var(--gold);font-weight:900}
+.pp-head h1{font-size:38px;line-height:1;margin:5px 0 8px;color:#f8f1df;letter-spacing:.2px}
+.pp-meta{color:#9da59e;font-size:10px;margin:0 0 5px}.pp-bio{white-space:pre-wrap;line-height:1.5;color:#d4d9d4;max-width:760px;margin:7px 0}
+.pp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.pp-btn{border:1px solid rgba(217,169,63,.32);background:#121914;color:var(--gold);padding:9px 13px;border-radius:9px;font-size:9px;font-weight:900;text-decoration:none;cursor:pointer}.pp-btn.primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}.pp-btn.following{background:#19221c;color:#fff}
+.pp-stats{display:flex;gap:22px;margin-top:13px;flex-wrap:wrap}.pp-stat{font-size:9px;color:#9fa69f}.pp-stat strong{display:inline;margin-right:4px;color:#fff;font-size:14px}.pp-stat.clickable{cursor:pointer}
+.pp-section{margin-top:15px;background:#0b100d;border:1px solid var(--line);border-radius:15px;padding:14px}.pp-tabs{display:flex;gap:5px;border-bottom:1px solid rgba(217,169,63,.12);margin:-1px -1px 12px;padding-bottom:8px}.pp-tab{border:0;background:transparent;color:#858d86;font-size:9px;font-weight:900;padding:8px 12px;border-radius:8px;cursor:pointer}.pp-tab.active{background:#18221d;color:var(--gold)}
+.pp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.pp-grid-item{position:relative;overflow:hidden;border-radius:7px;background:#050706}.pp-grid-item img,.pp-grid-item video{display:block;width:100%;height:100%;object-fit:cover}.pp-grid-item img{aspect-ratio:1}.pp-grid-item .type{position:absolute;right:6px;top:6px;background:rgba(0,0,0,.65);border-radius:99px;padding:4px 6px;font-size:9px}.pp-stories{display:flex;gap:10px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none}.pp-stories::-webkit-scrollbar{display:none}.pp-story{width:85px;height:110px;object-fit:cover;display:block;border-radius:11px;border:2px solid var(--gold);flex:0 0 auto}.pp-empty{padding:26px;text-align:center;color:#8f9891;font-size:10px}
+.pp-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);display:none;align-items:center;justify-content:center;padding:20px}.pp-modal.open{display:flex}.pp-modal-card{width:min(460px,100%);background:#0b100d;border:1px solid var(--line);border-radius:16px;padding:20px}.pp-modal-card h2{margin:0 0 14px;color:var(--gold)}.pp-user-list{display:grid;gap:8px;max-height:55vh;overflow:auto}.pp-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;background:#111713;text-decoration:none;color:inherit}.pp-user img{width:40px;height:40px;border-radius:50%;object-fit:cover}.pp-user strong{font-size:11px}.pp-close{float:right;background:transparent;border:0;color:var(--gold);font-size:20px;cursor:pointer}
+.pp-left,.pp-right{position:fixed;top:64px;bottom:0;z-index:900;background:linear-gradient(180deg,#0b100d,#080b09);border-color:rgba(217,169,63,.16);overflow:hidden}
+.pp-left{left:0;width:clamp(185px,15vw,225px);border-right:1px solid rgba(217,169,63,.18);padding:12px 9px}
+.pp-left-title{padding:3px 4px 10px;border-bottom:1px solid rgba(217,169,63,.12);margin-bottom:9px}.pp-left-title span{color:var(--gold);font-size:7px;font-weight:900;letter-spacing:2px}.pp-left-title h2{margin:4px 0;color:#fff;font-size:25px;font-weight:400}.pp-left-title p{margin:0;color:#788078;font-size:7px;line-height:1.4}
+.pp-nav{display:grid;gap:5px}.pp-nav a{display:flex;align-items:center;min-height:38px;padding:0 9px;border:1px solid rgba(217,169,63,.1);border-radius:8px;background:#101612;color:#d7d5cc;text-decoration:none;font-size:8px;font-weight:900}.pp-nav a:hover{border-color:rgba(217,169,63,.4);color:var(--gold)}
+.pp-right{right:0;width:clamp(190px,15vw,225px);border-left:1px solid rgba(217,169,63,.18);padding:12px 9px;overflow-y:auto;scrollbar-width:none}.pp-right::-webkit-scrollbar{display:none}.pp-right-title span{color:var(--gold);font-size:7px;font-weight:900;letter-spacing:2px}.pp-right-title h2{margin:4px 0 12px;color:#fff;font-size:26px;font-weight:400}.profile-sponsors{display:grid;gap:9px}.ps-sponsor{display:block;padding:6px;border:1px solid rgba(217,169,63,.18);border-radius:10px;background:#111713;text-decoration:none}.ps-sponsor img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:7px;background:#090b0a}.ps-sponsor span{display:block;padding:6px 2px 2px;color:#a779ff;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps-empty{padding:12px;text-align:center;color:#7e867f;font-size:9px}
+@media(max-width:900px){.header{grid-template-columns:1fr auto!important}.header-center{display:none!important}.pp-left{display:none}.pp-right{display:none}.public-profile{padding:78px 12px 35px!important}.pp-shell{max-width:100%}}
+@media(max-width:600px){.header{height:58px!important;min-height:58px!important;padding:6px 10px!important}.header-brand .brand-ball{width:34px!important;height:34px!important;flex-basis:34px!important;font-size:17px!important}.header-brand strong{font-size:11px!important}.header-brand span{font-size:6px!important}.header-actions{gap:5px!important}.header-actions a{font-size:7px!important}.public-profile{padding-top:70px!important}.pp-cover{height:105px}.pp-head{grid-template-columns:1fr;padding:0 14px 18px;text-align:center;gap:0}.pp-avatar{width:125px;height:125px;margin:-48px auto 0}.pp-info{padding-top:12px}.pp-head h1{font-size:30px}.pp-actions{justify-content:center}.pp-stats{justify-content:center;gap:13px}.pp-grid{grid-template-columns:repeat(3,1fr);gap:3px}.pp-section{padding:9px}}
 </style>
 </head>
-<body class="profile-page">
+<body>
 <header class="header">
-<a class="header-brand" href="index.html" style="text-decoration:none;color:inherit"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a>
+<a class="header-brand" href="index.html"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a>
 <div class="header-center">👤 &nbsp; PERFIL DO ATLETA</div>
-<div class="header-actions"><a class="championship-cta" href="index.html">🏠 FEED</a><a class="championship-cta" href="conta.html">◉ CONTA</a></div>
+<div class="header-actions"><a href="index.html">🏠 FEED</a><a href="conta.html">◉ CONTA</a></div>
 </header>
-<main class="public-profile">
+<aside class="pp-left"><div class="pp-left-title"><span>REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p></div><nav class="pp-nav"><a href="index.html">🏠 INÍCIO / FEED</a><a href="index.html#atletas">🏐 TODOS OS ATLETAS</a><a href="ranking.html">🏆 RANKING DOS ATLETAS</a><a href="index.html#equipes">👥 EQUIPES CADASTRADAS</a><a href="proximos-campeonatos.html">🏆 CAMPEONATOS</a><a href="comunidade.html">💬 COMUNIDADE</a><a href="conta.html">◉ MINHA CONTA</a></nav></aside>
+<aside class="pp-right"><div class="pp-right-title"><span>QUEM ACREDITA NO ESPORTE</span><h2>APOIADORES</h2></div><div id="profileSponsors" class="profile-sponsors"><div class="ps-empty">Carregando apoiadores...</div></div></aside>
+<main class="public-profile"><div class="pp-shell">
 <a class="pp-back" href="index.html">← VOLTAR AO FEED</a>
-<section class="pp-profile">
-<div id="cover" class="pp-cover"></div>
-<div class="pp-head">
-<img id="avatar" class="pp-avatar" alt="Foto do atleta">
-<div class="pp-info"><span class="pp-kicker">REDE ESPORTIVA</span><h1 id="name">Carregando...</h1><p id="meta" class="pp-meta"></p><p id="bio" class="pp-bio"></p>
-<div id="stats" class="pp-stats"><span class="pp-stat"><strong id="photos">0</strong>fotos</span><span class="pp-stat"><strong id="videos">0</strong>vídeos</span><span class="pp-stat"><strong id="stories">0</strong>stories</span><span id="followersStat" class="pp-stat clickable"><strong id="followers">0</strong>seguidores</span><span id="followingStat" class="pp-stat clickable"><strong id="following">0</strong>seguindo</span></div>
-<div id="actions" class="pp-actions"></div></div>
-</div></section>
-<section class="pp-section">
-<div class="pp-tabs"><button class="pp-tab active" data-tab="posts">▦ PUBLICAÇÕES</button><button class="pp-tab" data-tab="stories">◉ STORIES</button></div>
-<div id="gallery" class="pp-grid"></div><div id="storyList" class="pp-stories" hidden></div>
-</section>
-</main>
+<section class="pp-profile"><div id="cover" class="pp-cover"></div><div class="pp-head"><img id="avatar" class="pp-avatar" alt="Foto do atleta"><div class="pp-info"><span class="pp-kicker">PERFIL DO ATLETA</span><h1 id="name">Carregando...</h1><p id="meta" class="pp-meta"></p><p id="bio" class="pp-bio"></p><div id="stats" class="pp-stats"><span class="pp-stat"><strong id="photos">0</strong>fotos</span><span class="pp-stat"><strong id="videos">0</strong>vídeos</span><span class="pp-stat"><strong id="stories">0</strong>stories</span><span id="followersStat" class="pp-stat clickable"><strong id="followers">0</strong>seguidores</span><span id="followingStat" class="pp-stat clickable"><strong id="following">0</strong>seguindo</span></div><div id="actions" class="pp-actions"></div></div></div></section>
+<section class="pp-section"><div class="pp-tabs"><button class="pp-tab active" data-tab="posts">▦ PUBLICAÇÕES</button><button class="pp-tab" data-tab="stories">◉ STORIES</button></div><div id="gallery" class="pp-grid"></div><div id="storyList" class="pp-stories" hidden></div></section>
+</div></main>
 <div id="listModal" class="pp-modal"><div class="pp-modal-card"><button id="closeModal" class="pp-close">×</button><h2 id="modalTitle">Pessoas</h2><div id="userList" class="pp-user-list"></div></div></div>
-<script type="module" src="perfil-social.js?v=20260830-2"></script>
-</body></html><style>
-/* Mídia do perfil sem corte: a proporção original é preservada */
-.pp-grid{grid-template-columns:1fr!important}
-.pp-grid-item{aspect-ratio:auto!important;height:auto!important}
-.pp-grid-item img,.pp-grid-item video{display:block;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
-</style>
+<script type="module" src="perfil-social.js?v=20260830-6"></script>
+</body></html>
