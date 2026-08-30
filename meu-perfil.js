@@ -6,8 +6,117 @@ async function upload(file,folder){if(!file)throw Error("Selecione um arquivo.")
 function fill(){const p=profile||{};if($("coverPreview"))$("coverPreview").style.backgroundImage=p.capaUrl?`url("${p.capaUrl}")`:"";const publicLink=$("publicProfileLink");if(publicLink&&user)publicLink.href="perfil-social.html?uid="+encodeURIComponent(user.uid);$("name").value=p.nome||user.displayName||"";$("birth").value=p.nascimento||"";$("uf").value=p.uf||"";$("city").value=p.cidade||"";$("modalidade").value=p.modalidade||"";$("posicao").value=p.posicao||"";$("categoria").value=p.categoria||"Iniciante";$("time").value=p.time||"";$("contato").value=p.contato||"";$("bio").value=p.bio||"";const plan=p.planoId||"gratuito";document.querySelectorAll('input[name="profilePlano"]').forEach(x=>{x.checked=x.value===plan;x.closest(".profile-plano")?.classList.toggle("selecionado",x.checked)});$("displayName").textContent=p.nome||user.displayName||"Seu perfil";$("profileSummary").textContent=[p.cidade,p.uf,p.modalidade,p.posicao].filter(Boolean).join(" • ")||"Complete seu perfil para aparecer na rede";if(p.fotoUrl)$("avatar").src=p.fotoUrl;else $("avatar").src="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>')}
 async function saveProfile(){const nome=$("name").value.trim(),cidade=$("city").value.trim(),uf=$("uf").value;if(nome.length<2||cidade.length<2||!uf){status("Preencha nome, cidade e estado.");return}try{$("saveProfile").disabled=true;status("Salvando seu perfil...");let fotoUrl=profile?.fotoUrl||"";let fotoPath=profile?.fotoPath||"";let capaUrl=profile?.capaUrl||"";let capaPath=profile?.capaPath||"";const cover=$("coverInput")?.files?.[0];if(cover){const up=await upload(cover,"capa");capaUrl=up.url;capaPath=up.path;$("coverPreview").style.backgroundImage=`url("${capaUrl}")`}const file=$("avatarInput").files[0];if(file){const up=await upload(file,"perfil");fotoUrl=up.url;fotoPath=up.path;$("avatar").src=fotoUrl}profile={...(profile||{}),uid:user.uid,nome,nascimento:$("birth").value,cidade,uf,modalidade:$("modalidade").value.trim(),posicao:$("posicao").value.trim(),categoria:$("categoria").value,time:$("time").value.trim(),contato:$("contato").value.trim(),bio:$("bio").value.trim(),fotoUrl,fotoPath,capaUrl,capaPath,email:user.email||"",plano:document.querySelector('input[name="profilePlano"]:checked')?.value==="gratuito"?"Gratuito":String(document.querySelector('input[name="profilePlano"]:checked')?.value||"gratuito").replace(/^./,m=>m.toUpperCase()),planoId:document.querySelector('input[name="profilePlano"]:checked')?.value||"gratuito",valorPlano:{gratuito:0,bronze:9.9,prata:19.9,ouro:34.9,premium:49.9}[document.querySelector('input[name="profilePlano"]:checked')?.value||"gratuito"],planoStatus:(document.querySelector('input[name="profilePlano"]:checked')?.value||"gratuito")==="gratuito"?"ativo":"aguardando_pagamento",pagamentoConfirmado:false,atualizadoEm:serverTimestamp(),status:"ativo"};const usuarioRef=doc(db,"usuarios",user.uid);const usuarioSnap=await getDoc(usuarioRef);const papelExistente=usuarioSnap.exists()&&usuarioSnap.data()?.papel?usuarioSnap.data().papel:"usuario";const usuarioData={...profile,uid:user.uid,papel:papelExistente};await setDoc(usuarioRef,usuarioData,{merge:true});await setDoc(doc(db,"perfis",user.uid),profile,{merge:true});status("Perfil salvo. Agora você já pode publicar fotos, vídeos e stories.");$("displayName").textContent=nome}catch(e){console.error(e);status("Não foi possível salvar. Verifique sua conexão e tente novamente.")}finally{$("saveProfile").disabled=false}}
 
-async function loadClaimableProfiles(){const box=$("claimProfileCard"),list=$("claimProfileList"),st=$("claimProfileStatus");if(!box||!list||!user)return;try{  /* Após aprovação, o vínculo é gravado em legadoAtletaId. Também mantemos a checagem de ownerUid para vínculos antigos/manuais. */  if(profile?.legadoAtletaId){box.hidden=true;return}  const snap=await getDocs(collection(db,"atletas"));  const available=snap.docs.map(d=>({id:d.id,...d.data()}))    .filter(a=>!String(a.ownerUid||"").trim())    .sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));  if(!available.length){box.hidden=true;return}  box.hidden=false;  list.className="claim-list";  list.innerHTML=available.slice(0,100).map(a=>'<div class="claim-choice"><div><strong>'+esc(a.nome||"Atleta")+'</strong><small>'+esc([a.cidade,a.uf,a.categoria].filter(Boolean).join(" · "))+'</small><small>UID do perfil: '+esc(a.id)+'</small></div><button type="button" data-claim-profile="'+esc(a.id)+'">REIVINDICAR</button></div>').join("");  list.querySelectorAll("[data-claim-profile]").forEach(b=>b.onclick=()=>claimProfile(b.dataset.claimProfile,available.find(a=>a.id===b.dataset.claimProfile)));}catch(e){console.error(e);box.hidden=true}}
-async function claimProfile(perfilId,p){const st=$("claimProfileStatus");if(!p||!user)return;const b=document.querySelector('[data-claim-profile="'+CSS.escape(perfilId)+'"]');if(b)b.disabled=true;try{await setDoc(doc(db,"reivindicacoes_perfis",perfilId+"_"+user.uid),{perfilId,perfilNome:p.nome||"Atleta",solicitanteUid:user.uid,solicitanteEmail:user.email||"",solicitanteNome:profile?.nome||user.displayName||"",status:"pendente",criadoEm:serverTimestamp(),atualizadoEm:serverTimestamp()},{merge:true});if(st)st.textContent="Solicitação enviada para análise do administrador.";if(b)b.textContent="SOLICITAÇÃO ENVIADA";}catch(e){console.error(e);if(st)st.textContent="Não foi possível reivindicar este perfil agora.";if(b)b.disabled=false}}
+async function loadClaimableProfiles(){
+  const box=$("claimProfileCard"),list=$("claimProfileList"),st=$("claimProfileStatus");
+  if(!box||!list||!user)return;
+  try{
+    /*
+      Fonte canônica para disponibilidade:
+      - ownerUid no atleta = já vinculado;
+      - reivindicacao_perfis aprovada = já reivindicado, mesmo que um dado legado
+        ainda não tenha ownerUid;
+      - solicitação pendente do próprio usuário também fica fora da lista.
+      Isso impede que um perfil reapareça para reivindicação depois da aprovação.
+    */
+    const [claimsSnap, athletesSnap] = await Promise.all([
+      getDocs(collection(db,"reivindicacoes_perfis")),
+      getDocs(collection(db,"atletas"))
+    ]);
+    const claims=claimsSnap.docs.map(d=>({id:d.id,...d.data()}));
+    const approvedIds=new Set(
+      claims.filter(c=>String(c.status||"").toLowerCase()==="aprovada"&&c.perfilId)
+        .map(c=>String(c.perfilId))
+    );
+    const pendingByMe=new Set(
+      claims.filter(c=>String(c.status||"").toLowerCase()==="pendente"&&String(c.solicitanteUid||"")===String(user.uid))
+        .map(c=>String(c.perfilId||""))
+    );
+
+    const hasApprovedMine=claims.some(c=>
+      String(c.status||"").toLowerCase()==="aprovada" &&
+      String(c.solicitanteUid||"")===String(user.uid)
+    );
+    const ownedSnap=await getDocs(query(collection(db,"atletas"),where("ownerUid","==",user.uid)));
+    const alreadyLinked=Boolean(profile?.legadoAtletaId)||hasApprovedMine||!ownedSnap.empty;
+
+    if(alreadyLinked){
+      box.hidden=true;
+      if(list)list.innerHTML="";
+      return;
+    }
+
+    const available=athletesSnap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(a=>{
+        const id=String(a.id||"");
+        return id &&
+          !String(a.ownerUid||"").trim() &&
+          !approvedIds.has(id) &&
+          !pendingByMe.has(id);
+      })
+      .sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
+
+    if(!available.length){
+      box.hidden=true;
+      if(list)list.innerHTML="";
+      return;
+    }
+
+    box.hidden=false;
+    list.className="claim-list";
+    list.innerHTML=available.slice(0,100).map(a=>
+      '<div class="claim-choice"><div><strong>'+esc(a.nome||"Atleta")+
+      '</strong><small>'+esc([a.cidade,a.uf,a.categoria].filter(Boolean).join(" · "))+
+      '</small><small>UID do perfil: '+esc(a.id)+
+      '</small></div><button type="button" data-claim-profile="'+esc(a.id)+'">REIVINDICAR</button></div>'
+    ).join("");
+
+    list.querySelectorAll("[data-claim-profile]").forEach(b=>
+      b.onclick=()=>claimProfile(b.dataset.claimProfile,available.find(a=>a.id===b.dataset.claimProfile))
+    );
+  }catch(e){
+    console.error("Falha ao carregar perfis reivindicáveis:",e);
+    box.hidden=true;
+  }
+}
+async function claimProfile(perfilId,p){
+  const st=$("claimProfileStatus");
+  if(!p||!user)return;
+  const b=document.querySelector('[data-claim-profile="'+CSS.escape(perfilId)+'"]');
+  if(b)b.disabled=true;
+  try{
+    const claimRef=doc(db,"reivindicacoes_perfis",perfilId+"_"+user.uid);
+    const existing=await getDoc(claimRef);
+    if(existing.exists()){
+      const old=existing.data()||{};
+      if(String(old.status||"").toLowerCase()==="aprovada"){
+        if(st)st.textContent="Este perfil já está reivindicado e vinculado à sua conta.";
+        if(b)b.remove();
+        return;
+      }
+      if(String(old.status||"").toLowerCase()==="pendente"){
+        if(st)st.textContent="Este perfil já possui uma solicitação aguardando análise.";
+        if(b){b.textContent="SOLICITAÇÃO ENVIADA";b.disabled=true;}
+        return;
+      }
+    }
+    await setDoc(claimRef,{
+      perfilId,
+      perfilNome:p.nome||"Atleta",
+      solicitanteUid:user.uid,
+      solicitanteEmail:user.email||"",
+      solicitanteNome:profile?.nome||user.displayName||"",
+      status:"pendente",
+      criadoEm:serverTimestamp(),
+      atualizadoEm:serverTimestamp()
+    },{merge:true});
+    if(st)st.textContent="Solicitação enviada para análise do administrador.";
+    if(b){b.textContent="SOLICITAÇÃO ENVIADA";b.disabled=true;}
+  }catch(e){
+    console.error(e);
+    if(st)st.textContent="Não foi possível reivindicar este perfil agora.";
+    if(b)b.disabled=false;
+  }
+}
 document.querySelectorAll('input[name="profilePlano"]').forEach(x=>x.addEventListener("change",()=>{document.querySelectorAll(".profile-plano").forEach(l=>l.classList.toggle("selecionado",l.querySelector("input")?.checked));$("profilePlanStatus").textContent=x.value==="gratuito"?"Plano gratuito ativo.":"Plano selecionado. O pagamento ficará aguardando confirmação administrativa."}));
 async function publishPhoto(file){if(!file)return;if(!profile?.nome){status("Complete e salve seu perfil antes de publicar.",true);return}status("Enviando foto para o feed...",true);const up=await upload(file,"publicacoes");await addDoc(collection(db,"publicacoes"),{ownerUid:user.uid,ownerEmail:user.email||"",nome:profile.nome,texto:($("captionInput")?.value.trim()||"Nova foto de "+profile.nome),imagem:up.url,imagemUrl:up.url,imagemPath:up.path,imagemMime:up.mime,imagemTamanho:up.size,aprovado:true,status:"publicado",criadoEm:serverTimestamp()});status("Foto publicada no feed com sucesso.",true);if($("captionInput"))$("captionInput").value=""}
 async function publishVideo(file){if(!file)return;if(!profile?.nome){status("Complete e salve seu perfil antes de publicar.",true);return}status("Enviando vídeo para o feed...",true);const up=await upload(file,"videos");await addDoc(collection(db,"videos"),{ownerUid:user.uid,nome:profile.nome,videoUrl:up.url,videoPath:up.path,videoMime:up.mime,videoTamanho:up.size,legenda:$("captionInput")?.value.trim()||"",criadoEm:serverTimestamp()});status("Vídeo publicado no feed com sucesso.",true);if($("captionInput"))$("captionInput").value=""}
