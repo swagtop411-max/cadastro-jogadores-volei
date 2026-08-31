@@ -2,100 +2,83 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
-    }
-
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return signedIn()
-        && (
-          request.auth.token.admin == true
-          || request.auth.token.email == 'swagtop411@gmail.com'
-        );
+      return signedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'swagtop411@gmail.com'
+      );
     }
-
-    function isOwner(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
-    function authEmail() {
-      return signedIn() && request.auth.token.email is string
-        ? request.auth.token.email
-        : '';
-    }
-
-    function ownerEmailIsValid(value) {
-      return value is string
-        && (
-          (signedIn() && value == authEmail())
-          || (!signedIn() && value == '')
-        );
-    }
-
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    function authEmail() { return request.auth.token.email; }
     function validUf(value) {
-      return value is string
-        && value in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+      return value is string && value in ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
     }
-
     function validCategoria(value) {
-      return value is string
-        && value in ['Iniciante','Intermediário','Avançado'];
+      return value is string && value in ['Iniciante','Intermediário','Avançado'];
     }
-
     function validPlanoAtleta(plano, planoId, valor) {
       return plano in ['Gratuito','Bronze','Prata','Ouro','Premium']
         && planoId in ['gratuito','bronze','prata','ouro','premium']
         && valor is number
         && (
-          (plano == 'Gratuito' && planoId == 'gratuito' && valor == 0)
-          || (plano == 'Bronze' && planoId == 'bronze' && valor == 9.9)
-          || (plano == 'Prata' && planoId == 'prata' && valor == 19.9)
-          || (plano == 'Ouro' && planoId == 'ouro' && valor == 34.9)
-          || (plano == 'Premium' && planoId == 'premium' && valor == 49.9)
+          (plano == 'Gratuito' && planoId == 'gratuito' && valor == 0) ||
+          (plano == 'Bronze' && planoId == 'bronze' && valor == 9.9) ||
+          (plano == 'Prata' && planoId == 'prata' && valor == 19.9) ||
+          (plano == 'Ouro' && planoId == 'ouro' && valor == 34.9) ||
+          (plano == 'Premium' && planoId == 'premium' && valor == 49.9)
         );
     }
-
     function validPlanoStatus(planoId, planoStatus) {
-      return (planoId == 'gratuito' && planoStatus == 'ativo')
-        || (planoId != 'gratuito' && planoStatus == 'aguardando_pagamento');
+      return (planoId == 'gratuito' && planoStatus == 'ativo') ||
+        (planoId != 'gratuito' && planoStatus == 'aguardando_pagamento');
+    }
+    function approvedSocialTarget(id) {
+      return (
+        exists(/databases/$(database)/documents/publicacoes/$(id)) &&
+        get(/databases/$(database)/documents/publicacoes/$(id)).data.aprovado == true
+      ) || (
+        exists(/databases/$(database)/documents/videos/$(id)) &&
+        get(/databases/$(database)/documents/videos/$(id)).data.aprovado == true
+      );
     }
 
     // ============================================================
-    // CONTAS / PERFIS
+    // CONTAS PRIVADAS
     // ============================================================
     match /usuarios/{uid} {
       allow read: if isAdmin() || isOwner(uid);
-
       allow create: if isOwner(uid)
         && request.resource.data.uid == uid
         && request.resource.data.papel == 'usuario'
         && request.resource.data.email == authEmail()
         && request.resource.data.keys().hasOnly([
           'uid','nome','email','papel','status','criadoEm','atualizadoEm',
-          'nascimento','cidade','uf','modalidade','posicao','categoria','time',
-          'contato','bio','historicoCampeonatos','fotoUrl','fotoPath','capaUrl','capaPath',
-          'plano','planoId','valorPlano','planoStatus','pagamentoConfirmado'
+          'nascimento','cidade','uf','modalidade','modalidades','posicao','posicoes',
+          'categoria','time','contato','bio','historicoCampeonatos','fotoUrl','fotoPath',
+          'capaUrl','capaPath','plano','planoId','valorPlano','planoStatus',
+          'pagamentoConfirmado','legadoAtletaId'
         ]);
-
       allow update: if isOwner(uid)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.papel == resource.data.papel
         && request.resource.data.email == resource.data.email
         && request.resource.data.keys().hasOnly([
           'uid','nome','email','papel','status','criadoEm','atualizadoEm',
-          'nascimento','cidade','uf','modalidade','posicao','categoria','time',
-          'contato','bio','historicoCampeonatos','fotoUrl','fotoPath','capaUrl','capaPath',
-          'plano','planoId','valorPlano','planoStatus','pagamentoConfirmado'
+          'nascimento','cidade','uf','modalidade','modalidades','posicao','posicoes',
+          'categoria','time','contato','bio','historicoCampeonatos','fotoUrl','fotoPath',
+          'capaUrl','capaPath','plano','planoId','valorPlano','planoStatus',
+          'pagamentoConfirmado','legadoAtletaId'
         ]);
-
       allow delete: if isAdmin();
     }
 
+    // ============================================================
+    // PERFIS SOCIAIS PÚBLICOS + PRIVADO DA REIVINDICAÇÃO
+    // ============================================================
     match /perfis/{uid} {
-      // Documento público: somente dados destinados à vitrine/rede social.
       allow read: if true;
-
-      allow create: if isOwner(uid)
+      allow create: if (isOwner(uid) || isAdmin())
         && request.resource.data.uid == uid
         && request.resource.data.keys().hasOnly([
           'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
@@ -111,48 +94,48 @@ service cloud.firestore {
         && validCategoria(request.resource.data.categoria)
         && request.resource.data.historicoCampeonatos is list
         && request.resource.data.historicoCampeonatos.size() <= 30;
-
-      allow update: if isAdmin()
-        || (isOwner(uid)
-          && request.resource.data.uid == resource.data.uid
-          && request.resource.data.keys().hasOnly([
-            'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
-            'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos'
-          ])
-          && request.resource.data.nome is string
-          && request.resource.data.nome.size() >= 2
-          && request.resource.data.nome.size() <= 100
-          && request.resource.data.cidade is string
-          && request.resource.data.cidade.size() >= 2
-          && request.resource.data.cidade.size() <= 100
-          && validUf(request.resource.data.uf)
-          && validCategoria(request.resource.data.categoria)
-          && request.resource.data.historicoCampeonatos is list
-          && request.resource.data.historicoCampeonatos.size() <= 30);
-
+      allow update: if (isOwner(uid) || isAdmin())
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.keys().hasOnly([
+          'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
+          'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.cidade is string
+        && request.resource.data.cidade.size() >= 2
+        && request.resource.data.cidade.size() <= 100
+        && validUf(request.resource.data.uf)
+        && validCategoria(request.resource.data.categoria)
+        && request.resource.data.historicoCampeonatos is list
+        && request.resource.data.historicoCampeonatos.size() <= 30;
       allow delete: if isAdmin() || isOwner(uid);
     }
-
-    // ============================================================
-    // ATLETAS
-    // ============================================================
-    match /atletas/{atletaId} {
-      // Compatibilidade com o banco legado. Dados sensíveis são migrados pelo
-      // painel ADM para /privado/dados e não devem ser usados pela interface pública.
-      allow read: if true;
-      allow create, delete: if isAdmin();
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nome','nascimento','cidade','uf','modalidades','posicoes','modalidade','posicao',
-            'categoria','time','historicoEquipes','historicoCampeonatos','observacoes','foto',
-            'ownerUid','ownerEmail','atualizadoEm'
-          ]));
+    match /perfis/{uid}/privado/{documento} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow create, update, delete: if isAdmin();
     }
 
+    // ============================================================
+    // ATLETAS LEGADOS
+    // ============================================================
+    match /atletas/{atletaId} {
+      // Mantido público temporariamente para compatibilidade do banco legado.
+      // O painel ADM migra campos sensíveis para /privado/dados.
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','nascimento','cidade','uf','modalidades','posicoes','modalidade','posicao',
+          'categoria','time','historicoEquipes','historicoCampeonatos','observacoes','foto',
+          'ownerUid','ownerEmail','atualizadoEm'
+        ])
+      );
+    }
     match /atletas/{atletaId}/privado/{documento} {
       allow read, write: if isAdmin();
     }
@@ -164,11 +147,10 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
-
     match /apoiadores_pendentes/{pedidoId} {
       allow create: if request.resource.data.keys().hasAll([
-          'empresa','responsavel','contato','cidade','link','plano','planoId',
-          'valor','status','aprovacao','criadoEm'
+          'empresa','responsavel','contato','cidade','link','plano','planoId','valor',
+          'status','aprovacao','criadoEm'
         ])
         && request.resource.data.keys().hasOnly([
           'empresa','responsavel','contato','cidade','link','imagem','plano','planoId',
@@ -188,22 +170,20 @@ service cloud.firestore {
         && request.resource.data.cidade.size() <= 80
         && request.resource.data.link is string
         && request.resource.data.link.size() <= 300
-        && (!request.resource.data.keys().hasAny(['imagem'])
-          || (request.resource.data.imagem is string
-            && request.resource.data.imagem.size() <= 700000))
+        && (!request.resource.data.keys().hasAny(['imagem']) ||
+          (request.resource.data.imagem is string && request.resource.data.imagem.size() <= 700000))
         && request.resource.data.plano in ['Bronze','Prata','Ouro','Master']
         && request.resource.data.planoId in ['bronze','prata','ouro','master']
         && request.resource.data.valor is number
         && (
-          (request.resource.data.plano == 'Bronze' && request.resource.data.planoId == 'bronze' && request.resource.data.valor == 50)
-          || (request.resource.data.plano == 'Prata' && request.resource.data.planoId == 'prata' && request.resource.data.valor == 100)
-          || (request.resource.data.plano == 'Ouro' && request.resource.data.planoId == 'ouro' && request.resource.data.valor == 200)
-          || (request.resource.data.plano == 'Master' && request.resource.data.planoId == 'master' && request.resource.data.valor == 350)
+          (request.resource.data.plano == 'Bronze' && request.resource.data.planoId == 'bronze' && request.resource.data.valor == 50) ||
+          (request.resource.data.plano == 'Prata' && request.resource.data.planoId == 'prata' && request.resource.data.valor == 100) ||
+          (request.resource.data.plano == 'Ouro' && request.resource.data.planoId == 'ouro' && request.resource.data.valor == 200) ||
+          (request.resource.data.plano == 'Master' && request.resource.data.planoId == 'master' && request.resource.data.valor == 350)
         )
         && request.resource.data.status == 'aguardando_pagamento'
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.criadoEm is timestamp;
-
       allow read, update, delete: if isAdmin();
     }
 
@@ -212,16 +192,11 @@ service cloud.firestore {
     // ============================================================
     match /comentarios/{comentarioId} {
       allow read: if isAdmin() || resource.data.aprovado == true;
-
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail == authEmail()
-        && request.resource.data.keys().hasAll([
-          'ownerUid','ownerEmail','atletaId','nome','texto','aprovado','status','criadoEm'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'ownerUid','ownerEmail','atletaId','nome','texto','aprovado','status','criadoEm'
-        ])
+        && request.resource.data.keys().hasAll(['ownerUid','ownerEmail','atletaId','nome','texto','aprovado','status','criadoEm'])
+        && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','atletaId','nome','texto','aprovado','status','criadoEm'])
         && request.resource.data.atletaId is string
         && request.resource.data.atletaId.size() >= 1
         && request.resource.data.nome is string
@@ -234,7 +209,6 @@ service cloud.firestore {
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is timestamp
         && exists(/databases/$(database)/documents/atletas/$(request.resource.data.atletaId));
-
       allow update, delete: if isAdmin();
     }
 
@@ -245,16 +219,9 @@ service cloud.firestore {
       allow read: if isAdmin() || resource.data.publicado == true;
       allow create, update, delete: if isAdmin();
     }
-
     match /campeonatos_pendentes/{campeonatoId} {
-      allow create: if request.resource.data.keys().hasAll([
-          'nome','organizador','data','local','descricao','imagem',
-          'publicado','status','aprovacao','criadoEm'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'nome','organizador','data','local','descricao','imagem',
-          'publicado','status','aprovacao','criadoEm'
-        ])
+      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -277,7 +244,6 @@ service cloud.firestore {
         && request.resource.data.criadoEm is string
         && request.resource.data.criadoEm.size() >= 10
         && request.resource.data.criadoEm.size() <= 40;
-
       allow read, update, delete: if isAdmin();
     }
 
@@ -286,24 +252,19 @@ service cloud.firestore {
     // ============================================================
     match /atletas_pendentes/{atletaId} {
       allow create: if (
-          (signedIn()
-            && request.resource.data.ownerUid == request.auth.uid
-            && request.resource.data.ownerEmail == authEmail())
-          ||
-          (!signedIn()
-            && request.resource.data.ownerUid == ''
-            && request.resource.data.ownerEmail == '')
+          (signedIn() && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail == authEmail()) ||
+          (!signedIn() && request.resource.data.ownerUid == '' && request.resource.data.ownerEmail == '')
         )
         && request.resource.data.keys().hasAll([
-          'ownerUid','ownerEmail','nome','nascimento','cidade','uf','contato','categoria',
-          'time','foto','status','aprovacao','criadoEm','modalidades','posicoes','modalidade',
-          'posicao','observacoes','plano','planoId','valorPlano','planoStatus'
+          'ownerUid','ownerEmail','nome','nascimento','cidade','uf','contato','categoria','time',
+          'foto','status','aprovacao','criadoEm','modalidades','posicoes','modalidade','posicao',
+          'observacoes','plano','planoId','valorPlano','planoStatus'
         ])
         && request.resource.data.keys().hasOnly([
-          'ownerUid','ownerEmail','nome','nascimento','cidade','uf','contato','categoria',
-          'time','foto','status','aprovacao','criadoEm','modalidades','posicoes','modalidade',
-          'posicao','observacoes','historicoCampeonatos','historicoEquipes','plano','planoId',
-          'valorPlano','planoStatus','pagamentoConfirmado'
+          'ownerUid','ownerEmail','nome','nascimento','cidade','uf','contato','categoria','time',
+          'foto','status','aprovacao','criadoEm','modalidades','posicoes','modalidade','posicao',
+          'observacoes','historicoCampeonatos','historicoEquipes','plano','planoId','valorPlano',
+          'planoStatus','pagamentoConfirmado'
         ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
@@ -336,81 +297,61 @@ service cloud.firestore {
         && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.get('historicoCampeonatos', []) is list
         && request.resource.data.get('historicoCampeonatos', []).size() <= 30
-        && validPlanoAtleta(
-          request.resource.data.plano,
-          request.resource.data.planoId,
-          request.resource.data.valorPlano
-        )
-        && validPlanoStatus(request.resource.data.planoId, request.resource.data.planoStatus)
-        // O cliente jamais confirma o próprio pagamento.
+        && validPlanoAtleta(request.resource.data.plano,request.resource.data.planoId,request.resource.data.valorPlano)
+        && validPlanoStatus(request.resource.data.planoId,request.resource.data.planoStatus)
         && request.resource.data.get('pagamentoConfirmado', false) == false
         && request.resource.data.criadoEm is string;
-
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.ownerEmail == resource.data.ownerEmail
-          && request.resource.data.plano == resource.data.plano
-          && request.resource.data.planoId == resource.data.planoId
-          && request.resource.data.valorPlano == resource.data.valorPlano
-          && request.resource.data.planoStatus == resource.data.planoStatus
-          && request.resource.data.get('pagamentoConfirmado', false) == resource.data.get('pagamentoConfirmado', false)
-          && request.resource.data.aprovacao == resource.data.aprovacao
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade',
-            'posicao','categoria','time','historicoCampeonatos','historicoEquipes','observacoes','foto'
-          ]));
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.ownerEmail == resource.data.ownerEmail
+        && request.resource.data.plano == resource.data.plano
+        && request.resource.data.planoId == resource.data.planoId
+        && request.resource.data.valorPlano == resource.data.valorPlano
+        && request.resource.data.planoStatus == resource.data.planoStatus
+        && request.resource.data.get('pagamentoConfirmado', false) == resource.data.get('pagamentoConfirmado', false)
+        && request.resource.data.aprovacao == resource.data.aprovacao
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','nascimento','cidade','uf','contato','modalidades','posicoes','modalidade','posicao',
+          'categoria','time','historicoCampeonatos','historicoEquipes','observacoes','foto'
+        ])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     // ============================================================
-    // EQUIPES
+    // EQUIPES + PRIVADO
     // ============================================================
     match /equipes/{equipeId} {
       allow read: if true;
       allow create, delete: if isAdmin();
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'
-          ]));
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'
+        ])
+      );
     }
-
     match /equipes/{equipeId}/privado/{documento} {
-      allow read: if isAdmin()
-        || (signedIn()
-          && get(/databases/$(database)/documents/equipes/$(equipeId)).data.ownerUid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && get(/databases/$(database)/documents/equipes/$(equipeId)).data.ownerUid == request.auth.uid);
       allow write: if isAdmin();
     }
-
     match /equipes_pendentes/{equipeId} {
       allow create: if (
-          (signedIn()
-            && request.resource.data.ownerUid == request.auth.uid
-            && request.resource.data.ownerEmail == authEmail())
-          ||
-          (!signedIn()
-            && request.resource.data.ownerUid == ''
-            && request.resource.data.ownerEmail == '')
+          (signedIn() && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail == authEmail()) ||
+          (!signedIn() && request.resource.data.ownerUid == '' && request.resource.data.ownerEmail == '')
         )
         && request.resource.data.keys().hasAll([
           'ownerUid','ownerEmail','nome','responsavel','uf','cidade','modalidade','categoria',
-          'contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status',
-          'aprovacao','criadoEm'
+          'contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm'
         ])
         && request.resource.data.keys().hasOnly([
           'ownerUid','ownerEmail','nome','responsavel','uf','cidade','modalidade','categoria',
-          'contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status',
-          'aprovacao','criadoEm','pagamentoConfirmado'
+          'contato','logo','atletas','plano','planoId','valorPlano','planoStatus','status','aprovacao','criadoEm','pagamentoConfirmado'
         ])
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
@@ -433,48 +374,36 @@ service cloud.firestore {
         && request.resource.data.logo.size() <= 450000
         && request.resource.data.atletas is list
         && request.resource.data.atletas.size() <= 30
-        && validPlanoAtleta(
-          request.resource.data.plano,
-          request.resource.data.planoId,
-          request.resource.data.valorPlano
-        )
-        && validPlanoStatus(request.resource.data.planoId, request.resource.data.planoStatus)
+        && validPlanoAtleta(request.resource.data.plano,request.resource.data.planoId,request.resource.data.valorPlano)
+        && validPlanoStatus(request.resource.data.planoId,request.resource.data.planoStatus)
         && request.resource.data.status == 'ativo'
         && request.resource.data.aprovacao == 'pendente'
-        // Mesmo bloqueio de fraude aplicado aos atletas.
         && request.resource.data.get('pagamentoConfirmado', false) == false
         && request.resource.data.criadoEm is string;
-
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.ownerEmail == resource.data.ownerEmail
-          && request.resource.data.plano == resource.data.plano
-          && request.resource.data.planoId == resource.data.planoId
-          && request.resource.data.valorPlano == resource.data.valorPlano
-          && request.resource.data.planoStatus == resource.data.planoStatus
-          && request.resource.data.get('pagamentoConfirmado', false) == resource.data.get('pagamentoConfirmado', false)
-          && request.resource.data.aprovacao == resource.data.aprovacao
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-            'nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas'
-          ]));
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin() || (
+        signedIn()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.ownerEmail == resource.data.ownerEmail
+        && request.resource.data.plano == resource.data.plano
+        && request.resource.data.planoId == resource.data.planoId
+        && request.resource.data.valorPlano == resource.data.valorPlano
+        && request.resource.data.planoStatus == resource.data.planoStatus
+        && request.resource.data.get('pagamentoConfirmado', false) == resource.data.get('pagamentoConfirmado', false)
+        && request.resource.data.aprovacao == resource.data.aprovacao
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nome','responsavel','uf','cidade','modalidade','categoria','contato','logo','atletas'
+        ])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     // ============================================================
     // REDE SOCIAL
     // ============================================================
     match /publicacoes/{publicacaoId} {
-      allow read: if resource.data.aprovado == true
-        || isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
-
+      allow read: if resource.data.aprovado == true || isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.get('ownerEmail','') == authEmail()
@@ -498,32 +427,27 @@ service cloud.firestore {
         && request.resource.data.get('imagemTamanho',0) >= 0
         && request.resource.data.get('imagemTamanho',0) <= 10 * 1024 * 1024
         && request.resource.data.keys().hasOnly([
-          'ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath',
-          'imagemMime','imagemTamanho','legenda','tipo','armazenamento','aprovado',
-          'status','criadoEm'
+          'ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath','imagemMime',
+          'imagemTamanho','legenda','tipo','armazenamento','aprovado','status','criadoEm'
         ]);
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.aprovado == resource.data.aprovado
-          && request.resource.data.status == resource.data.status
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','texto']));
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin() || (
+        signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.aprovado == resource.data.aprovado
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','texto'])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     match /comentarios_publicacoes/{comentarioId} {
       allow read: if resource.data.aprovado == true || isAdmin();
-
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail == authEmail()
         && request.resource.data.publicacaoId is string
         && request.resource.data.publicacaoId.size() >= 1
-        && exists(/databases/$(database)/documents/publicacoes/$(request.resource.data.publicacaoId))
+        && approvedSocialTarget(request.resource.data.publicacaoId)
         && request.resource.data.nome is string
         && request.resource.data.nome.size() >= 2
         && request.resource.data.nome.size() <= 100
@@ -534,15 +458,10 @@ service cloud.firestore {
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.keys().hasOnly([
-          'ownerUid','ownerEmail','publicacaoId','nome','texto',
-          'parentCommentId','aprovado','status','criadoEm'
+          'ownerUid','ownerEmail','publicacaoId','nome','texto','parentCommentId','aprovado','status','criadoEm'
         ]);
-
       allow update: if isAdmin();
-      allow delete: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && resource.data.aprovado == false);
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && resource.data.aprovado == false);
     }
 
     match /curtidas_publicacoes/{publicacaoId}/usuarios/{uid} {
@@ -551,8 +470,7 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid','criadoEm'])
         && request.resource.data.uid == uid
         && request.resource.data.criadoEm is timestamp
-        && exists(/databases/$(database)/documents/publicacoes/$(publicacaoId))
-        && get(/databases/$(database)/documents/publicacoes/$(publicacaoId)).data.aprovado == true;
+        && approvedSocialTarget(publicacaoId);
       allow delete: if isOwner(uid);
       allow update: if false;
     }
@@ -563,28 +481,17 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['uid','criadoEm'])
         && request.resource.data.uid == uid
         && request.resource.data.criadoEm is timestamp
-        && (
-          exists(/databases/$(database)/documents/atletas/$(perfilId))
-          || exists(/databases/$(database)/documents/perfis/$(perfilId))
-        );
+        && (exists(/databases/$(database)/documents/atletas/$(perfilId)) || exists(/databases/$(database)/documents/perfis/$(perfilId)));
       allow delete: if isOwner(uid);
       allow update: if false;
     }
 
     match /stories/{storyId} {
-      allow read: if isAdmin()
-        || resource.data.aprovado == true
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
-
+      allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
-        && request.resource.data.keys().hasAll([
-          'ownerUid','mediaUrl','legenda','tipo','criadoEm','expiraEm','aprovado','status'
-        ])
-        && request.resource.data.keys().hasOnly([
-          'ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo',
-          'criadoEm','expiraEm','aprovado','status'
-        ])
+        && request.resource.data.keys().hasAll(['ownerUid','mediaUrl','legenda','tipo','criadoEm','expiraEm','aprovado','status'])
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo','criadoEm','expiraEm','aprovado','status'])
         && request.resource.data.get('nome','Atleta') is string
         && request.resource.data.get('nome','Atleta').size() <= 100
         && request.resource.data.mediaUrl is string
@@ -600,24 +507,18 @@ service cloud.firestore {
         && request.resource.data.expiraEm > request.resource.data.criadoEm
         && request.resource.data.aprovado == false
         && request.resource.data.status == 'pendente';
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.aprovado == resource.data.aprovado
-          && request.resource.data.status == resource.data.status
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow update: if isAdmin() || (
+        signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.aprovado == resource.data.aprovado
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda'])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     match /videos/{videoId} {
-      allow read: if isAdmin()
-        || resource.data.aprovado == true
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
-
+      allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.videoUrl is string
@@ -633,21 +534,15 @@ service cloud.firestore {
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.aprovado == false
         && request.resource.data.status == 'pendente'
-        && request.resource.data.keys().hasOnly([
-          'ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho',
-          'legenda','aprovado','status','criadoEm'
-        ]);
-
-      allow update: if isAdmin()
-        || (signedIn()
-          && resource.data.ownerUid == request.auth.uid
-          && request.resource.data.ownerUid == resource.data.ownerUid
-          && request.resource.data.aprovado == resource.data.aprovado
-          && request.resource.data.status == resource.data.status
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
-
-      allow delete: if isAdmin()
-        || (signedIn() && resource.data.ownerUid == request.auth.uid);
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho','legenda','aprovado','status','criadoEm']);
+      allow update: if isAdmin() || (
+        signedIn() && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.aprovado == resource.data.aprovado
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda'])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     // ============================================================
@@ -666,10 +561,7 @@ service cloud.firestore {
         && request.resource.data.detalhes.size() <= 1000
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is timestamp
-        && request.resource.data.keys().hasOnly([
-          'alvoTipo','alvoId','motivo','detalhes',
-          'reportadoPorUid','criadoEm','status'
-        ]);
+        && request.resource.data.keys().hasOnly(['alvoTipo','alvoId','motivo','detalhes','reportadoPorUid','criadoEm','status']);
       allow read, update, delete: if isAdmin();
     }
 
@@ -687,13 +579,8 @@ service cloud.firestore {
         && request.resource.data.status == 'pendente'
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.atualizadoEm is timestamp
-        && request.resource.data.keys().hasOnly([
-          'perfilId','perfilNome','solicitanteUid','solicitanteEmail',
-          'solicitanteNome','status','criadoEm','atualizadoEm'
-        ]);
-
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.solicitanteUid == request.auth.uid);
+        && request.resource.data.keys().hasOnly(['perfilId','perfilNome','solicitanteUid','solicitanteEmail','solicitanteNome','status','criadoEm','atualizadoEm']);
+      allow read: if isAdmin() || (signedIn() && resource.data.solicitanteUid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
@@ -711,7 +598,6 @@ service cloud.firestore {
       allow delete: if isOwner(followerUid);
       allow update: if false;
     }
-
     match /seguindo/{perfilUid}/usuarios/{followedUid} {
       allow read: if true;
       allow create: if isOwner(perfilUid)
