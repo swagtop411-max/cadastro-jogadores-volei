@@ -53,7 +53,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -R --exclude-dir=.git --exclude='*.md' -nF '147580' .; then
+          needle='147''580'
+          if grep -R --exclude-dir=.git --exclude='*.md' -nF "$needle" .; then
             echo 'Admin password must never be committed.'
             exit 1
           fi
