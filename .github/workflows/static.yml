@@ -26,6 +26,12 @@ jobs:
         with:
           node-version: 22
 
+      - name: Setup Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Validate JavaScript syntax
         shell: bash
         run: |
@@ -65,7 +71,18 @@ jobs:
           set -euo pipefail
           grep -q "pagamentoConfirmado', false) == false" firestore.rules
           grep -q "match /equipes/{equipeId}/privado/{documento}" firestore.rules
+          grep -q "match /perfis/{uid}/privado/{documento}" firestore.rules
+          grep -q "approvedSocialTarget" firestore.rules
           grep -q "allow update: if false" storage.rules
+
+      - name: Compile Firebase rules in emulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.1.0 emulators:exec \
+            --project demo-cadastro-atletas \
+            --only firestore,storage \
+            "node -e \"console.log('Firebase rules compiled successfully')\""
 
   deploy:
     needs: validate
