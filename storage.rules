@@ -9,9 +9,13 @@ service firebase.storage {
       );
   }
 
+  function isOwner(uid) {
+    return request.auth != null && request.auth.uid == uid;
+  }
+
   function isImage() {
     return request.resource != null
-      && request.resource.contentType.matches('image/(jpeg|jpg|png|webp|gif)');
+      && request.resource.contentType.matches('image/(jpeg|jpg|png|webp)');
   }
 
   function isVideo() {
@@ -20,58 +24,53 @@ service firebase.storage {
   }
 
   match /b/{bucket}/o {
+    // Foto de perfil: pública, mas somente o dono pode criar um novo arquivo.
+    // update é bloqueado para evitar substituição silenciosa de objetos existentes.
     match /usuarios/{uid}/perfil/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
+      allow create: if isOwner(uid)
         && isImage()
         && request.resource.size <= 5 * 1024 * 1024;
-      allow delete: if isAdmin()
-        || (request.auth != null && request.auth.uid == uid);
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(uid);
     }
 
     match /usuarios/{uid}/capa/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
+      allow create: if isOwner(uid)
         && isImage()
-        && request.resource.size <= 10 * 1024 * 1024;
-      allow delete: if isAdmin()
-        || (request.auth != null && request.auth.uid == uid);
+        && request.resource.size <= 8 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(uid);
     }
 
     match /usuarios/{uid}/publicacoes/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
-        && (
-          (isImage() && request.resource.size <= 10 * 1024 * 1024)
-          || (isVideo() && request.resource.size <= 45 * 1024 * 1024)
-        );
-      allow delete: if isAdmin()
-        || (request.auth != null && request.auth.uid == uid);
+      allow create: if isOwner(uid)
+        && isImage()
+        && request.resource.size <= 10 * 1024 * 1024;
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(uid);
     }
 
     match /usuarios/{uid}/videos/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
+      allow create: if isOwner(uid)
         && isVideo()
         && request.resource.size <= 45 * 1024 * 1024;
-      allow delete: if isAdmin()
-        || (request.auth != null && request.auth.uid == uid);
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(uid);
     }
 
     match /usuarios/{uid}/stories/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
+      allow create: if isOwner(uid)
         && (
           (isImage() && request.resource.size <= 10 * 1024 * 1024)
           || (isVideo() && request.resource.size <= 45 * 1024 * 1024)
         );
-      allow delete: if isAdmin()
-        || (request.auth != null && request.auth.uid == uid);
+      allow update: if false;
+      allow delete: if isAdmin() || isOwner(uid);
     }
   }
 }
