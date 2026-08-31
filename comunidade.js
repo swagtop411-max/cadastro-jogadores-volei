@@ -148,8 +148,8 @@ async function loadFeed() {
   setFeedStatus("Carregando publicações...");
   try {
     const [postsSnapshot, commentsSnapshot] = await Promise.all([
-      getDocs(query(postsRef, where("aprovado", "==", true))),
-      getDocs(query(commentsRef, where("aprovado", "==", true))),
+      getDocs(query(postsRef, where("aprovado", "==", true), limit(30))),
+      getDocs(query(commentsRef, where("aprovado", "==", true), limit(300))),
     ]);
     currentPosts = postsSnapshot.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
@@ -213,9 +213,7 @@ async function uploadPostImage(file, uid) {
     return await getDownloadURL(imageRef);
   } catch (error) {
     console.warn("Falha no Storage. Usando a imagem compactada diretamente no Firestore.", error);
-    // O Firestore aceita a imagem compactada dentro do limite das regras.
-    if (compressed.length <= 700000) return compressed;
-    throw new Error("Não foi possível enviar a foto. Tente uma imagem menor.");
+    throw new Error("Não foi possível enviar a foto para o armazenamento. Verifique sua conexão e tente novamente.");
   }
 }
 
@@ -279,15 +277,24 @@ publishForm?.addEventListener("submit", async (event) => {
   setStatus(publishStatus, "Enviando publicação para análise...");
   try {
     const image = file ? await uploadPostImage(file, currentUser.uid) : "";
+    const criadoEm = Timestamp.now();
+    const imagemUrl = image || "";
     await addDoc(postsRef, {
       ownerUid: currentUser.uid,
       ownerEmail: currentUser.email || "",
       nome: currentUser.displayName || name,
       texto: body,
-      imagem: image,
+      imagem: imagemUrl,
+      imagemUrl,
+      imagemPath: "",
+      imagemMime: file?.type || "image/jpeg",
+      imagemTamanho: Number(file?.size || 0),
+      legenda: body,
+      tipo: "imagem",
+      armazenamento: "storage",
       aprovado: false,
       status: "pendente",
-      criadoEm: Timestamp.now(),
+      criadoEm,
     });
     publishForm.reset();
     if (postCounter) postCounter.textContent = "0";
