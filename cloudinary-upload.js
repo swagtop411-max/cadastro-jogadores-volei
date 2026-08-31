@@ -11,6 +11,56 @@ export const CLOUDINARY_CONFIG = Object.freeze({
   videoPreset: CLOUDINARY_VIDEO_PRESET,
 });
 
+/*
+ * Ponte de compatibilidade do compositor do perfil.
+ * O script legado usa o arquivo para montar a prévia e, em seguida,
+ * limpa o value do input. O publicador Cloudinary precisa que esse mesmo
+ * File continue disponível quando o usuário clicar em PUBLICAR.
+ *
+ * Capturamos a seleção antes do listener legado e restauramos o File
+ * depois que ele terminar de preparar a prévia. Assim a UI atual continua
+ * funcionando sem voltar a depender do Firebase Storage.
+ */
+function installProfileMediaInputBridge() {
+  if (typeof document === "undefined" || document.documentElement.dataset.cloudinaryMediaBridge === "1") return;
+  document.documentElement.dataset.cloudinaryMediaBridge = "1";
+
+  document.addEventListener("change", (event) => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement)) return;
+    if (input.id !== "cameraInput" && input.id !== "galleryInput") return;
+
+    const file = input.files?.[0];
+    if (!file) return;
+    const otherId = input.id === "cameraInput" ? "galleryInput" : "cameraInput";
+
+    setTimeout(() => {
+      try {
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        input.files = transfer.files;
+        const other = document.getElementById(otherId);
+        if (other instanceof HTMLInputElement) other.value = "";
+      } catch (error) {
+        console.warn("Não foi possível preservar a mídia selecionada:", error);
+      }
+    }, 0);
+  }, true);
+
+  document.addEventListener("click", (event) => {
+    const button = event.target.closest?.("#changeMediaBtn,#closeMedia");
+    if (!button) return;
+    setTimeout(() => {
+      const camera = document.getElementById("cameraInput");
+      const gallery = document.getElementById("galleryInput");
+      if (camera instanceof HTMLInputElement) camera.value = "";
+      if (gallery instanceof HTMLInputElement) gallery.value = "";
+    }, 0);
+  }, true);
+}
+
+installProfileMediaInputBridge();
+
 function validateFile(file, { maxBytes, allowImage = true, allowVideo = false } = {}) {
   if (!file) throw new Error("Nenhum arquivo selecionado.");
   if (maxBytes && file.size > maxBytes) throw new Error("Arquivo acima do limite permitido.");
