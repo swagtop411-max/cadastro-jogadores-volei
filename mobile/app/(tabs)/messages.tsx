@@ -1,6 +1,7 @@
+import { router } from 'expo-router';
 import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { db } from '@/src/config/firebase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors, radii, spacing } from '@/src/theme';
@@ -11,6 +12,7 @@ type ConversationRow = {
   otherName: string;
   lastMessage: string;
   unread: boolean;
+  time: number;
 };
 
 export default function MessagesScreen() {
@@ -36,9 +38,10 @@ export default function MessagesScreen() {
           otherName,
           lastMessage: String(data.lastMessage || 'Inicie uma conversa'),
           unread: data.lastSenderUid && data.lastSenderUid !== user.uid && !(data.lastReadBy || []).includes(user.uid),
+          time: data.lastMessageAt?.toMillis?.() || (Number(data.lastMessageAt?.seconds || 0) * 1000),
         };
       }));
-      setRows(next);
+      setRows(next.sort((a, b) => b.time - a.time));
     });
   }, [user]);
 
@@ -47,22 +50,22 @@ export default function MessagesScreen() {
       <View style={styles.header}>
         <Text style={styles.kicker}>DIRECT</Text>
         <Text style={styles.title}>Mensagens</Text>
-        <Text style={styles.subtitle}>As conversas são as mesmas do site. O chat completo entra na próxima etapa.</Text>
+        <Text style={styles.subtitle}>Converse pelo app e continue a mesma conversa no site.</Text>
       </View>
       <FlatList
         data={rows}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>Nenhuma conversa ainda.</Text>}
+        ListEmptyComponent={<Text style={styles.empty}>Nenhuma conversa ainda. Abra o perfil de um atleta e toque em Mensagem.</Text>}
         renderItem={({ item }) => (
-          <View style={[styles.card, item.unread && styles.unread]}>
+          <Pressable style={[styles.card, item.unread && styles.unread]} onPress={() => router.push(`/chat/${item.id}` as any)}>
             <View style={styles.avatar}><Text>🏐</Text></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.otherName}</Text>
               <Text numberOfLines={1} style={styles.message}>{item.lastMessage}</Text>
             </View>
-            {item.unread && <View style={styles.dot} />}
-          </View>
+            {item.unread ? <View style={styles.dot} /> : <Text style={styles.arrow}>›</Text>}
+          </Pressable>
         )}
       />
     </View>
@@ -82,5 +85,6 @@ const styles = StyleSheet.create({
   name: { color: colors.ink, fontWeight: '900' },
   message: { color: colors.muted, marginTop: 4, fontSize: 12 },
   dot: { width: 9, height: 9, borderRadius: 5, backgroundColor: colors.cyan },
-  empty: { color: colors.muted, textAlign: 'center', marginTop: 50 },
+  arrow: { color: colors.cyan, fontSize: 25 },
+  empty: { color: colors.muted, textAlign: 'center', marginTop: 50, lineHeight: 20, paddingHorizontal: 24 },
 });
