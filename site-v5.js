@@ -90,6 +90,7 @@ function runEnhancements() {
   enhanceMedia();
   installDiscoveryLinks();
   installProfileArchiveButton();
+  import("./direct-v5.js?v=20260901-1").catch(error => console.warn("Direct V5:", error));
 }
 
 if (document.readyState === "loading") {
