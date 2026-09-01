@@ -1,3 +1,4 @@
+import "./site-v5.js?v=20260901-8";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { addDoc, collection, getDoc, doc, getFirestore, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -19,7 +20,7 @@ async function handleSubmit(event){
  try{
   let upload=null;if(file)upload=await uploadCloudinary(file,{maxBytes:25*1024*1024,allowImage:true,allowVideo:false,tags:["cadastro-de-atletas","publicacoes","comunidade"]});
   let nome=user.displayName||"Atleta";try{const p=await getDoc(doc(db,"perfis",user.uid));if(p.exists()&&p.data().nome)nome=p.data().nome}catch{}
-  await addDoc(collection(db,"publicacoes"),{ownerUid:user.uid,ownerEmail:user.email||"",nome,texto:body,imagem:upload?.url||"",imagemUrl:upload?.url||"",imagemPath:upload?.path||"",imagemMime:upload?.mime||"image/jpeg",imagemTamanho:Number(upload?.size||0),legenda:body,tipo:"imagem",armazenamento:upload?"cloudinary":"nenhum",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
+  await addDoc(collection(db,"publicacoes"),{ownerUid:user.uid,ownerEmail:user.email||"",nome,texto:body,imagem:upload?.url||"",imagemUrl:upload?.url||"",imagemPath:upload?.path||"",imagemMime:upload?.mime||"image/jpeg",imagemTamanho:Number(upload?.size||0),legenda:body,tipo:"imagem",midias:[],hashtags:[],mencoes:[],armazenamento:upload?"cloudinary":"nenhum",aprovado:true,status:"publicado",criadoEm:serverTimestamp()});
   form.reset();if($("postCounter"))$("postCounter").textContent="0";const preview=$("photoPreview");if(preview){preview.classList.add("hidden");preview.innerHTML=""}setStatus("Publicado no feed!","success");
  }catch(error){console.error("Comunidade Cloudinary:",error);setStatus(error?.message||"Não foi possível publicar.","error")}finally{if(button)button.disabled=false}
 }
