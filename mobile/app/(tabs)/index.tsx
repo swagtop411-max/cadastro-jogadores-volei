@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   storySection: { backgroundColor: colors.surface, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, marginTop: spacing.md, paddingVertical: 14 },
   storyHeadingRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 14, alignItems: 'center' },
   storyHeading: { color: colors.ink, fontSize: 12, fontWeight: '900', letterSpacing: 1.2 },
-  createStory: { color: colors.cyanDark || colors.cyan, fontWeight: '900', fontSize: 11 },
+  createStory: { color: colors.cyan, fontWeight: '900', fontSize: 11 },
   storyRail: { gap: 13, paddingHorizontal: 14, paddingTop: 12, paddingBottom: 2 },
   storyItem: { width: 68, alignItems: 'center' },
   storyRing: { width: 61, height: 61, borderRadius: 31, borderWidth: 3, borderColor: colors.cyan, padding: 2 },
