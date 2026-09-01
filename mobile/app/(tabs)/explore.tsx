@@ -35,13 +35,19 @@ export default function ExploreScreen() {
     <View style={styles.page}>
       <View style={styles.header}>
         <Text style={styles.kicker}>DESCOBRIR</Text>
-        <Text style={styles.title}>Atletas</Text>
+        <Text style={styles.title}>A rede do vôlei</Text>
         <TextInput value={search} onChangeText={setSearch} placeholder="Nome, cidade, categoria, posição..." placeholderTextColor={colors.muted} style={styles.search} />
+        <View style={styles.quickRow}>
+          <Pressable style={styles.quick} onPress={() => router.push('/championships' as any)}><Text style={styles.quickIcon}>🏆</Text><Text style={styles.quickText}>Campeonatos</Text></Pressable>
+          <Pressable style={styles.quick} onPress={() => router.push('/teams' as any)}><Text style={styles.quickIcon}>👥</Text><Text style={styles.quickText}>Equipes</Text></Pressable>
+          <Pressable style={styles.quick} onPress={() => router.push('/reels' as any)}><Text style={styles.quickIcon}>▶</Text><Text style={styles.quickText}>Reels</Text></Pressable>
+        </View>
       </View>
       <FlatList
         data={visible}
         keyExtractor={item => item.uid}
         contentContainerStyle={styles.list}
+        ListHeaderComponent={<Text style={styles.sectionTitle}>ATLETAS</Text>}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum atleta encontrado.</Text>}
         renderItem={({ item }) => (
           <Pressable style={styles.card} onPress={() => router.push(`/profile/${item.uid}` as any)}>
@@ -65,7 +71,12 @@ const styles = StyleSheet.create({
   kicker: { color: colors.cyan, fontWeight: '900', letterSpacing: 2, fontSize: 10 },
   title: { color: colors.white, fontWeight: '900', fontSize: 29, marginTop: 4, marginBottom: 12 },
   search: { backgroundColor: colors.surface, borderRadius: radii.md, minHeight: 48, paddingHorizontal: 14, color: colors.ink },
+  quickRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  quick: { flex: 1, minHeight: 65, borderRadius: radii.md, backgroundColor: colors.navySoft, borderWidth: 1, borderColor: '#27445A', alignItems: 'center', justifyContent: 'center', padding: 6 },
+  quickIcon: { color: colors.white, fontSize: 20 },
+  quickText: { color: colors.white, fontSize: 9, fontWeight: '900', marginTop: 4 },
   list: { padding: spacing.md, gap: 10, paddingBottom: 100 },
+  sectionTitle: { color: colors.ink, fontSize: 11, fontWeight: '900', letterSpacing: 1.4, marginBottom: 2 },
   card: { backgroundColor: colors.surface, borderRadius: radii.md, borderWidth: 1, borderColor: colors.border, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { width: 64, height: 64, borderRadius: 32 },
   avatarFallback: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
