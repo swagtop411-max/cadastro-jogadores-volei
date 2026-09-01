@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Banco de Atletas",
+    "slug": "cadastro-atletas-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "cadastroatletas",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cadastrodeatletas.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "O Banco de Atletas usa a câmera para publicar fotos, vídeos e Stories.",
+        "NSPhotoLibraryUsageDescription": "O Banco de Atletas acessa sua biblioteca somente quando você escolhe uma mídia para publicar."
+      }
+    },
+    "android": {
+      "package": "com.cadastrodeatletas.app",
+      "permissions": ["CAMERA", "POST_NOTIFICATIONS"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir que o Banco de Atletas use sua câmera",
+          "microphonePermission": "Permitir que o Banco de Atletas use seu microfone",
+          "recordAudioAndroid": true,
+          "barcodeScannerEnabled": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o Banco de Atletas acesse as mídias escolhidas por você",
+          "cameraPermission": "Permitir que o Banco de Atletas use sua câmera"
+        }
+      ],
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
