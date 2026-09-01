@@ -1,0 +1,12 @@
+{
+  "name": "Banco de Dados de Atletas",
+  "short_name": "Banco de Atletas",
+  "description": "Rede esportiva para atletas, equipes, campeonatos e oportunidades do vôlei.",
+  "lang": "pt-BR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e9eff5",
+  "theme_color": "#071827",
+  "orientation": "any"
+}
