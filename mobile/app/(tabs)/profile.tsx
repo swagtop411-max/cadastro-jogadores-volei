@@ -60,6 +60,10 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      <Pressable style={styles.editProfile} onPress={() => router.push('/edit-profile' as any)}>
+        <Text style={styles.editProfileText}>✎ EDITAR PERFIL</Text>
+      </Pressable>
+
       <View style={styles.stats}>
         <View style={styles.stat}><Text style={styles.statValue}>{profile?.categoria || '—'}</Text><Text style={styles.statLabel}>Categoria</Text></View>
         <View style={styles.stat}><Text style={styles.statValue}>{profile?.posicao || '—'}</Text><Text style={styles.statLabel}>Posição</Text></View>
@@ -74,7 +78,7 @@ export default function ProfileScreen() {
 
       <View style={styles.card}>
         <Text style={styles.heading}>Perfil esportivo</Text>
-        <Text style={styles.bio}>{profile?.bio || 'Adicione sua bio no site ou, em breve, diretamente no aplicativo.'}</Text>
+        <Text style={styles.bio}>{profile?.bio || 'Use Editar Perfil para adicionar sua apresentação esportiva.'}</Text>
         {!!insta && <Pressable style={styles.instagram} onPress={() => Linking.openURL(insta)}><Text style={styles.instagramText}>◎ ABRIR INSTAGRAM</Text></Pressable>}
       </View>
 
@@ -113,6 +117,8 @@ const styles = StyleSheet.create({
   avatarFallback: { width: 86, height: 86, borderRadius: 43, backgroundColor: colors.navySoft, alignItems: 'center', justifyContent: 'center', borderWidth: 3, borderColor: colors.cyan },
   name: { color: colors.white, fontSize: 25, fontWeight: '900' },
   location: { color: '#B9C8D6', marginTop: 5 },
+  editProfile: { minHeight: 46, borderRadius: radii.md, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center', marginTop: 10 },
+  editProfileText: { color: colors.white, fontWeight: '900', letterSpacing: 1 },
   stats: { flexDirection: 'row', gap: 8, marginTop: 12 },
   stat: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, padding: 12, borderWidth: 1, borderColor: colors.border },
   statValue: { color: colors.ink, fontSize: 12, fontWeight: '900' },
