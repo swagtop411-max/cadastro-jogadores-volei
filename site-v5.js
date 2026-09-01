@@ -1,15 +1,19 @@
-import "./social-v6.js?v=20260901-1";
-import "./social-v6-followfix.js?v=20260901-1";
+import "./social-v6.js?v=20260901-2";
+import "./social-v6-followfix.js?v=20260901-2";
 
-const THEME_VERSION = "20260901-7";
+const THEME_VERSION = "20260901-8";
+const MENU_ID = "siteMenuDrawer";
+const MENU_TRIGGER_ID = "siteMenuTrigger";
 
 function ensureTheme() {
-  if (document.getElementById("siteThemeV5Runtime")) return;
-  const link = document.createElement("link");
-  link.id = "siteThemeV5Runtime";
-  link.rel = "stylesheet";
+  let link = document.getElementById("siteThemeV5Runtime");
+  if (!link) {
+    link = document.createElement("link");
+    link.id = "siteThemeV5Runtime";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }
   link.href = `site-theme.css?v=${THEME_VERSION}`;
-  document.head.appendChild(link);
   document.documentElement.classList.add("site-v5");
   document.body?.classList.add("site-v5");
 }
@@ -44,89 +48,220 @@ function enhanceMedia(root = document) {
   root.querySelectorAll?.("img").forEach(sharpenImage);
 }
 
-function addMenuLink(container, href, icon, label, marker, options = {}) {
-  if (!container) return null;
-  let link = container.querySelector(`[data-v5-link="${marker}"]`);
-  if (!link) {
-    link = document.createElement("a");
-    link.dataset.v5Link = marker;
-    container.appendChild(link);
+function menuTemplate() {
+  return `
+    <div class="site-menu-overlay" data-fechar-menu></div>
+    <aside class="site-menu-panel" role="dialog" aria-modal="true" aria-labelledby="siteMenuTitulo">
+      <button class="site-menu-close" type="button" data-fechar-menu aria-label="Fechar menu">×</button>
+      <div class="site-menu-brand">
+        <span>REDE ESPORTIVA</span>
+        <h2 id="siteMenuTitulo">MENU</h2>
+        <p>Todas as áreas do Banco de Dados de Atletas em um só lugar.</p>
+      </div>
+      <nav class="site-menu-nav" data-v7-menu-nav>
+        <a href="index.html#feed">🏠 <span>INÍCIO / FEED</span></a>
+        <a href="explorar.html">⌕ <span>EXPLORAR</span></a>
+        <a href="atletas.html">🏐 <span>TODOS OS ATLETAS</span></a>
+        <button type="button" data-v7-ranking>🏆 <span>RANKING DOS ATLETAS</span></button>
+        <button type="button" data-v7-equipes>👥 <span>EQUIPES CADASTRADAS</span></button>
+        <a href="proximos-campeonatos.html">🏆 <span>CAMPEONATOS</span></a>
+        <a href="comunidade.html">💬 <span>COMUNIDADE</span></a>
+        <a href="reels.html">▶ <span>REELS</span></a>
+        <a href="salvos.html">▣ <span>SALVOS</span></a>
+        <button type="button" data-v7-messages hidden>✉ <span>MENSAGENS</span><b class="v5-menu-badge" hidden>0</b></button>
+        <button type="button" data-v7-notifications hidden>🔔 <span>NOTIFICAÇÕES</span><b class="v5-menu-badge" hidden>0</b></button>
+        <a href="conta.html">◉ <span>MINHA CONTA</span></a>
+        <a href="https://wa.me/5516988586327?text=Ol%C3%A1!%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20o%20Banco%20de%20Dados%20de%20Atletas%20ou%20quero%20ser%20um%20apoiador." target="_blank" rel="noopener noreferrer">💬 <span>INFORMAÇÕES / APOIO</span></a>
+        <a href="admin.html" data-v7-admin hidden>🔐 <span>PAINEL ADM</span></a>
+      </nav>
+      <div class="site-menu-register">
+        <strong>Banco de Dados de Atletas</strong>
+        <span>Publique, siga atletas, converse e acompanhe campeonatos em uma única rede esportiva.</span>
+        <a href="conta.html?tab=register">CRIAR MINHA CONTA →</a>
+      </div>
+    </aside>`;
+}
+
+function ensureHeaderTrigger() {
+  const header = document.querySelector(".header");
+  if (!header) return null;
+
+  let trigger = document.getElementById(MENU_TRIGGER_ID);
+  if (!trigger) {
+    trigger = document.createElement("button");
+    trigger.id = MENU_TRIGGER_ID;
+    trigger.className = "site-menu-trigger";
+    trigger.type = "button";
+    trigger.setAttribute("aria-controls", MENU_ID);
+    trigger.setAttribute("aria-expanded", "false");
+    trigger.innerHTML = "☰<span>MENU</span>";
+    header.prepend(trigger);
   }
 
-  const html = `<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-  if (link.getAttribute("href") !== href) link.setAttribute("href", href);
-  if (link.innerHTML !== html) link.innerHTML = html;
-  if (options.target && link.target !== options.target) link.target = options.target;
-  if (options.rel && link.rel !== options.rel) link.rel = options.rel;
-  return link;
+  trigger.onclick = event => {
+    event.preventDefault();
+    event.stopPropagation();
+    window.toggleSiteMenu?.();
+  };
+  return trigger;
+}
+
+function ensureDrawer() {
+  let drawer = document.getElementById(MENU_ID);
+  if (!drawer) {
+    drawer = document.createElement("div");
+    drawer.id = MENU_ID;
+    drawer.className = "site-menu-drawer";
+    drawer.setAttribute("aria-hidden", "true");
+    document.body.appendChild(drawer);
+  }
+  drawer.innerHTML = menuTemplate();
+  drawer.setAttribute("aria-hidden", drawer.classList.contains("open") ? "false" : "true");
+  return drawer;
 }
 
 function closeMainMenu() {
-  if (typeof window.closeSiteMenu === "function") window.closeSiteMenu();
-  else {
-    document.getElementById("siteMenuDrawer")?.classList.remove("open");
-    document.documentElement.classList.remove("site-menu-open");
-    document.body?.classList.remove("site-menu-open");
-  }
+  const drawer = document.getElementById(MENU_ID);
+  const trigger = document.getElementById(MENU_TRIGGER_ID);
+  drawer?.classList.remove("open");
+  drawer?.setAttribute("aria-hidden", "true");
+  trigger?.setAttribute("aria-expanded", "false");
+  document.documentElement.classList.remove("site-menu-open");
+  document.body?.classList.remove("site-menu-open");
 }
 
-function addMenuAction(container, marker, icon, label, sourceId, badgeId) {
-  if (!container) return null;
-  let button = container.querySelector(`[data-v5-action="${marker}"]`);
-  if (!button) {
-    button = document.createElement("button");
-    button.type = "button";
-    button.dataset.v5Action = marker;
-    button.innerHTML = `<span aria-hidden="true">${icon}</span><span>${label}</span><b class="v5-menu-badge" hidden>0</b>`;
-    button.addEventListener("click", () => {
+function openMainMenu() {
+  const drawer = document.getElementById(MENU_ID);
+  const trigger = document.getElementById(MENU_TRIGGER_ID);
+  if (!drawer) return;
+  drawer.classList.add("open");
+  drawer.setAttribute("aria-hidden", "false");
+  trigger?.setAttribute("aria-expanded", "true");
+  document.documentElement.classList.add("site-menu-open");
+  document.body?.classList.add("site-menu-open");
+  requestAnimationFrame(() => drawer.querySelector(".site-menu-close")?.focus());
+}
+
+function installMenuBehavior() {
+  ensureHeaderTrigger();
+  const drawer = ensureDrawer();
+
+  window.closeSiteMenu = closeMainMenu;
+  window.toggleSiteMenu = () => drawer.classList.contains("open") ? closeMainMenu() : openMainMenu();
+
+  drawer.addEventListener("click", event => {
+    const close = event.target.closest?.("[data-fechar-menu]");
+    if (close) {
+      event.preventDefault();
       closeMainMenu();
-      setTimeout(() => document.getElementById(sourceId)?.click(), 30);
-    });
-    container.appendChild(button);
-  }
+      return;
+    }
 
-  const source = document.getElementById(sourceId);
-  const sourceBadge = badgeId ? document.getElementById(badgeId) : null;
-  const badge = button.querySelector(".v5-menu-badge");
-  const count = Number(String(sourceBadge?.textContent || "0").replace(/\D/g, "")) || 0;
-  const badgeHidden = !count || sourceBadge?.hidden === true;
+    const ranking = event.target.closest?.("[data-v7-ranking]");
+    if (ranking) {
+      event.preventDefault();
+      closeMainMenu();
+      if (typeof window.abrirRanking === "function") window.abrirRanking();
+      else if (document.getElementById("btnAbrirRanking")) document.getElementById("btnAbrirRanking").click();
+      else location.href = "index.html?abrir=ranking";
+      return;
+    }
 
-  if (badge) {
-    if (badge.hidden !== badgeHidden) badge.hidden = badgeHidden;
-    const labelValue = count > 99 ? "99+" : String(count);
-    if (badge.textContent !== labelValue) badge.textContent = labelValue;
-  }
-  const buttonHidden = !source;
-  if (button.hidden !== buttonHidden) button.hidden = buttonHidden;
-  return button;
+    const equipes = event.target.closest?.("[data-v7-equipes]");
+    if (equipes) {
+      event.preventDefault();
+      closeMainMenu();
+      if (typeof window.abrirEquipes === "function") window.abrirEquipes();
+      else if (document.getElementById("btnAbrirEquipes")) document.getElementById("btnAbrirEquipes").click();
+      else location.href = "index.html#equipes";
+      return;
+    }
+
+    const messages = event.target.closest?.("[data-v7-messages]");
+    if (messages) {
+      event.preventDefault();
+      closeMainMenu();
+      setTimeout(() => document.getElementById("snInboxButton")?.click(), 25);
+      return;
+    }
+
+    const notifications = event.target.closest?.("[data-v7-notifications]");
+    if (notifications) {
+      event.preventDefault();
+      closeMainMenu();
+      setTimeout(() => document.getElementById("snNotificationsButton")?.click(), 25);
+      return;
+    }
+
+    if (event.target.closest?.("a")) closeMainMenu();
+  });
+
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && drawer.classList.contains("open")) closeMainMenu();
+  });
 }
 
-function installPrimaryMenuActions() {
-  document.querySelectorAll(".site-menu-nav").forEach(nav => {
-    addMenuLink(nav, "explorar.html", "⌕", "EXPLORAR", "explorar");
-    addMenuLink(nav, "reels.html", "▶", "REELS", "reels");
-    addMenuLink(nav, "salvos.html", "▣", "SALVOS", "salvos");
+function badgeCount(sourceId) {
+  const source = document.getElementById(sourceId);
+  if (!source || source.hidden) return 0;
+  return Number(String(source.textContent || "0").replace(/\D/g, "")) || 0;
+}
 
-    const support = document.querySelector(".whatsapp-top-cta");
-    if (support?.href) {
-      addMenuLink(nav, support.href, "💬", "INFORMAÇÕES / APOIO", "apoio-info", {
-        target: "_blank",
-        rel: "noopener noreferrer"
-      });
+function syncMenuUtilities() {
+  const drawer = document.getElementById(MENU_ID);
+  if (!drawer) return;
+
+  const messages = drawer.querySelector("[data-v7-messages]");
+  const notifications = drawer.querySelector("[data-v7-notifications]");
+  const admin = drawer.querySelector("[data-v7-admin]");
+  const inboxSource = document.getElementById("snInboxButton");
+  const notificationSource = document.getElementById("snNotificationsButton");
+  const adminSource = document.getElementById("adminPanelCta");
+
+  if (messages) {
+    messages.hidden = !inboxSource;
+    const count = badgeCount("snInboxBadge");
+    const badge = messages.querySelector(".v5-menu-badge");
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 99 ? "99+" : String(count);
     }
+  }
 
-    addMenuAction(nav, "mensagens", "✉", "MENSAGENS", "snInboxButton", "snInboxBadge");
-    addMenuAction(nav, "notificacoes", "🔔", "NOTIFICAÇÕES", "snNotificationsButton", "snNotificationsBadge");
-
-    const adminSource = document.getElementById("adminPanelCta");
-    let adminLink = nav.querySelector('[data-v5-link="admin"]');
-    if (adminSource) {
-      adminLink = addMenuLink(nav, adminSource.href || "admin.html", "🔐", "PAINEL ADM", "admin");
-      if (adminLink.hidden !== adminSource.hidden) adminLink.hidden = adminSource.hidden;
-    } else if (adminLink && adminLink.hidden !== true) {
-      adminLink.hidden = true;
+  if (notifications) {
+    notifications.hidden = !notificationSource;
+    const count = badgeCount("snNotificationsBadge");
+    const badge = notifications.querySelector(".v5-menu-badge");
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 99 ? "99+" : String(count);
     }
-  });
+  }
+
+  if (admin) admin.hidden = !adminSource || adminSource.hidden;
+}
+
+function relocateSupporters() {
+  if (!/index\.html$|\/$/i.test(location.pathname)) return;
+  if (document.querySelector(".site-supporters-strip")) return;
+
+  const oldSidebar = document.querySelector(".sponsors-sidebar");
+  const list = oldSidebar?.querySelector("#apoiadoresLista");
+  if (!oldSidebar || !list) return;
+
+  const strip = document.createElement("section");
+  strip.className = "site-supporters-strip";
+  strip.setAttribute("aria-label", "Apoiadores do projeto");
+
+  const title = oldSidebar.querySelector(".sponsors-title");
+  const cta = oldSidebar.querySelector(".apoio-cta");
+  if (title) strip.appendChild(title);
+  strip.appendChild(list);
+  if (cta) strip.appendChild(cta);
+
+  const home = document.querySelector(".home-social");
+  if (home) home.insertAdjacentElement("afterend", strip);
+  else document.querySelector("main")?.prepend(strip);
 }
 
 function openStoryArchive() {
@@ -154,95 +289,14 @@ function installProfileArchiveButton() {
   actions.appendChild(button);
 }
 
-const MOBILE_HEADER_PROPERTIES = [
-  "display","flex-wrap","align-items","justify-content","min-height","height","padding","gap","overflow",
-  "flex","width","min-width","max-width","margin-left","white-space","font-size","line-height","text-overflow",
-  "letter-spacing","text-align"
-];
-
-function clearMobileHeaderStyles(element) {
-  if (!element) return;
-  MOBILE_HEADER_PROPERTIES.forEach(prop => element.style.removeProperty(prop));
-}
-
-function important(element, property, value) {
-  element?.style.setProperty(property, value, "important");
-}
-
-function installMobileHeader() {
-  const mobile = window.matchMedia("(max-width: 720px)").matches;
-
-  document.querySelectorAll(".header").forEach(header => {
-    const trigger = header.querySelector(".site-menu-trigger");
-    const triggerLabel = trigger?.querySelector("span");
-    const brand = header.querySelector(".header-brand,.brand");
-    const brandBall = brand?.querySelector(".brand-ball");
-    const brandTitle = brand?.querySelector("strong");
-    const brandSubtitle = brand?.querySelector("span");
-    const center = header.querySelector(".header-center");
-    const actions = header.querySelector(".header-actions,.nav");
-
-    if (!mobile) {
-      [header, trigger, triggerLabel, brand, brandBall, brandTitle, brandSubtitle, center, actions]
-        .forEach(clearMobileHeaderStyles);
-      return;
-    }
-
-    important(header, "display", "flex");
-    important(header, "flex-wrap", "nowrap");
-    important(header, "align-items", "center");
-    important(header, "justify-content", "flex-start");
-    important(header, "min-height", "58px");
-    important(header, "height", "58px");
-    important(header, "padding", "7px 12px");
-    important(header, "gap", "10px");
-    important(header, "overflow", "hidden");
-
-    if (center) important(center, "display", "none");
-    if (actions) important(actions, "display", "none");
-
-    if (trigger) {
-      important(trigger, "display", "inline-flex");
-      important(trigger, "align-items", "center");
-      important(trigger, "justify-content", "center");
-      important(trigger, "flex", "0 0 42px");
-      important(trigger, "width", "42px");
-      important(trigger, "min-width", "42px");
-      important(trigger, "height", "40px");
-      important(trigger, "padding", "0");
-    }
-    if (triggerLabel) important(triggerLabel, "display", "none");
-
-    if (brand) {
-      important(brand, "display", "flex");
-      important(brand, "align-items", "center");
-      important(brand, "justify-content", "flex-start");
-      important(brand, "flex", "1 1 auto");
-      important(brand, "min-width", "0");
-      important(brand, "max-width", "none");
-      important(brand, "overflow", "hidden");
-    }
-    if (brandBall) important(brandBall, "display", "none");
-    if (brandSubtitle) important(brandSubtitle, "display", "none");
-    if (brandTitle) {
-      important(brandTitle, "display", "block");
-      important(brandTitle, "font-size", "12px");
-      important(brandTitle, "line-height", "1");
-      important(brandTitle, "letter-spacing", ".35px");
-      important(brandTitle, "white-space", "nowrap");
-      important(brandTitle, "overflow", "hidden");
-      important(brandTitle, "text-overflow", "ellipsis");
-    }
-  });
-}
-
 function runEnhancements() {
   ensureTheme();
+  installMenuBehavior();
   enhanceMedia();
-  installPrimaryMenuActions();
+  relocateSupporters();
   installProfileArchiveButton();
-  installMobileHeader();
-  import("./direct-v5.js?v=20260901-1").catch(error => console.warn("Direct V5:", error));
+  syncMenuUtilities();
+  import("./direct-v5.js?v=20260901-2").catch(error => console.warn("Direct V5:", error));
 }
 
 if (document.readyState === "loading") {
@@ -251,12 +305,7 @@ if (document.readyState === "loading") {
   runEnhancements();
 }
 
-let mobileHeaderTimer = 0;
-window.addEventListener("resize", () => {
-  clearTimeout(mobileHeaderTimer);
-  mobileHeaderTimer = setTimeout(installMobileHeader, 80);
-}, { passive: true });
-
+let utilityTimer = 0;
 const observer = new MutationObserver(mutations => {
   for (const mutation of mutations) {
     for (const node of mutation.addedNodes) {
@@ -264,9 +313,12 @@ const observer = new MutationObserver(mutations => {
       if (node instanceof Element) enhanceMedia(node);
     }
   }
-  installPrimaryMenuActions();
-  installProfileArchiveButton();
-  installMobileHeader();
+  clearTimeout(utilityTimer);
+  utilityTimer = setTimeout(() => {
+    syncMenuUtilities();
+    installProfileArchiveButton();
+    relocateSupporters();
+  }, 35);
 });
 
 observer.observe(document.documentElement, {
