@@ -1,133 +1,31 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Encontre atletas cadastrados por nome, cidade, posição, categoria ou equipe.">
 <title>Atletas cadastrados | Banco de Dados de Atletas</title>
 <link rel="stylesheet" href="estilo.css?v=20260827-1">
-<link rel="stylesheet" href="home-social.css?v=20260830-5">
+<link rel="stylesheet" href="site-theme.css?v=20260901-8">
+<link rel="stylesheet" href="ranking-global.css?v=20260830-1">
 <style>
-body.athletes-page{background:#070908!important;color:#f5f0e4!important}
-.athletes-page .header{position:sticky!important;top:0!important;z-index:1000!important}
-.athletes-page .container{max-width:1500px!important;margin:0 auto!important;padding:18px 240px 55px 240px!important}
-.athletes-page .athletes-shell{max-width:1000px;margin:0 auto}
-.athletes-page .section-heading{margin-bottom:18px}
-.athletes-page .section-heading h2{color:#fff}
-.athletes-page .athletes-content{background:#0a0e0c;border:1px solid rgba(217,169,63,.15);border-radius:16px;padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.3)}
-.athletes-page .filtros{display:grid;grid-template-columns:minmax(0,1fr) 180px 180px;gap:10px;margin-bottom:14px}
-.athletes-page .filtros #filtroPosicao{grid-column:1}
-.athletes-page .search-button{grid-column:1/-1;background:linear-gradient(135deg,#f2cc72,#bd8425)!important;color:#15130e!important}
-.athletes-page .results-bar{border-color:rgba(217,169,63,.15)!important;background:#0d1410!important;color:#ddd}
-.athletes-page .lista-jogadores{margin-top:10px}
-.athletes-page .site-menu-drawer{display:block!important;position:fixed!important;top:64px!important;left:0!important;bottom:0!important;width:225px!important;height:calc(100vh - 64px)!important;z-index:900!important;pointer-events:auto!important}
-.athletes-page .site-menu-overlay{display:none!important}
-.athletes-page .site-menu-panel{position:absolute!important;inset:0!important;width:225px!important;height:100%!important;padding:12px 9px!important;background:linear-gradient(180deg,#0b100d,#080b09)!important;border-right:1px solid rgba(217,169,63,.18)!important;border-radius:0!important;box-shadow:8px 0 30px rgba(0,0,0,.25)!important}
-.athletes-page .site-menu-close{display:none!important}
-.athletes-page .site-menu-brand{padding:2px 4px 10px!important}
-.athletes-page .site-menu-brand h2{font-size:28px!important}
-.athletes-page .site-menu-nav{gap:5px!important;padding:9px 0!important}
-.athletes-page .site-menu-group-items{display:grid!important}
-.athletes-page .public-layout{position:static!important}
-.athletes-page .sponsors-sidebar{position:fixed!important;top:64px!important;right:0!important;bottom:0!important;width:225px!important;height:calc(100vh - 64px)!important;overflow-y:auto!important;z-index:850!important}
-.athletes-page .home-legacy{display:none!important}
-@media(max-width:1200px) and (min-width:901px){
- .athletes-page .container{padding-left:198px!important;padding-right:198px!important}
- .athletes-page .site-menu-drawer,.athletes-page .site-menu-panel{width:185px!important}
- .athletes-page .sponsors-sidebar{width:185px!important}
-}
-@media(max-width:900px){
- .athletes-page .container{padding:15px 12px 40px!important}
- .athletes-page .site-menu-drawer{display:none!important}
- .athletes-page .sponsors-sidebar{display:none!important}
- .athletes-page .site-menu-trigger{display:inline-flex!important}
- .athletes-page .filtros{grid-template-columns:1fr!important}
- .athletes-page .filtros #filtroPosicao,.athletes-page .search-button{grid-column:auto}
-}
+.athletes-page .container{max-width:1180px!important;margin:0 auto!important;padding:28px 18px 55px!important}.athletes-shell{max-width:1050px;margin:0 auto}.section-heading{display:flex!important;align-items:end!important;justify-content:space-between!important;gap:20px!important;margin:0 0 18px!important}.section-heading span{color:#2563eb!important;font-size:8px!important;font-weight:900!important;letter-spacing:1.7px!important}.section-heading h2{margin:4px 0 0!important;color:#172033!important;font-family:'Montserrat',Arial,sans-serif!important;font-size:34px!important;font-weight:900!important;letter-spacing:-1.2px!important}.section-heading p{max-width:440px!important;margin:0!important;color:#667085!important;font-size:10px!important;text-align:right!important}.athletes-content{background:#fff!important;border:1px solid #e4e7ec!important;border-radius:20px!important;padding:20px!important;box-shadow:0 10px 35px rgba(15,23,42,.06)!important}.cadastro-cta{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;margin:0 0 18px!important;padding:17px!important;border:1px solid #dbeafe!important;border-radius:15px!important;background:#eff6ff!important}.cadastro-copy span{display:block!important;color:#2563eb!important;font-size:8px!important;font-weight:900!important;letter-spacing:1.5px!important}.cadastro-copy strong{display:block!important;color:#172033!important;font-size:16px!important;margin:3px 0!important}.cadastro-copy p{margin:0!important;color:#667085!important;font-size:9px!important}.cadastro-cta>a{white-space:nowrap!important}.filtros{display:grid!important;grid-template-columns:minmax(0,1.4fr) repeat(3,minmax(150px,.7fr)) auto!important;gap:9px!important;margin-bottom:14px!important}.filtros .search-button{min-width:115px!important;background:#2563eb!important;color:#fff!important}.results-bar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:15px!important;padding:11px 13px!important;border:1px solid #e4e7ec!important;border-radius:12px!important;background:#f8fafc!important}.results-bar span{color:#2563eb!important;font-size:8px!important;font-weight:900!important;letter-spacing:1.4px!important}.results-bar strong{color:#475467!important;font-size:9px!important}.lista-jogadores{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:14px!important;margin-top:14px!important}.social-athlete-card{position:relative;display:flex!important;flex-direction:column!important;gap:0!important;padding:0!important;overflow:hidden!important;background:#fff!important;border:1px solid #e4e7ec!important;border-radius:17px!important;box-shadow:0 8px 28px rgba(15,23,42,.06)!important}.social-athlete-top{display:flex!important;align-items:center!important;gap:12px!important;padding:14px 15px 11px!important}.social-athlete-avatar{width:62px!important;height:62px!important;flex:0 0 62px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #dbeafe!important;background:#eef2f7!important}.social-athlete-name{font-size:18px!important;line-height:1.1!important;margin:0 0 4px!important;color:#172033!important}.social-athlete-location{font-size:11px!important;color:#667085!important;margin:0!important}.social-athlete-badge{margin-left:auto!important;border:1px solid #bfdbfe!important;border-radius:999px!important;padding:5px 8px!important;font-size:8px!important;font-weight:900!important;color:#1d4ed8!important;white-space:nowrap!important;background:#eff6ff!important}.social-athlete-photo{width:100%!important;height:auto!important;aspect-ratio:1.18/1!important;object-fit:cover!important;border:0!important;border-radius:0!important;background:#f2f4f7!important}.social-athlete-info{padding:11px 15px 14px!important}.social-athlete-tags{display:flex!important;flex-wrap:wrap!important;gap:6px!important;margin-bottom:11px!important}.social-athlete-tag{padding:5px 8px!important;border-radius:999px!important;background:#f8fafc!important;border:1px solid #e4e7ec!important;color:#475467!important;font-size:9px!important;font-weight:800!important}.social-athlete-actions{display:flex!important;gap:8px!important}.social-athlete-actions a{flex:1!important;text-align:center!important;text-decoration:none!important;border-radius:10px!important;padding:10px 8px!important;font-size:9px!important;font-weight:900!important}.social-athlete-actions .primary{background:#2563eb!important;color:#fff!important}.social-athlete-actions .secondary{border:1px solid #d0d5dd!important;color:#344054!important;background:#fff!important}@media(max-width:900px){.lista-jogadores{grid-template-columns:1fr!important}.filtros{grid-template-columns:1fr 1fr!important}.filtros input{grid-column:1/-1!important}.filtros .search-button{grid-column:1/-1!important}.section-heading{display:block!important}.section-heading p{text-align:left!important;margin-top:6px!important}.cadastro-cta{align-items:flex-start!important;flex-direction:column!important}.cadastro-cta>a{width:100%!important}}@media(max-width:580px){.athletes-page .container{padding:18px 10px 38px!important}.athletes-content{padding:13px!important}.filtros{grid-template-columns:1fr!important}.filtros input,.filtros .search-button{grid-column:auto!important}.section-heading h2{font-size:28px!important}}
 </style>
-<style id="social-athlete-cards">
-.athletes-page .lista-jogadores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.athletes-page .social-athlete-card{position:relative;display:flex;flex-direction:column;gap:0;padding:0!important;overflow:hidden;background:linear-gradient(145deg,#0d1410,#09100c)!important;border:1px solid rgba(217,169,63,.22)!important;border-radius:16px!important;box-shadow:0 14px 35px rgba(0,0,0,.28)!important}
-.athletes-page .social-athlete-top{display:flex;align-items:center;gap:12px;padding:14px 15px 11px}
-.athletes-page .social-athlete-avatar{width:62px!important;height:62px!important;flex:0 0 62px!important;border-radius:50%!important;object-fit:cover!important;border:2px solid #d9a93f!important;background:#17221b!important}
-.athletes-page .social-athlete-name{font-size:18px!important;line-height:1.1;margin:0 0 4px;color:#fff!important}
-.athletes-page .social-athlete-location{font-size:11px!important;color:#9ba79e!important;margin:0!important}
-.athletes-page .social-athlete-badge{margin-left:auto;border:1px solid rgba(217,169,63,.28);border-radius:999px;padding:5px 8px;font-size:8px;font-weight:900;letter-spacing:.5px;color:#f2cc72;white-space:nowrap}
-.athletes-page .social-athlete-photo{width:100%!important;height:auto!important;aspect-ratio:1.18/1!important;object-fit:cover!important;border:0!important;border-radius:0!important;background:#050706!important}
-.athletes-page .social-athlete-info{padding:11px 15px 14px}
-.athletes-page .social-athlete-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:11px}
-.athletes-page .social-athlete-tag{padding:5px 8px;border-radius:999px;background:#141d18;border:1px solid rgba(217,169,63,.13);color:#d6ddd8;font-size:9px;font-weight:800}
-.athletes-page .social-athlete-actions{display:flex;gap:8px}
-.athletes-page .social-athlete-actions a{flex:1;text-align:center;text-decoration:none;border-radius:9px;padding:10px 8px;font-size:9px;font-weight:900}
-.athletes-page .social-athlete-actions .primary{background:linear-gradient(135deg,#f2cc72,#bd8425);color:#16120b}
-.athletes-page .social-athlete-actions .secondary{border:1px solid rgba(217,169,63,.25);color:#f2cc72;background:#0b110e}
-@media(max-width:900px){.athletes-page .lista-jogadores{grid-template-columns:1fr}}
-</style><link rel="stylesheet" href="ranking-global.css?v=20260830-1">
 </head>
 <body class="athletes-page">
-<header class="header">
-<button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false" onclick="window.toggleSiteMenu&&window.toggleSiteMenu(event)">☰<span>MENU</span></button>
-<div class="header-brand"><div class="brand-ball">🏐</div><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></div>
-<div class="header-center">🔎 &nbsp; Buscar atletas, cidades, posições ou equipes...</div>
-<div class="header-actions"><a class="championship-cta community-top-cta" href="comunidade.html">✦ COMUNIDADE</a><a class="championship-cta account-top-cta" href="conta.html">◉ MINHA CONTA</a><a class="championship-cta" href="proximos-campeonatos.html">🏆 PRÓXIMOS CAMPEONATOS</a></div>
-</header>
-<div class="site-menu-drawer" id="siteMenuDrawer" aria-hidden="false">
-<div class="site-menu-overlay" data-fechar-menu></div>
-<aside class="site-menu-panel">
-<div class="site-menu-brand"><span>REDE ESPORTIVA</span><h2>EXPLORAR</h2><p>Atletas, equipes, ranking e campeonatos em um só lugar.</p></div>
-<nav class="site-menu-nav">
-<a href="index.html">🏠 INÍCIO / FEED</a>
-<div class="site-menu-group"><button class="site-menu-group-title" type="button">🏐 ATLETAS, EQUIPES E RANKING <span>⌄</span></button><div class="site-menu-group-items">
-<a href="index.html?abrir=ranking">🏆 RANKING DOS ATLETAS <small>Veja os melhores atletas</small></a>
-<a href="index.html#equipes">👥 EQUIPES CADASTRADAS <small>Conheça os times e seus atletas</small></a>
-<a href="atletas.html" aria-current="page">🏐 TODOS OS ATLETAS <small>Veja todos os atletas cadastrados</small></a>
-</div></div>
-<a href="proximos-campeonatos.html">🏆 CAMPEONATOS <span>›</span></a>
-<a href="comunidade.html">💬 COMUNIDADE <span>›</span></a>
-<a href="conta.html" data-menu-account>◉ MINHA CONTA <span>›</span></a>
-</nav>
-<div class="site-menu-register"><strong>Faça parte da rede</strong><span>Crie sua conta para curtir, comentar, publicar, seguir atletas e participar.</span><a href="conta.html?tab=register">CRIAR MINHA CONTA →</a></div>
-</aside></div>
-<main class="container">
-<div class="athletes-shell">
+<header class="header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a></header>
+<main class="container"><div class="athletes-shell">
 <section class="section-heading"><div><span>REDE ESPORTIVA</span><h2>ATLETAS CADASTRADOS</h2></div><p>Encontre jogadores por nome, cidade, posição, categoria ou equipe.</p></section>
 <div class="athletes-content">
-<div class="cadastro-cta"><div class="cadastro-copy"><span>QUER FAZER PARTE?</span><strong>Cadastre-se no Banco de Dados de Atletas</strong><p>Preencha seus dados e envie sua foto. A M&amp;M Organização fará a análise antes da publicação.</p></div><a class="whatsapp-cadastro" href="conta.html?tab=register&return=meu-perfil.html?novo=1">💬 QUERO ME CADASTRAR</a><a href="cadastro-equipe.html" class="championship-cta">👥 CADASTRAR EQUIPE</a></div>
+<div class="cadastro-cta"><div class="cadastro-copy"><span>QUER FAZER PARTE?</span><strong>Crie seu perfil de atleta</strong><p>Entre na rede, complete seu perfil e comece a publicar, seguir e conversar com outros atletas.</p></div><a class="whatsapp-cadastro" href="conta.html?tab=register&return=meu-perfil.html?novo=1">CRIAR PERFIL</a><a href="cadastro-equipe.html" class="championship-cta">CADASTRAR EQUIPE</a></div>
 <section class="filtros"><input type="search" id="busca" placeholder="🔎 Buscar atleta, equipe ou cidade..." autocomplete="off"><select id="filtroNivel"><option value="">Todas as categorias</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select><select id="filtroCidade"><option value="">Todas as cidades</option></select><select id="filtroPosicao"><option value="">Todas as posições</option><option>Levantador</option><option>Ponteiro</option><option>Oposto</option><option>Central</option><option>Líbero</option><option>Universal</option></select><button type="button" id="btnPesquisar" class="search-button">PESQUISAR</button></section>
 <div class="results-bar"><span>PERFIS DISPONÍVEIS</span><strong id="resultadoTexto">Selecione um atleta para conhecer o perfil completo</strong></div>
 <section id="listaJogadores" class="lista-jogadores"><p class="subtitulo">Carregando atletas...</p></section>
-</div></div>
-</main>
+</div></div></main>
+<script type="module" src="site-v5.js?v=20260901-8"></script>
 <script type="module" src="analytics.js?v=20260826-12"></script>
-<script type="module" src="public.js?v=20260830-7"></script>
+<script type="module" src="public.js?v=20260830-8"></script>
 <script type="module" src="apoio.js?v=20260830-2"></script>
-<script>
-const d=document.getElementById('siteMenuDrawer'),t=document.getElementById('siteMenuTrigger');
-t?.addEventListener('click',()=>{d.classList.add('open');d.setAttribute('aria-hidden','false');t.setAttribute('aria-expanded','true')});
-d?.querySelectorAll('[data-fechar-menu]').forEach(x=>x.addEventListener('click',()=>d.classList.remove('open')));
-</script>
-<style>
-/* ATLETAS: alinhamento com a home */
-@media(max-width:900px){
-  body.athletes-page{overflow-x:hidden!important}
-  .athletes-page .header{position:relative!important;min-height:76px!important;padding:10px 12px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;align-items:center!important;gap:8px!important}
-  .athletes-page .header-brand{min-width:0!important;display:flex!important;align-items:center!important}
-  .athletes-page .header-brand .brand-ball{width:42px!important;height:42px!important;flex:0 0 42px!important}
-  .athletes-page .header-brand strong{font-size:12px!important;line-height:1.1!important}
-  .athletes-page .header-brand span{font-size:6px!important}
-  .athletes-page .header-center{display:none!important}
-  .athletes-page .header-actions{display:flex!important;justify-content:flex-end!important}
-  .athletes-page .header-actions a{font-size:7px!important;padding:9px 7px!important}
-  .athletes-page .header-actions a:not(.account-top-cta){display:none!important}
-  .athletes-page .site-menu-trigger{display:inline-flex!important;position:relative!important;z-index:2147483647!important}
-  .athletes-page .container{padding:18px 12px 40px!important;max-width:none!important}
-  .athletes-page .athletes-shell{width:100%!important;max-width:none!important}
-  .athletes-page .section-heading{padding:4px 4px 18px!important}
-  .athletes-page .section-heading h2{font-size:34px!important;line-height:1.05!important}
-  .athletes-page .section-heading p{font-size:13px!important;line-height:1.5!important}
-  .athletes-page .athletes-content{padding:14px!important;border-radius:16px!important}
-  .athletes-page .filtros{display:grid!important;grid-template-columns:1fr!important}
-  .athletes-page .filtros input,.athletes-page .filtros select,.athletes-page .filtros .search-button{width:100%!important;min-width:0!important}
-}
-</style>
-<script type="module" src="ranking.js?v=20260830-1"></script>
+<script type="module" src="ranking.js?v=20260830-5"></script>
 <script type="module" src="menu-perfil.js?v=20260830-1"></script>
 </body></html>
