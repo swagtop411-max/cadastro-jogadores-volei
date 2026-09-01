@@ -49,10 +49,12 @@ function addMenuLink(container, href, icon, label, marker, options = {}) {
     link.dataset.v5Link = marker;
     container.appendChild(link);
   }
-  link.href = href;
-  link.innerHTML = `<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-  if (options.target) link.target = options.target;
-  if (options.rel) link.rel = options.rel;
+
+  const html = `<span aria-hidden="true">${icon}</span><span>${label}</span>`;
+  if (link.getAttribute("href") !== href) link.setAttribute("href", href);
+  if (link.innerHTML !== html) link.innerHTML = html;
+  if (options.target && link.target !== options.target) link.target = options.target;
+  if (options.rel && link.rel !== options.rel) link.rel = options.rel;
   return link;
 }
 
@@ -84,11 +86,15 @@ function addMenuAction(container, marker, icon, label, sourceId, badgeId) {
   const sourceBadge = badgeId ? document.getElementById(badgeId) : null;
   const badge = button.querySelector(".v5-menu-badge");
   const count = Number(String(sourceBadge?.textContent || "0").replace(/\D/g, "")) || 0;
+  const badgeHidden = !count || sourceBadge?.hidden === true;
+
   if (badge) {
-    badge.hidden = !count || sourceBadge?.hidden === true;
-    badge.textContent = count > 99 ? "99+" : String(count);
+    if (badge.hidden !== badgeHidden) badge.hidden = badgeHidden;
+    const labelValue = count > 99 ? "99+" : String(count);
+    if (badge.textContent !== labelValue) badge.textContent = labelValue;
   }
-  button.hidden = !source;
+  const buttonHidden = !source;
+  if (button.hidden !== buttonHidden) button.hidden = buttonHidden;
   return button;
 }
 
@@ -113,8 +119,8 @@ function installPrimaryMenuActions() {
     let adminLink = nav.querySelector('[data-v5-link="admin"]');
     if (adminSource) {
       adminLink = addMenuLink(nav, adminSource.href || "admin.html", "🔐", "PAINEL ADM", "admin");
-      adminLink.hidden = adminSource.hidden;
-    } else if (adminLink) {
+      if (adminLink.hidden !== adminSource.hidden) adminLink.hidden = adminSource.hidden;
+    } else if (adminLink && adminLink.hidden !== true) {
       adminLink.hidden = true;
     }
   });
