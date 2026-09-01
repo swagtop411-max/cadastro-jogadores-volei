@@ -1,9 +1,9 @@
 import { Redirect, Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Text, type ColorValue } from 'react-native';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { colors } from '@/src/theme';
 
-const icon = (emoji: string, color: string) => <Text style={{ fontSize: 19, color }}>{emoji}</Text>;
+const icon = (emoji: string, color: ColorValue) => <Text style={{ fontSize: 19, color }}>{emoji}</Text>;
 
 export default function TabsLayout() {
   const { user, loading } = useAuth();
