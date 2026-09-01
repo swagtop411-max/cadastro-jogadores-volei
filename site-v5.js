@@ -23,10 +23,10 @@ function sharpenImage(img) {
     const available = parent.clientWidth || img.clientWidth || 0;
     if (!available) return;
 
-    // Nunca ampliar uma mídia além da resolução nativa. Reduzir é seguro,
-    // ampliar é o que cria a aparência borrada/pixelada no feed e stories.
+    // Não ampliar fotos além da resolução nativa. O arquivo original continua
+    // sendo entregue pelo Cloudinary, evitando a perda causada por upscale visual.
     if (img.naturalWidth < available && img.matches(
-      ".social-media-frame img,.sn-story-media,.pp-content-media img,.pp-archive-item img,.pp-story,.community-media img"
+      ".social-media-frame img,.sn-story-media,.pp-content-media img,.pp-archive-item img,.pp-story,.community-media img,.explore-item img,.saved-item img"
     )) {
       img.style.width = `${img.naturalWidth}px`;
       img.style.maxWidth = "100%";
@@ -56,6 +56,7 @@ function installDiscoveryLinks() {
   document.querySelectorAll(".site-menu-nav,.pp-nav").forEach(nav => {
     addMenuLink(nav, "explorar.html", "⌕", "EXPLORAR", "explorar");
     addMenuLink(nav, "reels.html", "▶", "REELS", "reels");
+    addMenuLink(nav, "salvos.html", "▣", "SALVOS", "salvos");
   });
 }
 
@@ -109,5 +110,4 @@ const observer = new MutationObserver(mutations => {
 });
 
 observer.observe(document.documentElement, { childList: true, subtree: true });
-
 window.addEventListener("sn:story-deleted", () => setTimeout(installProfileArchiveButton, 50));
