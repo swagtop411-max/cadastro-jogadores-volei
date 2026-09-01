@@ -18,6 +18,15 @@ export type PublicProfile = {
   }>;
 };
 
+export type FeedMedia = {
+  url: string;
+  tipo?: 'image' | 'video' | string;
+  type?: 'image' | 'video' | string;
+  path?: string;
+  mime?: string;
+  bytes?: number;
+};
+
 export type FeedPost = {
   id: string;
   ownerUid: string;
@@ -27,6 +36,9 @@ export type FeedPost = {
   imagemUrl?: string;
   imagem?: string;
   tipo?: 'imagem' | 'carrossel';
+  midias?: FeedMedia[];
+  hashtags?: string[];
+  mencoes?: string[];
   aprovado?: boolean;
   status?: string;
   criadoEm?: unknown;
