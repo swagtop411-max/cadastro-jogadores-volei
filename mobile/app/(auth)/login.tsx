@@ -46,31 +46,16 @@ export default function LoginScreen() {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Entrar</Text>
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          autoComplete="email"
-          placeholder="E-mail"
-          placeholderTextColor={colors.muted}
-          style={styles.input}
-        />
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          autoComplete="password"
-          placeholder="Senha"
-          placeholderTextColor={colors.muted}
-          style={styles.input}
-          onSubmitEditing={login}
-        />
+        <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" placeholder="E-mail" placeholderTextColor={colors.muted} style={styles.input} />
+        <TextInput value={password} onChangeText={setPassword} secureTextEntry autoComplete="password" placeholder="Senha" placeholderTextColor={colors.muted} style={styles.input} onSubmitEditing={login} />
         {!!error && <Text style={styles.error}>{error}</Text>}
         <Pressable style={[styles.button, busy && { opacity: 0.6 }]} disabled={busy} onPress={login}>
           <Text style={styles.buttonText}>{busy ? 'ENTRANDO...' : 'ENTRAR'}</Text>
         </Pressable>
-        <Text style={styles.note}>Nesta primeira fase, o aplicativo usa exatamente a mesma conta Firebase do site.</Text>
+        <Pressable style={styles.signup} onPress={() => router.push('/(auth)/signup')}>
+          <Text style={styles.signupText}>NOVO POR AQUI? CRIAR CONTA</Text>
+        </Pressable>
+        <Text style={styles.note}>Uma conta só: o login usado no aplicativo é o mesmo do cadastrodeatletas.com.br.</Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -88,5 +73,7 @@ const styles = StyleSheet.create({
   error: { color: colors.danger, fontWeight: '700', marginBottom: 10 },
   button: { minHeight: 52, borderRadius: radii.md, backgroundColor: colors.cyan, alignItems: 'center', justifyContent: 'center' },
   buttonText: { color: colors.white, fontWeight: '900', letterSpacing: 1 },
+  signup: { minHeight: 48, borderRadius: radii.md, borderWidth: 1, borderColor: colors.navy, alignItems: 'center', justifyContent: 'center', marginTop: 9 },
+  signupText: { color: colors.navy, fontWeight: '900', fontSize: 11 },
   note: { color: colors.muted, fontSize: 12, lineHeight: 18, marginTop: 14 },
 });
