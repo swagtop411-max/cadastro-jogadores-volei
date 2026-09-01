@@ -42,7 +42,13 @@ service cloud.firestore {
         get(/databases/$(database)/documents/videos/$(id)).data.aprovado == true
       );
     }
+    function isConversationParticipant(conversationId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/conversas/$(conversationId))
+        && request.auth.uid in get(/databases/$(database)/documents/conversas/$(conversationId)).data.participants;
+    }
 
+    // CONTAS PRIVADAS
     match /usuarios/{uid} {
       allow read: if isAdmin() || isOwner(uid);
       allow create: if isOwner(uid)
@@ -68,6 +74,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // PERFIS PÚBLICOS
     match /perfis/{uid} {
       allow read: if true;
       allow create: if (isOwner(uid) || isAdmin())
@@ -91,6 +98,7 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // ATLETAS LEGADOS
     match /atletas/{atletaId} {
       allow read: if true;
       allow create, delete: if isAdmin();
@@ -105,6 +113,7 @@ service cloud.firestore {
     }
     match /atletas/{atletaId}/privado/{documento} { allow read, write: if isAdmin(); }
 
+    // APOIADORES
     match /apoiadores/{apoiadorId} { allow read: if true; allow write: if isAdmin(); }
     match /apoiadores_pendentes/{pedidoId} {
       allow create: if request.resource.data.keys().hasAll(['empresa','responsavel','contato','cidade','link','plano','planoId','valor','status','aprovacao','criadoEm'])
@@ -124,6 +133,7 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // COMENTÁRIOS DE PERFIS LEGADOS
     match /comentarios/{comentarioId} {
       allow read: if isAdmin() || resource.data.aprovado == true;
       allow create: if signedIn()
@@ -140,6 +150,7 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // CAMPEONATOS
     match /campeonatos/{campeonatoId} { allow read: if isAdmin() || resource.data.publicado == true; allow create, update, delete: if isAdmin(); }
     match /campeonatos_pendentes/{campeonatoId} {
       allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
@@ -155,6 +166,7 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // CADASTROS PENDENTES DE ATLETAS
     match /atletas_pendentes/{atletaId} {
       allow create: if (((signedIn() && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail == authEmail()) || (!signedIn() && request.resource.data.ownerUid == '' && request.resource.data.ownerEmail == ''))
         && request.resource.data.keys().hasAll(['ownerUid','ownerEmail','nome','nascimento','cidade','uf','contato','categoria','time','foto','status','aprovacao','criadoEm','modalidades','posicoes','modalidade','posicao','observacoes','plano','planoId','valorPlano','planoStatus'])
@@ -181,6 +193,7 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // EQUIPES
     match /equipes/{equipeId} {
       allow read: if true;
       allow create, delete: if isAdmin();
@@ -209,7 +222,7 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
-    // Publicações feitas pelo próprio perfil entram no ar imediatamente.
+    // FEED
     match /publicacoes/{publicacaoId} {
       allow read: if resource.data.aprovado == true || isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn()
@@ -225,25 +238,30 @@ service cloud.firestore {
         && request.resource.data.get('imagem','') is string
         && request.resource.data.get('imagemPath','') is string && request.resource.data.get('imagemPath','').size() <= 1000
         && request.resource.data.get('imagemMime','image/jpeg') in ['image/jpeg','image/jpg','image/png','image/webp']
-        && request.resource.data.get('imagemTamanho',0) is number && request.resource.data.get('imagemTamanho',0) >= 0 && request.resource.data.get('imagemTamanho',0) <= 10 * 1024 * 1024
+        && request.resource.data.get('imagemTamanho',0) is number && request.resource.data.get('imagemTamanho',0) >= 0 && request.resource.data.get('imagemTamanho',0) <= 25 * 1024 * 1024
         && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath','imagemMime','imagemTamanho','legenda','tipo','armazenamento','aprovado','status','criadoEm']);
       allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','texto']));
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // COMENTÁRIOS DO FEED: publicados imediatamente pelo perfil autenticado.
     match /comentarios_publicacoes/{comentarioId} {
       allow read: if resource.data.aprovado == true || isAdmin();
-      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid && request.resource.data.ownerEmail == authEmail()
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerEmail == authEmail()
         && request.resource.data.publicacaoId is string && request.resource.data.publicacaoId.size() >= 1
         && approvedSocialTarget(request.resource.data.publicacaoId)
         && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 100
-        && request.resource.data.texto is string && request.resource.data.texto.size() >= 3 && request.resource.data.texto.size() <= 500
-        && request.resource.data.aprovado == false && request.resource.data.status == 'pendente' && request.resource.data.criadoEm is timestamp
+        && request.resource.data.texto is string && request.resource.data.texto.size() >= 1 && request.resource.data.texto.size() <= 500
+        && request.resource.data.aprovado == true && request.resource.data.status == 'publicado'
+        && request.resource.data.criadoEm is timestamp
         && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','publicacaoId','nome','texto','parentCommentId','aprovado','status','criadoEm']);
-      allow update: if isAdmin();
-      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && resource.data.aprovado == false);
+      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto']));
+      allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // CURTIDAS E SALVOS
     match /curtidas_publicacoes/{publicacaoId}/usuarios/{uid} {
       allow read: if true;
       allow create: if isOwner(uid) && request.resource.data.keys().hasOnly(['uid','criadoEm']) && request.resource.data.uid == uid && request.resource.data.criadoEm is timestamp && approvedSocialTarget(publicacaoId);
@@ -254,7 +272,19 @@ service cloud.firestore {
       allow create: if isOwner(uid) && request.resource.data.keys().hasOnly(['uid','criadoEm']) && request.resource.data.uid == uid && request.resource.data.criadoEm is timestamp && (exists(/databases/$(database)/documents/atletas/$(perfilId)) || exists(/databases/$(database)/documents/perfis/$(perfilId)));
       allow delete: if isOwner(uid); allow update: if false;
     }
+    match /salvos/{uid}/publicacoes/{postId} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid)
+        && approvedSocialTarget(postId)
+        && request.resource.data.postId == postId
+        && request.resource.data.kind is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['postId','kind','createdAt']);
+      allow delete: if isOwner(uid);
+      allow update: if false;
+    }
 
+    // STORIES 24H
     match /stories/{storyId} {
       allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
@@ -271,7 +301,16 @@ service cloud.firestore {
       allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
+    match /story_views/{storyId}/usuarios/{viewerUid} {
+      allow read: if isAdmin() || isOwner(viewerUid) || (signedIn() && exists(/databases/$(database)/documents/stories/$(storyId)) && get(/databases/$(database)/documents/stories/$(storyId)).data.ownerUid == request.auth.uid);
+      allow create, update: if isOwner(viewerUid)
+        && request.resource.data.viewerUid == viewerUid
+        && request.resource.data.viewedAt is timestamp
+        && request.resource.data.keys().hasOnly(['viewerUid','viewedAt']);
+      allow delete: if isAdmin() || isOwner(viewerUid);
+    }
 
+    // VÍDEOS / REELS
     match /videos/{videoId} {
       allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
@@ -287,6 +326,76 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
+    // MENSAGENS PRIVADAS
+    match /conversas/{conversationId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid in resource.data.participants);
+      allow create: if signedIn()
+        && request.resource.data.participants is list
+        && request.resource.data.participants.size() == 2
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants[0] != request.resource.data.participants[1]
+        && exists(/databases/$(database)/documents/perfis/$(request.resource.data.participants[0]))
+        && exists(/databases/$(database)/documents/perfis/$(request.resource.data.participants[1]))
+        && request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() <= 500
+        && request.resource.data.lastSenderUid is string
+        && request.resource.data.lastMessageAt is timestamp
+        && request.resource.data.lastReadBy is list
+        && request.auth.uid in request.resource.data.lastReadBy
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['participants','lastMessage','lastSenderUid','lastMessageAt','lastReadBy','createdAt']);
+      allow update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.participants == resource.data.participants
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.keys().hasOnly(['participants','lastMessage','lastSenderUid','lastMessageAt','lastReadBy','createdAt'])
+        && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastReadBy']) && request.auth.uid in request.resource.data.lastReadBy)
+          ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage','lastSenderUid','lastMessageAt','lastReadBy'])
+            && request.resource.data.lastSenderUid == request.auth.uid
+            && request.resource.data.lastMessage is string && request.resource.data.lastMessage.size() >= 1 && request.resource.data.lastMessage.size() <= 500
+            && request.resource.data.lastMessageAt is timestamp
+            && request.resource.data.lastReadBy == [request.auth.uid])
+        )
+      );
+      allow delete: if isAdmin();
+
+      match /mensagens/{messageId} {
+        allow read: if isAdmin() || isConversationParticipant(conversationId);
+        allow create: if isConversationParticipant(conversationId)
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.text is string && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 2000
+          && request.resource.data.type == 'text'
+          && request.resource.data.createdAt is timestamp
+          && request.resource.data.keys().hasOnly(['senderUid','text','type','createdAt']);
+        allow update: if false;
+        allow delete: if isAdmin() || (signedIn() && resource.data.senderUid == request.auth.uid);
+      }
+    }
+
+    // NOTIFICAÇÕES DE ATIVIDADE
+    match /notificacoes/{targetUid}/itens/{notificationId} {
+      allow read: if isAdmin() || isOwner(targetUid);
+      allow create: if signedIn()
+        && targetUid != request.auth.uid
+        && request.resource.data.targetUid == targetUid
+        && request.resource.data.actorUid == request.auth.uid
+        && request.resource.data.actorNome is string && request.resource.data.actorNome.size() <= 100
+        && request.resource.data.actorFoto is string && request.resource.data.actorFoto.size() <= 2000
+        && request.resource.data.type in ['like','comment','follow','message']
+        && request.resource.data.sourceId is string && request.resource.data.sourceId.size() <= 200
+        && request.resource.data.text is string && request.resource.data.text.size() <= 500
+        && request.resource.data.lida == false
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly(['targetUid','actorUid','actorNome','actorFoto','type','sourceId','text','lida','createdAt']);
+      allow update: if isAdmin() || (isOwner(targetUid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lida'])
+        && request.resource.data.lida is bool);
+      allow delete: if isAdmin() || isOwner(targetUid);
+    }
+
+    // DENÚNCIAS
     match /denuncias/{denunciaId} {
       allow create: if signedIn() && request.resource.data.reportadoPorUid == request.auth.uid
         && request.resource.data.alvoTipo in ['publicacao','comentario','perfil','equipe']
@@ -298,6 +407,7 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // REIVINDICAÇÕES
     match /reivindicacoes_perfis/{claimId} {
       allow create: if signedIn() && request.resource.data.solicitanteUid == request.auth.uid && request.resource.data.solicitanteEmail == authEmail()
         && request.resource.data.perfilId is string && request.resource.data.perfilId.size() >= 1
@@ -309,6 +419,7 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // SEGUIDORES
     match /seguidores/{perfilUid}/usuarios/{followerUid} {
       allow read: if true;
       allow create: if isOwner(followerUid) && followerUid != perfilUid && exists(/databases/$(database)/documents/perfis/$(perfilUid)) && request.resource.data.uid == request.auth.uid && request.resource.data.criadoEm is timestamp && request.resource.data.keys().hasOnly(['uid','criadoEm']);
