@@ -5,50 +5,46 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Cadastro de atletas - Banco de Dados de Atletas">
 <title>Cadastro de Atleta | Banco de Dados</title>
-<link rel="stylesheet" href="estilo.css">
-<link rel="stylesheet" href="cadastro-atleta.css?v=20260827-7">
+<link rel="stylesheet" href="estilo.css?v=20260901-1">
+<link rel="stylesheet" href="cadastro-atleta.css?v=20260901-8">
 <style>
-body{min-height:100vh;background:#050807;color:#f5f0e3}
-.cadastro-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 18px}
-.cadastro-modal{position:relative;max-height:none;overflow:visible}
-.cadastro-home{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;color:#f2cc72;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:1px}
-.cadastro-home:hover{text-decoration:underline}
-.cadastro-legal{margin:10px 0 0;color:#8f968e;font-size:10px;line-height:1.5}.cadastro-legal a{color:#f2cc72;text-decoration:none}.cadastro-legal a:hover{text-decoration:underline}
+body{min-height:100vh}.cadastro-page{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:32px 18px 60px}.cadastro-modal{position:relative;max-height:none;overflow:visible;width:min(960px,100%)}.cadastro-home{display:inline-flex;align-items:center;gap:8px;margin-bottom:18px;color:#087da3;text-decoration:none;font-size:10px;font-weight:900;letter-spacing:1px}.cadastro-home:hover{text-decoration:underline}.cadastro-legal{margin:10px 0 0;font-size:10px;line-height:1.5}.cadastro-legal a{color:#087da3;text-decoration:none}.cadastro-legal a:hover{text-decoration:underline}.cadastro-draft-note{margin:8px 0 0;color:#5d7283;font-size:10px;line-height:1.45}.cadastro-draft-note strong{color:#087da3}.instagram-help{display:flex;align-items:center;gap:6px}.instagram-help:before{content:'◎';color:#c13f8f;font-weight:900}.cadastro-photo-note{display:block;margin-top:7px;color:#5f7484;font-size:10px}.cadastro-photo-preview{max-width:280px;max-height:280px;object-fit:contain}
 </style>
-<script>window.addEventListener("error",function(e){var m=document.getElementById("cadStatusMsg");if(m&&e.message){m.textContent="Erro ao carregar o cadastro: "+e.message;m.className="cadastro-status erro"}});window.addEventListener("unhandledrejection",function(e){var m=document.getElementById("cadStatusMsg");if(m){m.textContent="Erro no cadastro: "+(e.reason?.message||"verifique a conexão");m.className="cadastro-status erro"}});</script></head>
+<script>window.addEventListener("error",function(e){var m=document.getElementById("cadStatusMsg");if(m&&e.message){m.textContent="Erro ao carregar o cadastro: "+e.message;m.className="cadastro-status erro"}});window.addEventListener("unhandledrejection",function(e){var m=document.getElementById("cadStatusMsg");if(m){m.textContent="Erro no cadastro: "+(e.reason?.message||"verifique a conexão");m.className="cadastro-status erro"}});</script>
+</head>
 <body>
 <main class="cadastro-page">
 <div class="cadastro-modal">
 <a class="cadastro-home" href="index.html">← VOLTAR AO BANCO DE ATLETAS</a>
-<div class="cadastro-modal-head"><div><span class="cadastro-modal-kicker">BANCO DE DADOS DE ATLETAS</span><h2>QUERO ME CADASTRAR</h2><p>Preencha seus dados e envie sua foto. O cadastro ficará em análise antes da publicação.</p></div></div>
-<form id="cadastroForm" class="cadastro-form">
-<div class="cadastro-field"><label>NOME COMPLETO *</label><input id="cadNome" required maxlength="100"></div>
-<div class="cadastro-field"><label>DATA DE NASCIMENTO</label><input id="cadNascimento" type="date"></div>
-<div class="cadastro-field"><label>ESTADO *</label><select id="cadUF" required><option value="">Selecione o estado</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div><div class="cadastro-field"><label>CIDADE *</label><input id="cadCidade" required maxlength="70" placeholder="Sertãozinho"></div>
+<div class="cadastro-modal-head"><div><span class="cadastro-modal-kicker">BANCO DE DADOS DE ATLETAS</span><h2>QUERO ME CADASTRAR</h2><p>Crie seu perfil esportivo. Seus dados ficam salvos como rascunho neste aparelho enquanto você preenche o formulário.</p><p class="cadastro-draft-note">💾 <strong>Rascunho automático:</strong> se a internet cair ou você recarregar a página, seus dados digitados serão restaurados. Por segurança, somente a foto precisa ser selecionada novamente.</p></div></div>
+<form id="cadastroForm" class="cadastro-form" novalidate>
+<div class="cadastro-field"><label for="cadNome">NOME COMPLETO *</label><input id="cadNome" required maxlength="100" autocomplete="name"></div>
+<div class="cadastro-field"><label for="cadNascimento">DATA DE NASCIMENTO</label><input id="cadNascimento" type="date" autocomplete="bday"></div>
+<div class="cadastro-field"><label for="cadUF">ESTADO *</label><select id="cadUF" required><option value="">Selecione o estado</option><option>AC</option><option>AL</option><option>AP</option><option>AM</option><option>BA</option><option>CE</option><option>DF</option><option>ES</option><option>GO</option><option>MA</option><option>MT</option><option>MS</option><option>MG</option><option>PA</option><option>PB</option><option>PR</option><option>PE</option><option>PI</option><option>RJ</option><option>RN</option><option>RS</option><option>RO</option><option>RR</option><option>SC</option><option>SP</option><option>SE</option><option>TO</option></select></div>
+<div class="cadastro-field"><label for="cadCidade">CIDADE *</label><input id="cadCidade" required maxlength="70" placeholder="Sertãozinho" autocomplete="address-level2"></div>
 <div class="cadastro-field full"><label>MODALIDADE *</label><div class="opcoes-grid" id="cadModalidades"><label class="opcao-check"><input type="checkbox" value="Vôlei de praia"><span>🏖️ Vôlei de praia</span></label><label class="opcao-check"><input type="checkbox" value="Vôlei de quadra"><span>🏐 Vôlei de quadra</span></label></div><small class="campo-ajuda">Você pode selecionar uma ou as duas modalidades.</small></div>
 <div class="cadastro-field full"><label>POSIÇÕES *</label><div class="opcoes-grid posicoes-grid" id="cadPosicoes"><label class="opcao-check"><input type="checkbox" value="Levantador"><span>Levantador</span></label><label class="opcao-check"><input type="checkbox" value="Ponteiro"><span>Ponteiro</span></label><label class="opcao-check"><input type="checkbox" value="Oposto"><span>Oposto</span></label><label class="opcao-check"><input type="checkbox" value="Central"><span>Central</span></label><label class="opcao-check"><input type="checkbox" value="Líbero"><span>Líbero</span></label><label class="opcao-check"><input type="checkbox" value="Universal"><span>Universal</span></label></div><small class="campo-ajuda">Selecione uma ou mais posições.</small></div>
-<div class="cadastro-field"><label>CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
-<div class="cadastro-field"><label>TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
+<div class="cadastro-field"><label for="cadCategoria">CATEGORIA *</label><select id="cadCategoria" required><option value="">Selecione</option><option>Iniciante</option><option>Intermediário</option><option>Avançado</option></select></div>
+<div class="cadastro-field"><label for="cadTime">TIME / EQUIPE ATUAL *</label><input id="cadTime" required maxlength="100"></div>
 <div class="cadastro-field full plano-field"><label>PLANO DE VISIBILIDADE</label><p class="campo-ajuda">O plano gratuito continua disponível. Os planos pagos aumentam o destaque do seu perfil nas buscas e vitrines do site.</p><div id="cadPlanos" class="planos-cadastro">
 <label class="plano-card selecionado"><input type="radio" name="cadPlano" value="gratuito" data-nome="Gratuito" data-valor="0" checked><span>🆓 GRATUITO</span><strong>R$ 0/mês</strong><small>Perfil normal no banco de atletas.</small></label>
 <label class="plano-card"><input type="radio" name="cadPlano" value="bronze" data-nome="Bronze" data-valor="9.9"><span>🥉 BRONZE</span><strong>R$ 9,90/mês</strong><small>Pequeno destaque visual no perfil.</small></label>
 <label class="plano-card"><input type="radio" name="cadPlano" value="prata" data-nome="Prata" data-valor="19.9"><span>🥈 PRATA</span><strong>R$ 19,90/mês</strong><small>Mais destaque e prioridade nas buscas.</small></label>
 <label class="plano-card"><input type="radio" name="cadPlano" value="ouro" data-nome="Ouro" data-valor="34.9"><span>🥇 OURO</span><strong>R$ 34,90/mês</strong><small>Grande destaque e posição privilegiada.</small></label>
 <label class="plano-card premium"><input type="radio" name="cadPlano" value="premium" data-nome="Premium" data-valor="49.9"><span>👑 PREMIUM</span><strong>R$ 49,90/mês</strong><small>Máxima visibilidade e selo Premium.</small></label>
-</div><small class="campo-ajuda">Ao escolher um plano pago, sua solicitação fica pendente para análise e confirmação. Nenhuma cobrança é feita automaticamente.</small></div><div class="cadastro-field"><label>STATUS</label><select id="cadStatus" disabled><option value="ativo" selected>🟢 Ativo</option></select><small class="campo-ajuda">Seu cadastro será publicado como atleta ativo após o processamento.</small></div>
-<div class="cadastro-field"><label>WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30" placeholder="Telefone, WhatsApp ou e-mail"></div>
-<div class="cadastro-field full"><label>FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
-<div class="cadastro-field full"><label>CAMPEONATOS QUE PARTICIPEI <span class="campo-opcional">(OPCIONAL)</span></label>
-<div id="cadCampeonatos" class="historico-campeonatos"></div>
-<button type="button" id="btnAddCampeonato" class="btn-add-campeonato">＋ ADICIONAR CAMPEONATO</button>
-<small class="campo-ajuda">Cadastre quantos campeonatos quiser e informe a colocação, se desejar.</small></div>
-<div class="cadastro-field full"><label>OBSERVAÇÕES <span class="campo-opcional">(OPCIONAL)</span></label><textarea id="cadObs" maxlength="500" placeholder="Conte algo que possa ajudar equipes e organizadores a conhecer você."></textarea></div>
+</div><small class="campo-ajuda">Ao escolher um plano pago, sua solicitação fica pendente para análise e confirmação. Nenhuma cobrança é feita automaticamente.</small></div>
+<div class="cadastro-field"><label>STATUS</label><select id="cadStatus" disabled><option value="ativo" selected>🟢 Ativo</option></select><small class="campo-ajuda">Seu cadastro será publicado como atleta ativo após o processamento.</small></div>
+<div class="cadastro-field"><label for="cadContato">WHATSAPP / CONTATO *</label><input id="cadContato" required maxlength="30" placeholder="Telefone, WhatsApp ou e-mail" autocomplete="tel"></div>
+<div class="cadastro-field full"><label for="cadInstagram">PERFIL DO INSTAGRAM <span class="campo-opcional">(OPCIONAL)</span></label><input id="cadInstagram" maxlength="120" placeholder="@seuusuario ou https://instagram.com/seuusuario" inputmode="url" autocomplete="url"><small class="campo-ajuda instagram-help">O link ficará visível no seu perfil público para facilitar descoberta e conexão.</small></div>
+<div class="cadastro-field full"><label for="cadFoto">FOTO DO ATLETA *</label><input id="cadFoto" type="file" accept="image/jpeg,image/png,image/webp" required><small class="cadastro-photo-note">JPG, PNG ou WEBP. A foto original é enviada ao Cloudinary sem a antiga compactação em base64.</small><img id="cadPreview" class="cadastro-photo-preview" alt="Pré-visualização da foto"></div>
+<div class="cadastro-field full"><label>CAMPEONATOS QUE PARTICIPEI <span class="campo-opcional">(OPCIONAL)</span></label><div id="cadCampeonatos" class="historico-campeonatos"></div><button type="button" id="btnAddCampeonato" class="btn-add-campeonato">＋ ADICIONAR CAMPEONATO</button><small class="campo-ajuda">Cadastre quantos campeonatos quiser e informe a colocação, se desejar.</small></div>
+<div class="cadastro-field full"><label for="cadObs">OBSERVAÇÕES <span class="campo-opcional">(OPCIONAL)</span></label><textarea id="cadObs" maxlength="350" placeholder="Conte algo que possa ajudar equipes e organizadores a conhecer você."></textarea></div>
 <div class="cadastro-submit"><button id="cadEnviar" type="submit">ENVIAR PARA ANÁLISE</button><span id="cadStatusMsg" class="cadastro-status" aria-live="polite"></span></div>
 <p class="cadastro-legal">Ao enviar o cadastro, você declara que as informações fornecidas são verdadeiras e que leu a <a href="politica-privacidade.html">Política de Privacidade</a> e os <a href="termos-de-uso.html">Termos de Uso</a>.</p>
 </form>
 </div>
 </main>
-<script type="module" src="analytics.js?v=20260825-2"></script>
-<script type="module" src="cadastro-direto.js?v=20260828-1"></script>
+<script type="module" src="analytics.js?v=20260901-8"></script>
+<script type="module" src="cadastro-direto.js?v=20260901-8"></script>
 </body>
 </html>
