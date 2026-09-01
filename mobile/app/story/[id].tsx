@@ -1,10 +1,16 @@
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { getStory, markStoryViewed, type StoryItem } from '@/src/services/stories';
 import { colors } from '@/src/theme';
+
+function StoryVideo({ uri }: { uri: string }) {
+  const player = useVideoPlayer(uri, current => { current.loop = false; current.play(); });
+  return <VideoView player={player} style={styles.media} contentFit="contain" nativeControls={false} />;
+}
 
 export default function StoryScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,6 +30,7 @@ export default function StoryScreen() {
   if (loading) return <View style={styles.center}><ActivityIndicator color={colors.cyan} size="large" /></View>;
   if (!story) return <View style={styles.center}><Text style={styles.muted}>Story não encontrado.</Text></View>;
 
+  const isVideo = story.tipo === 'video' || story.mediaType === 'video';
   return (
     <View style={styles.page}>
       <View style={styles.topBar}>
@@ -34,7 +41,7 @@ export default function StoryScreen() {
         <Pressable onPress={() => router.back()} hitSlop={12}><Text style={styles.close}>×</Text></Pressable>
       </View>
       <View style={styles.mediaWrap}>
-        <Image source={{ uri: story.mediaUrl }} style={styles.media} contentFit="contain" cachePolicy="memory-disk" transition={120} />
+        {isVideo ? <StoryVideo uri={story.mediaUrl} /> : <Image source={{ uri: story.mediaUrl }} style={styles.media} contentFit="contain" cachePolicy="memory-disk" transition={120} />}
       </View>
       {!!story.legenda && <View style={styles.captionBox}><Text style={styles.caption}>{story.legenda}</Text></View>}
     </View>
