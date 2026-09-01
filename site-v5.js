@@ -1,4 +1,5 @@
 import "./social-v6.js?v=20260901-1";
+import "./social-v6-followfix.js?v=20260901-1";
 
 const THEME_VERSION = "20260901-7";
 
