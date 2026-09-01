@@ -89,8 +89,8 @@ export default function ReelsScreen() {
       .filter(item => !!item.videoUrl && !!item.ownerUid && item.status !== 'pendente')
       .sort((a, b) => (b.criadoEm?.toMillis?.() || b.criadoEm?.seconds * 1000 || 0) - (a.criadoEm?.toMillis?.() || a.criadoEm?.seconds * 1000 || 0));
     setItems(next);
-    if (!activeId && next[0]) setActiveId(next[0].id);
-  }), [activeId]);
+    setActiveId(current => current || next[0]?.id || '');
+  }), []);
 
   return (
     <View style={styles.page}>
@@ -113,7 +113,7 @@ export default function ReelsScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: '#000' },
   reel: { position: 'relative', backgroundColor: '#000', overflow: 'hidden' },
-  video: { ...StyleSheet.absoluteFillObject },
+  video: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
   gradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '48%', backgroundColor: 'rgba(0,0,0,.28)' },
   info: { position: 'absolute', left: 16, right: 82, bottom: 30 },
   author: { color: colors.white, fontWeight: '900', fontSize: 14 },
