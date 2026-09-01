@@ -1,0 +1,8 @@
+body.site-v5.site-v8.profile-page{background:linear-gradient(180deg,#e9f0f5,#e3ebf1)!important;color:#172b3b!important}
+body.site-v5.site-v8.profile-page .header{position:sticky!important;top:0!important;width:100%!important;height:72px!important;min-height:72px!important;padding:10px clamp(16px,2.5vw,34px)!important;background:linear-gradient(115deg,#071827,#0a2133 62%,#0b2f3a)!important;border-bottom:1px solid rgba(76,180,215,.28)!important;box-shadow:0 10px 30px rgba(7,24,39,.18)!important}
+body.site-v5.site-v8.profile-page .profile-shell{max-width:1100px!important}
+body.site-v5.site-v8.profile-page .profile-card,body.site-v5.site-v8.profile-page .media-card{background:#fff!important;border:1px solid #d7e2e9!important;box-shadow:0 12px 34px rgba(7,24,39,.09)!important;color:#172b3b!important}
+body.site-v5.site-v8.profile-page .profile-card:before,body.site-v5.site-v8.profile-page .media-card:before{content:"";display:block;height:3px;margin:-1px -1px 16px;border-radius:18px 18px 0 0;background:linear-gradient(90deg,#00a5d4,#13a687,#f1843d)}
+body.site-v5.site-v8.profile-page .cover-preview{background:linear-gradient(135deg,#cbeaf3,#d8eee8)!important;border-color:#c8dae5!important}
+body.site-v5.site-v8.profile-page .profile-top h1,body.site-v5.site-v8.profile-page .media-card h2{color:#102637!important}
+body.site-v5.site-v8.profile-page .field input,body.site-v5.site-v8.profile-page .field select,body.site-v5.site-v8.profile-page .field textarea,body.site-v5.site-v8.profile-page .upload-box textarea{color:#162c3c!important;border-color:#c8d8e3!important}
