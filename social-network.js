@@ -1,9 +1,8 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
-  addDoc, arrayUnion, collection, doc, getDoc, getDocs, getFirestore,
-  limit, onSnapshot, orderBy, query, serverTimestamp, setDoc, Timestamp,
-  updateDoc, where
+  addDoc, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, getFirestore,
+  limit, onSnapshot, orderBy, query, setDoc, Timestamp, updateDoc, where
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const cfg = {
@@ -14,6 +13,7 @@ const cfg = {
   messagingSenderId: "48728914064",
   appId: "1:48728914064:web:1dd7aeb705319886f74015"
 };
+
 const app = getApps().length ? getApp() : initializeApp(cfg);
 export const socialAuth = getAuth(app);
 export const socialDb = getFirestore(app);
@@ -21,6 +21,7 @@ let currentUser = socialAuth.currentUser;
 let unsubInbox = null;
 let unsubNotifications = null;
 let unsubMessages = null;
+let storyTimer = null;
 const profileCache = new Map();
 
 const esc = (value) => {
@@ -50,7 +51,15 @@ function installStyles() {
   .sn-list{overflow:auto;flex:1;padding:8px}.sn-row{display:flex;gap:11px;align-items:center;padding:11px;border-radius:12px;color:#eee;text-decoration:none;cursor:pointer}.sn-row:hover{background:#111914}.sn-row.unread{background:#132019}.sn-row img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:1px solid rgba(242,204,114,.35)}.sn-row-main{min-width:0;flex:1}.sn-row-main strong,.sn-row-main span{display:block}.sn-row-main strong{font-size:13px}.sn-row-main span{margin-top:4px;color:#9aa19b;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sn-row time{color:#767d77;font-size:9px}
   .sn-chat{position:fixed;z-index:21000;right:18px;bottom:18px;width:min(390px,calc(100vw - 24px));height:min(610px,calc(100vh - 40px));display:none;flex-direction:column;background:#0b100d;border:1px solid rgba(217,169,63,.3);border-radius:18px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.65)}.sn-chat.open{display:flex}.sn-chat-head{display:flex;align-items:center;gap:9px;padding:12px 14px;border-bottom:1px solid rgba(217,169,63,.18)}.sn-chat-head img{width:36px;height:36px;border-radius:50%;object-fit:cover}.sn-chat-head strong{flex:1;color:#f4efe2}.sn-chat-messages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:7px}.sn-msg{max-width:78%;padding:9px 11px;border-radius:14px;background:#172019;color:#eee;font-size:12px;line-height:1.4;align-self:flex-start}.sn-msg.mine{align-self:flex-end;background:linear-gradient(135deg,#e8bc58,#b87d20);color:#111}.sn-msg small{display:block;opacity:.55;font-size:8px;margin-top:4px;text-align:right}.sn-chat-form{display:flex;gap:7px;padding:10px;border-top:1px solid rgba(217,169,63,.15)}.sn-chat-form input{flex:1;min-width:0;border:1px solid rgba(217,169,63,.25);border-radius:20px;background:#111713;color:#fff;padding:10px 13px;outline:none}.sn-chat-form button{border:0;border-radius:20px;padding:0 15px;background:#e8bc58;color:#111;font-weight:900;cursor:pointer}
   .sn-story-ring{position:relative;cursor:pointer;border-radius:50%;padding:3px;background:linear-gradient(135deg,#f8d771,#e07837,#b841c6)}.sn-story-ring.seen{background:#485049}.sn-story-ring>img,.sn-story-ring>video{display:block;border-radius:50%;border:3px solid #0a0f0c;object-fit:cover}
-  .sn-story-viewer{position:fixed;inset:0;z-index:22000;background:rgba(0,0,0,.96);display:none;align-items:center;justify-content:center}.sn-story-viewer.open{display:flex}.sn-story-card{position:relative;width:min(460px,100vw);height:min(820px,100vh);background:#050505;overflow:hidden}.sn-story-media{width:100%;height:100%;object-fit:contain;background:#000}.sn-story-top{position:absolute;left:0;right:0;top:0;z-index:3;padding:10px;background:linear-gradient(rgba(0,0,0,.65),transparent)}.sn-progresses{display:flex;gap:3px;margin-bottom:10px}.sn-progress{height:2px;flex:1;background:rgba(255,255,255,.35);overflow:hidden}.sn-progress i{display:block;height:100%;width:0;background:#fff}.sn-progress.done i{width:100%}.sn-story-user{display:flex;align-items:center;gap:8px;color:#fff;font:800 11px Arial}.sn-story-user img{width:32px;height:32px;border-radius:50%;object-fit:cover}.sn-story-close{position:absolute;right:9px;top:7px;border:0;background:transparent;color:#fff;font-size:25px;cursor:pointer}.sn-story-nav{position:absolute;top:55px;bottom:0;width:32%;border:0;background:transparent;cursor:pointer}.sn-story-prev{left:0}.sn-story-next{right:0}.sn-story-caption{position:absolute;left:16px;right:16px;bottom:20px;color:#fff;text-align:center;text-shadow:0 1px 5px #000;font-size:12px;z-index:3}
+  .sn-story-viewer{position:fixed;inset:0;z-index:22000;background:rgba(0,0,0,.97);display:none;align-items:center;justify-content:center}.sn-story-viewer.open{display:flex}
+  .sn-story-card{position:relative;width:min(540px,100vw);height:min(900px,100vh);background:#000;overflow:hidden}
+  .sn-story-content{position:absolute;inset:0;display:grid;place-items:center;background:#000;overflow:hidden}
+  .sn-story-media{display:block;width:auto!important;height:auto!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;background:#000;image-rendering:auto}
+  video.sn-story-media{width:100%!important;height:100%!important}
+  .sn-story-top{position:absolute;left:0;right:0;top:0;z-index:5;padding:10px;background:linear-gradient(rgba(0,0,0,.78),transparent)}.sn-progresses{display:flex;gap:3px;margin-bottom:10px}.sn-progress{height:2px;flex:1;background:rgba(255,255,255,.35);overflow:hidden}.sn-progress i{display:block;height:100%;width:0;background:#fff}.sn-progress.done i{width:100%}
+  .sn-story-user{display:inline-flex;align-items:center;gap:8px;color:#fff!important;font:800 11px Arial;text-decoration:none;max-width:calc(100% - 105px);cursor:pointer}.sn-story-user:hover strong{text-decoration:underline}.sn-story-user img{width:32px;height:32px;border-radius:50%;object-fit:cover}.sn-story-user strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sn-story-close{position:absolute;right:9px;top:7px;border:0;background:transparent;color:#fff;font-size:25px;cursor:pointer}.sn-story-delete{position:absolute;right:44px;top:11px;border:1px solid rgba(255,255,255,.3);border-radius:8px;background:rgba(0,0,0,.45);color:#fff;padding:5px 8px;font:800 9px Arial;cursor:pointer}.sn-story-delete:hover{background:#7f211b}
+  .sn-story-nav{position:absolute;top:55px;bottom:0;width:32%;border:0;background:transparent;cursor:pointer;z-index:2}.sn-story-prev{left:0}.sn-story-next{right:0}.sn-story-caption{position:absolute;left:16px;right:16px;bottom:20px;color:#fff;text-align:center;text-shadow:0 1px 5px #000;font-size:12px;z-index:4;pointer-events:none}
   .sn-notification-icon{width:32px;text-align:center;font-size:18px}.sn-empty{padding:28px 15px;text-align:center;color:#8c948e;font-size:12px}
   @media(max-width:700px){.sn-chat{right:6px;bottom:6px;height:calc(100vh - 12px);width:calc(100vw - 12px)}.sn-panel{width:100vw}.sn-story-card{width:100vw;height:100vh}}
   `;
@@ -76,7 +85,6 @@ function socialGate() {
   location.href = `conta.html?tab=login&return=${encodeURIComponent(location.pathname + location.search + location.hash)}`;
   return false;
 }
-
 function conversationId(a, b) { return [a, b].sort().join("__"); }
 
 function ensureBaseUI() {
@@ -148,12 +156,16 @@ export async function openInbox() {
   ensureBaseUI();
   if (!socialGate()) return;
   const overlay = document.getElementById("snInboxOverlay");
-  overlay.classList.add("open"); overlay.setAttribute("aria-hidden","false");
-  const list = document.getElementById("snInboxList"); list.innerHTML = '<div class="sn-empty">Carregando conversas...</div>';
+  overlay.classList.add("open");
+  const list = document.getElementById("snInboxList");
+  list.innerHTML = '<div class="sn-empty">Carregando conversas...</div>';
   try {
     const snap = await getDocs(query(collection(socialDb,"conversas"),where("participants","array-contains",currentUser.uid)));
     await renderInboxDocs([...snap.docs]);
-  } catch (e) { console.error(e); list.innerHTML='<div class="sn-empty">Não foi possível carregar as conversas.</div>'; }
+  } catch (e) {
+    console.error(e);
+    list.innerHTML='<div class="sn-empty">Não foi possível carregar as conversas.</div>';
+  }
 }
 
 export async function createNotification(targetUid, type, { sourceId="", text="" }={}) {
@@ -176,7 +188,7 @@ export async function createNotification(targetUid, type, { sourceId="", text=""
 
 function notificationText(x) {
   if (x.type === "like") return "curtiu sua publicação.";
-  if (x.type === "comment") return `comentou: ${x.text || ""}`;
+  if (x.type === "comment") return `comentou${x.text ? ": " + x.text : " na sua publicação."}`;
   if (x.type === "follow") return "começou a seguir você.";
   if (x.type === "message") return `enviou uma mensagem${x.text ? ": " + x.text : "."}`;
   return x.text || "interagiu com você.";
@@ -216,7 +228,7 @@ export async function openChatWith(otherUid, otherName="Atleta", otherAvatar="")
   ensureBaseUI(); if(!socialGate() || !otherUid || otherUid===currentUser.uid)return;
   const chatId=conversationId(currentUser.uid,otherUid); activeChat={id:chatId,otherUid};
   const other=await profileOf(otherUid); otherName=other.nome||otherName;otherAvatar=other.fotoUrl||otherAvatar||fallbackAvatar;
-  const chat=document.getElementById("snChat");chat.classList.add("open");chat.setAttribute("aria-hidden","false");
+  const chat=document.getElementById("snChat");chat.classList.add("open");
   document.getElementById("snChatName").textContent=otherName;document.getElementById("snChatAvatar").src=otherAvatar;
   try{
     const ref=doc(socialDb,"conversas",chatId), snap=await getDoc(ref);
@@ -238,7 +250,11 @@ function watchMessages(chatId){
   },err=>{console.error(err);list.innerHTML='<div class="sn-empty">Mensagens indisponíveis.</div>'});
 }
 
-function closeChat(){if(unsubMessages){unsubMessages();unsubMessages=null}document.getElementById("snChat")?.classList.remove("open");activeChat={id:"",otherUid:""}}
+function closeChat(){
+  if(unsubMessages){unsubMessages();unsubMessages=null}
+  document.getElementById("snChat")?.classList.remove("open");
+  activeChat={id:"",otherUid:""};
+}
 
 function installChatForm(){
   const form=document.getElementById("snChatForm");if(!form||form.dataset.ready)return;form.dataset.ready="1";
@@ -284,31 +300,93 @@ async function markStorySeen(story){
 }
 
 function storyMedia(story){return story.mediaUrl||story.imagemUrl||story.imagem||""}
-let storyTimer=null;
-export async function openStoryViewer(stories,startIndex=0){
-  if(!stories?.length)return;ensureBaseUI();installStyles();
+
+export async function openStoryViewer(inputStories,startIndex=0){
+  if(!inputStories?.length)return;
+  ensureBaseUI();installStyles();
+  const stories=[...inputStories];
   let viewer=document.getElementById("snStoryViewer");
-  if(!viewer){viewer=document.createElement("div");viewer.id="snStoryViewer";viewer.className="sn-story-viewer";viewer.innerHTML='<div class="sn-story-card"><div class="sn-story-top"><div class="sn-progresses"></div><div class="sn-story-user"><img alt=""><strong></strong></div><button class="sn-story-close">×</button></div><div class="sn-story-content"></div><button class="sn-story-nav sn-story-prev" aria-label="Anterior"></button><button class="sn-story-nav sn-story-next" aria-label="Próximo"></button><div class="sn-story-caption"></div></div>';document.body.appendChild(viewer)}
-  let index=Math.max(0,Math.min(startIndex,stories.length-1));viewer.classList.add("open");
-  const close=()=>{clearTimeout(storyTimer);viewer.classList.remove("open");const v=viewer.querySelector("video");v?.pause()};
+  if(!viewer){
+    viewer=document.createElement("div");
+    viewer.id="snStoryViewer";
+    viewer.className="sn-story-viewer";
+    viewer.innerHTML='<div class="sn-story-card"><div class="sn-story-content"></div><div class="sn-story-top"><div class="sn-progresses"></div><a class="sn-story-user" href="#"><img alt=""><strong></strong></a><button class="sn-story-delete" type="button" hidden>EXCLUIR</button><button class="sn-story-close" type="button">×</button></div><button class="sn-story-nav sn-story-prev" aria-label="Anterior"></button><button class="sn-story-nav sn-story-next" aria-label="Próximo"></button><div class="sn-story-caption"></div></div>';
+    document.body.appendChild(viewer);
+  }
+  let index=Math.max(0,Math.min(startIndex,stories.length-1));
+  viewer.classList.add("open");
+
+  const close=()=>{
+    clearTimeout(storyTimer);
+    viewer.classList.remove("open");
+    viewer.querySelector("video")?.pause();
+  };
+
   const show=async()=>{
-    clearTimeout(storyTimer);const s=stories[index],p=await profileOf(s.ownerUid);await markStorySeen(s);
-    viewer.querySelector(".sn-story-user img").src=p.fotoUrl||fallbackAvatar;viewer.querySelector(".sn-story-user strong").textContent=p.nome||s.nome||"Atleta";
+    if(!stories.length){close();return}
+    index=Math.max(0,Math.min(index,stories.length-1));
+    clearTimeout(storyTimer);
+    const s=stories[index],p=await profileOf(s.ownerUid);
+    await markStorySeen(s);
+
+    const profileLink=viewer.querySelector(".sn-story-user");
+    profileLink.href=`perfil-social.html?uid=${encodeURIComponent(s.ownerUid||"")}`;
+    profileLink.onclick=(event)=>{event.stopPropagation();close()};
+    profileLink.querySelector("img").src=p.fotoUrl||fallbackAvatar;
+    profileLink.querySelector("strong").textContent=p.nome||s.nome||"Atleta";
+
+    const deleteButton=viewer.querySelector(".sn-story-delete");
+    deleteButton.hidden=!(currentUser && s.ownerUid===currentUser.uid);
+    deleteButton.onclick=async(event)=>{
+      event.preventDefault();event.stopPropagation();
+      clearTimeout(storyTimer);
+      if(!confirm("Excluir este Story definitivamente?")){show();return}
+      try{
+        await deleteDoc(doc(socialDb,"stories",s.id));
+        stories.splice(index,1);
+        window.dispatchEvent(new CustomEvent("sn:story-deleted",{detail:{id:s.id,ownerUid:s.ownerUid}}));
+        if(!stories.length){close();return}
+        if(index>=stories.length)index=stories.length-1;
+        await show();
+      }catch(error){console.error("Excluir Story:",error);alert("Não foi possível excluir o Story.");await show()}
+    };
+
     viewer.querySelector(".sn-progresses").innerHTML=stories.map((_,i)=>`<span class="sn-progress${i<index?" done":""}"><i></i></span>`).join("");
     const content=viewer.querySelector(".sn-story-content"),url=storyMedia(s),isVideo=(s.mediaType||s.tipo||"").startsWith("video");
-    content.innerHTML=isVideo?`<video class="sn-story-media" src="${esc(url)}" autoplay playsinline></video>`:`<img class="sn-story-media" src="${esc(url)}" alt="Story">`;
+    content.innerHTML=isVideo?`<video class="sn-story-media" src="${esc(url)}" autoplay playsinline></video>`:`<img class="sn-story-media" src="${esc(url)}" alt="Story em qualidade original" decoding="async">`;
     viewer.querySelector(".sn-story-caption").textContent=s.legenda||"";
+
     const bar=viewer.querySelectorAll(".sn-progress")[index]?.querySelector("i");
     const next=()=>{if(index<stories.length-1){index++;show()}else close()};
-    if(isVideo){const v=content.querySelector("video");v.onloadedmetadata=()=>{const duration=Math.min(15000,Math.max(3000,(v.duration||5)*1000));if(bar){bar.style.transition=`width ${duration}ms linear`;requestAnimationFrame(()=>bar.style.width="100%")}storyTimer=setTimeout(next,duration)};v.onended=next}
-    else{if(bar){bar.style.transition="width 5000ms linear";requestAnimationFrame(()=>bar.style.width="100%")}storyTimer=setTimeout(next,5000)}
+    if(isVideo){
+      const v=content.querySelector("video");
+      v.onloadedmetadata=()=>{
+        const duration=Math.min(15000,Math.max(3000,(v.duration||5)*1000));
+        if(bar){bar.style.transition=`width ${duration}ms linear`;requestAnimationFrame(()=>bar.style.width="100%")}
+        storyTimer=setTimeout(next,duration);
+      };
+      v.onended=next;
+    }else{
+      const image=content.querySelector("img");
+      image.onload=()=>{
+        image.dataset.naturalWidth=String(image.naturalWidth||0);
+        image.dataset.naturalHeight=String(image.naturalHeight||0);
+      };
+      if(bar){bar.style.transition="width 5000ms linear";requestAnimationFrame(()=>bar.style.width="100%")}
+      storyTimer=setTimeout(next,5000);
+    }
   };
-  viewer.querySelector(".sn-story-close").onclick=close;viewer.querySelector(".sn-story-next").onclick=()=>{if(index<stories.length-1){index++;show()}else close()};viewer.querySelector(".sn-story-prev").onclick=()=>{if(index>0){index--;show()}};
+
+  viewer.querySelector(".sn-story-close").onclick=close;
+  viewer.querySelector(".sn-story-next").onclick=()=>{if(index<stories.length-1){index++;show()}else close()};
+  viewer.querySelector(".sn-story-prev").onclick=()=>{if(index>0){index--;show()}};
   show();
 }
 
 export async function renderStoriesBar(container){
-  if(!container)return;const stories=await getActiveStories();if(!stories.length){container.innerHTML='<div class="sn-empty">Nenhum story ativo agora.</div>';return}
+  if(!container)return;
+  const stories=await getActiveStories();
+  if(!stories.length){container.innerHTML='<div class="sn-empty">Nenhum story ativo agora.</div>';return}
   const seen=await seenStoryIds(stories),groups=new Map();
   for(const s of stories){if(!groups.has(s.ownerUid))groups.set(s.ownerUid,[]);groups.get(s.ownerUid).push(s)}
   const rows=[];
@@ -319,8 +397,15 @@ export async function renderStoriesBar(container){
 }
 
 export async function attachProfileStory(avatarEl, ownerUid){
-  if(!avatarEl||!ownerUid)return;const stories=await getActiveStories({ownerUid,max:30});if(!stories.length)return;
-  const seen=await seenStoryIds(stories);avatarEl.style.cursor="pointer";avatarEl.style.outline=stories.some(s=>!seen.has(s.id))?"3px solid #e69b3f":"3px solid #59605a";avatarEl.style.outlineOffset="3px";avatarEl.onclick=()=>openStoryViewer(stories,0);
+  if(!avatarEl||!ownerUid)return;
+  const stories=await getActiveStories({ownerUid,max:30});
+  avatarEl.style.outline="";avatarEl.style.outlineOffset="";avatarEl.onclick=null;
+  if(!stories.length)return;
+  const seen=await seenStoryIds(stories);
+  avatarEl.style.cursor="pointer";
+  avatarEl.style.outline=stories.some(s=>!seen.has(s.id))?"3px solid #e69b3f":"3px solid #59605a";
+  avatarEl.style.outlineOffset="3px";
+  avatarEl.onclick=()=>openStoryViewer(stories,0);
 }
 
 export function initSocialNetwork(){
