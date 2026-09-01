@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
+import { router } from 'expo-router';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -65,6 +66,12 @@ export default function ProfileScreen() {
         <View style={styles.stat}><Text style={styles.statValue}>{profile?.time || '—'}</Text><Text style={styles.statLabel}>Equipe</Text></View>
       </View>
 
+      <View style={styles.quickActions}>
+        <Pressable style={styles.quickButton} onPress={() => router.push('/stories-archive' as any)}><Text style={styles.quickIcon}>◉</Text><Text style={styles.quickText}>STORIES POSTADOS</Text></Pressable>
+        <Pressable style={styles.quickButton} onPress={() => router.push('/saved' as any)}><Text style={styles.quickIcon}>▣</Text><Text style={styles.quickText}>SALVOS</Text></Pressable>
+        <Pressable style={styles.quickButton} onPress={() => router.push('/reels' as any)}><Text style={styles.quickIcon}>▶</Text><Text style={styles.quickText}>REELS</Text></Pressable>
+      </View>
+
       <View style={styles.card}>
         <Text style={styles.heading}>Perfil esportivo</Text>
         <Text style={styles.bio}>{profile?.bio || 'Adicione sua bio no site ou, em breve, diretamente no aplicativo.'}</Text>
@@ -110,6 +117,10 @@ const styles = StyleSheet.create({
   stat: { flex: 1, backgroundColor: colors.surface, borderRadius: radii.md, padding: 12, borderWidth: 1, borderColor: colors.border },
   statValue: { color: colors.ink, fontSize: 12, fontWeight: '900' },
   statLabel: { color: colors.muted, fontSize: 10, marginTop: 4 },
+  quickActions: { flexDirection: 'row', gap: 8, marginTop: 12 },
+  quickButton: { flex: 1, minHeight: 68, borderRadius: radii.md, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center', padding: 6 },
+  quickIcon: { color: colors.cyan, fontSize: 19, fontWeight: '900' },
+  quickText: { color: colors.white, fontSize: 8, fontWeight: '900', textAlign: 'center', marginTop: 5 },
   card: { backgroundColor: colors.surface, borderRadius: radii.lg, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginTop: 12 },
   heading: { color: colors.ink, fontWeight: '900', fontSize: 18, marginBottom: 8 },
   bio: { color: colors.muted, lineHeight: 20 },
