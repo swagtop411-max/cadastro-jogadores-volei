@@ -24,6 +24,9 @@ export default function RootLayout() {
         <Stack.Screen name="notifications" options={{ title: 'Notificações' }} />
         <Stack.Screen name="championships" options={{ title: 'Campeonatos' }} />
         <Stack.Screen name="teams" options={{ title: 'Equipes' }} />
+        <Stack.Screen name="saved" options={{ title: 'Salvos' }} />
+        <Stack.Screen name="stories-archive" options={{ title: 'Stories postados' }} />
+        <Stack.Screen name="hashtag/[tag]" options={{ title: 'Hashtag' }} />
         <Stack.Screen name="story/[id]" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         <Stack.Screen name="reels" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
       </Stack>
