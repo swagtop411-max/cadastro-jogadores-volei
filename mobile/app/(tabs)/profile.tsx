@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { db } from '@/src/config/firebase';
 import { useAuth } from '@/src/providers/AuthProvider';
 import { approveFollowRequest, isPrivateProfile, rejectFollowRequest, subscribeFollowRequests, type FollowRequest } from '@/src/services/privacy';
+import { registerPushToken } from '@/src/services/push';
 import type { PublicProfile } from '@/src/types/social';
 import { colors, radii, spacing } from '@/src/theme';
 
@@ -24,6 +25,8 @@ export default function ProfileScreen() {
   const [privateProfile, setPrivateProfile] = useState(false);
   const [requests, setRequests] = useState<FollowRequest[]>([]);
   const [busyUid, setBusyUid] = useState('');
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushStatus, setPushStatus] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +48,19 @@ export default function ProfileScreen() {
     } finally {
       setBusyUid('');
     }
+  }
+
+  async function activatePush() {
+    if (!user || pushBusy) return;
+    setPushBusy(true);
+    setPushStatus('Preparando notificações...');
+    const result = await registerPushToken(user.uid);
+    if (result.status === 'registered') setPushStatus('✓ Notificações deste aparelho registradas.');
+    else if (result.status === 'permission-denied') setPushStatus('Permissão de notificações não concedida.');
+    else if (result.status === 'needs-eas-project-id') setPushStatus('Push preparado. Falta vincular o projeto ao EAS antes do primeiro build.');
+    else if (result.status === 'firestore-rules-pending') setPushStatus('Token gerado. Falta publicar a regra de push no Firestore.');
+    else setPushStatus(result.reason);
+    setPushBusy(false);
   }
 
   if (loading) return <View style={styles.center}><ActivityIndicator size="large" color={colors.cyan} /></View>;
@@ -80,6 +96,13 @@ export default function ProfileScreen() {
         <Text style={styles.heading}>Perfil esportivo</Text>
         <Text style={styles.bio}>{profile?.bio || 'Use Editar Perfil para adicionar sua apresentação esportiva.'}</Text>
         {!!insta && <Pressable style={styles.instagram} onPress={() => Linking.openURL(insta)}><Text style={styles.instagramText}>◎ ABRIR INSTAGRAM</Text></Pressable>}
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.heading}>Notificações no celular</Text>
+        <Text style={styles.bio}>Ative para receber Direct, curtidas, comentários e novos seguidores quando a infraestrutura de push estiver vinculada ao build.</Text>
+        <Pressable disabled={pushBusy} style={[styles.pushButton, pushBusy && { opacity: 0.55 }]} onPress={activatePush}><Text style={styles.pushButtonText}>{pushBusy ? 'ATIVANDO...' : '🔔 ATIVAR NOTIFICAÇÕES'}</Text></Pressable>
+        {!!pushStatus && <Text style={styles.pushStatus}>{pushStatus}</Text>}
       </View>
 
       {requests.length > 0 && <View style={styles.card}>
@@ -132,6 +155,9 @@ const styles = StyleSheet.create({
   bio: { color: colors.muted, lineHeight: 20 },
   instagram: { alignSelf: 'flex-start', backgroundColor: colors.navy, borderRadius: radii.pill, paddingHorizontal: 16, paddingVertical: 11, marginTop: 14 },
   instagramText: { color: colors.white, fontSize: 11, fontWeight: '900' },
+  pushButton: { minHeight: 46, borderRadius: radii.md, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+  pushButtonText: { color: colors.white, fontWeight: '900', fontSize: 10 },
+  pushStatus: { color: colors.muted, fontSize: 11, lineHeight: 17, marginTop: 9 },
   requests: { gap: 9, marginTop: 13 },
   request: { flexDirection: 'row', gap: 10, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 },
   requestAvatar: { width: 44, height: 44, borderRadius: 22 },
