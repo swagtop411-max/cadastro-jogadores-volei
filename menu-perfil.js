@@ -1,7 +1,30 @@
+import "./site-v5.js?v=20260901-8";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { addDoc, collection, deleteField, doc, getDoc, getDocs, getFirestore, query, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { uploadCloudinary } from "./cloudinary-upload.js?v=20260831-1";
+
+(function installMyProfileV7Cleanup(){
+  if(document.getElementById("myProfileV7Cleanup"))return;
+  const style=document.createElement("style");style.id="myProfileV7Cleanup";style.textContent=`
+  body.site-v5.profile-page{padding-left:0!important;padding-right:0!important;background:#f5f7fb!important;color:#172033!important}
+  body.site-v5.profile-page .profile-side-left,body.site-v5.profile-page .profile-side-right{display:none!important}
+  body.site-v5.profile-page .header{position:sticky!important;top:0!important;left:auto!important;right:auto!important;width:100%!important;height:66px!important;min-height:66px!important;padding:10px 24px!important;display:flex!important;grid-template-columns:none!important;justify-content:flex-start!important;background:rgba(255,255,255,.94)!important;border-bottom:1px solid #e4e7ec!important}
+  body.site-v5.profile-page .header-center,body.site-v5.profile-page .header-actions{display:none!important}
+  body.site-v5.profile-page .profile-shell{max-width:1050px!important;margin:0 auto!important;padding:28px 18px 65px!important}
+  body.site-v5.profile-page .profile-card,body.site-v5.profile-page .media-card{background:#fff!important;border:1px solid #e4e7ec!important;box-shadow:0 10px 35px rgba(15,23,42,.07)!important;color:#172033!important}
+  body.site-v5.profile-page .cover-editor{background:#f8fafc!important}
+  body.site-v5.profile-page .cover-preview{background:linear-gradient(135deg,#dbeafe,#ecfdf5)!important;border-color:#e4e7ec!important}
+  body.site-v5.profile-page .avatar{border-color:#fff!important;outline-color:#bfdbfe!important;background:#eef2f7!important}
+  body.site-v5.profile-page .profile-top h1,body.site-v5.profile-page .media-card h2{color:#172033!important}
+  body.site-v5.profile-page .profile-grid{border-color:#e4e7ec!important}
+  body.site-v5.profile-page .field input,body.site-v5.profile-page .field select,body.site-v5.profile-page .field textarea,body.site-v5.profile-page .upload-box textarea{background:#fff!important;color:#172033!important;border-color:#d0d5dd!important}
+  body.site-v5.profile-page .upload-box{background:#f8fafc!important;border-color:#d0d5dd!important}
+  body.site-v5.profile-page .upload-box p,body.site-v5.profile-page .empty{color:#667085!important}
+  body.site-v5.profile-page .gallery img,body.site-v5.profile-page .gallery video,body.site-v5.profile-page .story-list img,body.site-v5.profile-page .story-list video{background:#f2f4f7!important}
+  @media(max-width:700px){body.site-v5.profile-page .profile-shell{padding:18px 10px 45px!important}}
+  `;document.head.appendChild(style)
+})();
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
