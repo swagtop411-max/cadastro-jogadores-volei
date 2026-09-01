@@ -1,0 +1,216 @@
+/* =========================================================
+   BANCO DE DADOS DE ATLETAS • DESIGN SYSTEM V8 SPORT
+   ========================================================= */
+:root{
+  --v8-bg:#e9eff5;
+  --v8-bg-2:#dfe8f0;
+  --v8-surface:#ffffff;
+  --v8-surface-soft:#f5f8fb;
+  --v8-navy:#071827;
+  --v8-navy-2:#102638;
+  --v8-blue:#009fd3;
+  --v8-blue-2:#007eaa;
+  --v8-green:#118466;
+  --v8-orange:#f1843d;
+  --v8-text:#162432;
+  --v8-text-2:#32475a;
+  --v8-muted:#617486;
+  --v8-line:#cbd8e3;
+  --v8-line-soft:#dde6ee;
+  --v8-shadow:0 15px 42px rgba(7,24,39,.12);
+  --v8-shadow-soft:0 7px 23px rgba(7,24,39,.08);
+  --v8-radius:18px;
+  --v8-radius-sm:12px;
+  --site-bg:var(--v8-bg);
+  --site-bg-soft:var(--v8-bg-2);
+  --site-surface:var(--v8-surface);
+  --site-surface-2:var(--v8-surface-soft);
+  --site-gold:var(--v8-blue);
+  --site-gold-light:#33b8df;
+  --site-green:var(--v8-green);
+  --site-text:var(--v8-text);
+  --site-text-2:var(--v8-text-2);
+  --site-muted:var(--v8-muted);
+  --site-line:var(--v8-line-soft);
+  --site-line-gold:#b9ddec;
+  --gold:var(--v8-blue);
+  --gold2:var(--v8-blue-2);
+  --bg:var(--v8-bg);
+  --card:#fff;
+  --line:var(--v8-line-soft);
+  --texto:var(--v8-text);
+  --muted:var(--v8-muted);
+  --borda:var(--v8-line-soft);
+  --sombra:var(--v8-shadow-soft);
+}
+
+html{background:var(--v8-bg)!important;color-scheme:light!important}
+body.site-v5,body{
+  color:var(--v8-text)!important;
+  background:
+    radial-gradient(circle at 4% 2%,rgba(0,159,211,.10),transparent 24%),
+    radial-gradient(circle at 96% 12%,rgba(17,132,102,.08),transparent 26%),
+    linear-gradient(180deg,#edf3f8 0%,#e6edf3 48%,#edf3f8 100%)!important;
+}
+body.site-v5:after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;
+  background-image:linear-gradient(rgba(7,24,39,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(7,24,39,.022) 1px,transparent 1px);
+  background-size:38px 38px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.6),transparent 72%);
+}
+
+/* CABEÇALHO: esportivo, limpo e de alto contraste */
+.site-v5 .header{
+  min-height:72px!important;height:72px!important;padding:10px clamp(16px,2.5vw,34px)!important;
+  background:linear-gradient(115deg,var(--v8-navy),#0a2133 62%,#0b2f3a)!important;
+  border-bottom:1px solid rgba(76,180,215,.28)!important;
+  box-shadow:0 10px 30px rgba(7,24,39,.18)!important;
+  backdrop-filter:blur(18px) saturate(130%)!important;
+}
+.site-v5 .header-brand strong,.site-v5 .brand strong{color:#f7fbff!important;font-size:16px!important;letter-spacing:.2px!important}
+.site-v5 .site-menu-trigger{
+  min-width:98px!important;height:44px!important;border:1px solid rgba(134,211,235,.28)!important;
+  color:#effaff!important;background:rgba(255,255,255,.075)!important;box-shadow:inset 0 1px rgba(255,255,255,.06)!important;
+}
+.site-v5 .site-menu-trigger:hover{background:rgba(0,159,211,.18)!important;border-color:rgba(83,199,233,.58)!important;color:#fff!important}
+
+/* MENU */
+.site-v5 .site-menu-overlay{background:rgba(5,17,28,.54)!important;backdrop-filter:blur(5px)!important}
+.site-v5 .site-menu-panel{
+  background:linear-gradient(180deg,#0a1b2a,#102738)!important;color:#fff!important;
+  border-right:1px solid rgba(70,183,217,.28)!important;box-shadow:26px 0 80px rgba(3,14,23,.35)!important;
+}
+.site-v5 .site-menu-close{background:rgba(255,255,255,.07)!important;border-color:rgba(255,255,255,.14)!important;color:#fff!important}
+.site-v5 .site-menu-brand{border-color:rgba(255,255,255,.10)!important}
+.site-v5 .site-menu-brand span{color:#63d7f4!important}
+.site-v5 .site-menu-brand h2{color:#fff!important}
+.site-v5 .site-menu-brand p{color:#a9bac7!important}
+.site-v5 .site-menu-nav>a,.site-v5 .site-menu-nav>button,.site-v5 .site-menu-group-items>a,.site-v5 .site-menu-group-items>button{color:#e7f0f7!important}
+.site-v5 .site-menu-nav>a:hover,.site-v5 .site-menu-nav>button:hover,.site-v5 .site-menu-group-items>a:hover,.site-v5 .site-menu-group-items>button:hover{
+  background:rgba(0,159,211,.14)!important;color:#fff!important;border-color:rgba(67,195,232,.22)!important;
+}
+.site-v5 .site-menu-register{background:linear-gradient(135deg,rgba(0,159,211,.13),rgba(17,132,102,.12))!important;border-color:rgba(91,204,235,.22)!important}
+.site-v5 .site-menu-register strong,.site-v5 .site-menu-register a{color:#7be3ff!important}
+.site-v5 .site-menu-register span{color:#b9c7d1!important}
+
+/* TÍTULOS E TEXTOS: mais escuros e legíveis */
+.site-v5 h1,.site-v5 h2,.site-v5 h3,.site-v5 h4,.site-v5 h5,.site-v5 h6{color:var(--v8-text)!important}
+.site-v5 p,.site-v5 li,.site-v5 .meta,.site-v5 .subtitulo,.site-v5 small{color:var(--v8-muted)!important}
+.site-v5 .social-athlete-name,.site-v5 .perfil-nome,.site-v5 .pp-head h1{color:#0d1d2b!important}
+.site-v5 .social-athlete-location,.site-v5 .social-athlete-info,.site-v5 .social-athlete-tags,.site-v5 .social-athlete-tag,.site-v5 .perfil-box span,.site-v5 .perfil-box strong,.site-v5 .pp-meta,.site-v5 .pp-bio,.site-v5 .pp-stat,.site-v5 .timeline-item,.site-v5 .timeline-item strong{
+  color:#23384a!important;
+}
+.site-v5 .social-athlete-tag{background:#eef5f8!important;border:1px solid #d4e1e8!important}
+
+/* SUPERFÍCIES */
+.site-v5 .home-social,.site-v5 .social-post,.site-v5 .pp-profile,.site-v5 .pp-section,.site-v5 .perfil-hero,.site-v5 .perfil-section,.site-v5 .card,.site-v5 .team-card,.site-v5 .form-box,.site-v5 .champ-card,.site-v5 .account-card,.site-v5 .community-card,.site-v5 .admin-panel,.site-v5 .admin-view{
+  background:rgba(255,255,255,.97)!important;border:1px solid var(--v8-line-soft)!important;box-shadow:var(--v8-shadow-soft)!important;
+}
+.site-v5 .home-social{border-radius:22px!important;padding:18px!important}
+.site-v5 .home-social-head{border-bottom:1px solid #dce7ee!important;padding-bottom:14px!important;margin-bottom:15px!important}
+.site-v5 .home-social-head>div>span,.site-v5 .social-section-label,.site-v5 .pp-kicker,.site-v5 .perfil-kicker{color:var(--v8-blue-2)!important}
+.site-v5 .social-stories-wrap{background:#f2f7fa!important;border-color:#d7e3ea!important}
+.site-v5 .social-post{border-radius:18px!important;overflow:hidden!important}
+.site-v5 .social-media-frame{background:#e8eef3!important}
+.site-v5 .social-post-body{background:#fff!important}
+.site-v5 .social-author,.site-v5 .social-text,.site-v5 .social-likes{color:#172a39!important}
+.site-v5 .social-actions button{color:#395164!important}
+.site-v5 .social-actions .active{color:var(--v8-blue)!important}
+
+/* BOTÕES */
+.site-v5 .btn-primary,.site-v5 .pp-btn.primary,.site-v5 .gold-btn,.site-v5 .championship-cta,.site-v5 .analytics-cta,.site-v5 .whatsapp-cadastro{
+  background:linear-gradient(135deg,#00a9dc,#087ca5)!important;border-color:#078bb8!important;color:#fff!important;box-shadow:0 8px 20px rgba(0,139,184,.16)!important;
+}
+.site-v5 .btn-secondary,.site-v5 .pp-btn:not(.primary),.site-v5 .dark-btn{
+  background:#f7fafc!important;border:1px solid #cad9e4!important;color:#20384b!important;
+}
+.site-v5 button:not(:disabled):hover,.site-v5 .btn:hover,.site-v5 .pp-btn:hover{transform:translateY(-1px)!important;filter:saturate(1.04)}
+
+/* CAMPOS */
+.site-v5 input,.site-v5 select,.site-v5 textarea{background:#fff!important;color:#142536!important;border-color:#c5d5e1!important}
+.site-v5 input::placeholder,.site-v5 textarea::placeholder{color:#8495a5!important}
+.site-v5 input:focus,.site-v5 select:focus,.site-v5 textarea:focus{border-color:#4ab8d7!important;box-shadow:0 0 0 4px rgba(0,159,211,.10)!important}
+.site-v5 label{color:#2c4255!important}
+
+/* =========================================================
+   HOME V8: FEED + RAIL VERTICAL DE APOIADORES
+   ========================================================= */
+.v8-home-grid{
+  width:min(1280px,calc(100% - 28px));margin:0 auto 26px;display:grid;
+  grid-template-columns:minmax(0,1fr) 270px;gap:22px;align-items:start;
+}
+.v8-home-grid>.home-social{width:100%!important;max-width:none!important;margin:0!important;min-width:0}
+body.site-v5 .v8-home-grid>.sponsors-sidebar{
+  display:block!important;position:sticky!important;top:92px!important;width:100%!important;max-height:calc(100vh - 112px)!important;
+  overflow:auto!important;padding:14px!important;border:1px solid #d5e1e9!important;border-radius:20px!important;
+  background:rgba(255,255,255,.96)!important;box-shadow:var(--v8-shadow-soft)!important;z-index:20!important;
+  scrollbar-width:thin;scrollbar-color:#b8c8d4 transparent;
+}
+.v8-home-grid .ranking-menu-button,.v8-home-grid .equipes-menu-button{display:none!important}
+.v8-home-grid .sponsors-title{padding:4px 3px 12px!important;margin:0 0 12px!important;border-bottom:1px solid #e1e9ef!important}
+.v8-home-grid .sponsors-title>span{color:var(--v8-blue-2)!important;font-size:8px!important;font-weight:900!important;letter-spacing:1.5px!important}
+.v8-home-grid .sponsors-title h2{font-size:22px!important;margin:4px 0!important;color:#152838!important}
+.v8-home-grid .sponsors-title p{font-size:9px!important;line-height:1.45!important;margin:0!important;color:#6d7f8e!important}
+.v8-home-grid .sponsors-list{display:grid!important;grid-template-columns:1fr!important;gap:11px!important}
+.v8-home-grid .sponsor-card{
+  display:block!important;padding:8px!important;border:1px solid #dbe5ec!important;border-radius:15px!important;background:#f7fafc!important;
+  text-decoration:none!important;box-shadow:none!important;transition:.18s!important;
+}
+.v8-home-grid .sponsor-card:hover{transform:translateY(-2px)!important;border-color:#8fcfe1!important;box-shadow:0 9px 24px rgba(7,24,39,.09)!important}
+.v8-home-grid .sponsor-card img{display:block!important;width:100%!important;height:auto!important;max-height:250px!important;object-fit:contain!important;border-radius:11px!important;background:#eaf0f4!important}
+.v8-home-grid .sponsor-name{display:block!important;color:#173044!important;font-size:10px!important;font-weight:850!important;margin:8px 2px 2px!important}
+.v8-home-grid .sponsor-tier{display:block!important;color:#1681a6!important;font-size:8px!important;font-weight:800!important;margin:0 2px 2px!important;text-transform:uppercase!important}
+.v8-home-grid .apoio-cta{display:block!important;margin-top:12px!important}
+.v8-home-grid .apoio-cta button{width:100%!important;background:linear-gradient(135deg,#0f8769,#0b6e57)!important;border-color:#0f8769!important;color:#fff!important}
+body.site-v5 .site-supporters-strip{display:none!important}
+body.site-v5 .supporter-banner{display:none!important}
+
+/* Perfis */
+.site-v5 .pp-cover{background:linear-gradient(135deg,#cceaf3,#dceee8)!important}
+.site-v5 .pp-avatar{border:5px solid #fff!important;box-shadow:0 12px 30px rgba(7,24,39,.18)!important}
+.site-v5 .pp-section{border-radius:18px!important}
+.site-v5 .pp-tab.active{background:#e5f4f8!important;color:#087ea6!important;border-color:#b8dfe9!important}
+.site-v5 .profile-instagram-link{display:inline-flex!important;align-items:center!important;gap:7px!important;padding:9px 12px!important;border:1px solid #d1dce5!important;border-radius:11px!important;background:#fff!important;color:#253d50!important;text-decoration:none!important;font-size:10px!important;font-weight:800!important}
+.site-v5 .profile-instagram-link:hover{border-color:#da80bc!important;color:#aa2e7a!important}
+
+/* Campeonato */
+.site-v5 .event-hero{background:linear-gradient(125deg,#071827 0%,#0c3346 58%,#0e6659 120%)!important;border-color:rgba(77,201,224,.24)!important}
+.site-v5 .event-hero h1,.site-v5 .event-hero p{color:#fff!important}
+.site-v5 .event-kicker{color:#75def3!important}
+.site-v5 .champ-image-link{display:block!important;background:#dfe8ee!important;text-decoration:none!important}
+.site-v5 .champ-image-link:hover .champ-image{transform:scale(1.012)}
+.site-v5 .champ-image{transition:transform .2s ease!important}
+.site-v5 .champ-organizer-link{display:inline-flex!important;margin-top:10px!important;color:#087da3!important;font-size:9px!important;font-weight:850!important;text-decoration:none!important}
+
+/* Cadastro */
+.site-v5 .cadastro-modal{background:#fff!important;border:1px solid #d8e3ea!important;box-shadow:var(--v8-shadow)!important}
+.site-v5 .cadastro-page{background:transparent!important}
+.site-v5 .cadastro-field label,.site-v5 .campo-ajuda,.site-v5 .cadastro-legal{color:#40576a!important}
+.site-v5 .cadastro-status.erro{color:#b42318!important}
+.site-v5 .cadastro-status.ok,.site-v5 .cadastro-status.success{color:#08704f!important}
+.site-v5 .draft-status{display:inline-flex;align-items:center;gap:5px;margin-left:6px;color:#577084!important;font-size:9px!important}
+
+/* Modais sociais modernos */
+.site-v5 .sn-panel,.site-v5 .sn-chat{background:#0b1b29!important;border-color:rgba(82,194,224,.22)!important}
+.site-v5 .sn-row{color:#eaf3f8!important}.site-v5 .sn-row:hover{background:#112b3d!important}.site-v5 .sn-row-main span{color:#a7bac7!important}
+.site-v5 .sn-chat-form input{background:#122a3b!important;color:#fff!important;border-color:#2c5268!important}
+.site-v5 .sn-chat-form button{background:#00a3d4!important;color:#fff!important}
+.site-v5 .sn-msg{background:#163245!important}.site-v5 .sn-msg.mine{background:linear-gradient(135deg,#00a3d4,#087ca4)!important;color:#fff!important}
+
+@media(max-width:1040px){
+  .v8-home-grid{grid-template-columns:minmax(0,1fr) 230px;gap:16px;width:min(100% - 20px,1100px)}
+}
+@media(max-width:820px){
+  .v8-home-grid{display:block!important;width:100%!important;margin:0!important}
+  .v8-home-grid>.home-social{margin:0 auto 18px!important;width:calc(100% - 20px)!important}
+  body.site-v5 .v8-home-grid>.sponsors-sidebar{position:static!important;max-height:none!important;width:calc(100% - 20px)!important;margin:0 auto 22px!important}
+  .v8-home-grid .sponsors-list{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .v8-home-grid .sponsor-card img{max-height:220px!important}
+}
+@media(max-width:560px){
+  .site-v5 .header{height:64px!important;min-height:64px!important}
+  .site-v5 .header-brand strong{font-size:13px!important}
+  .site-v5 .site-menu-trigger{min-width:78px!important;padding:0 10px!important}
+  .site-v5 .site-menu-trigger span{font-size:8px!important}
+  .v8-home-grid .sponsors-list{grid-template-columns:1fr!important}
+  .site-v5 .home-social{padding:12px!important;border-radius:16px!important}
+}
