@@ -1,0 +1,113 @@
+const ADMIN_EMAIL = "swagtop411@gmail.com";
+const V8_THEME_ID = "siteThemeV8Runtime";
+
+function loadV8Theme(){
+  let link=document.getElementById(V8_THEME_ID);
+  if(!link){link=document.createElement("link");link.id=V8_THEME_ID;link.rel="stylesheet";document.head.appendChild(link)}
+  link.href="site-v8.css?v=20260901-1";
+  document.documentElement.classList.add("site-v8");
+  document.body?.classList.add("site-v8");
+}
+
+function moveSupportersBack(){
+  const strip=document.querySelector(".site-supporters-strip");
+  const aside=document.querySelector(".sponsors-sidebar");
+  if(strip&&aside){
+    const title=strip.querySelector(".sponsors-title");
+    const list=strip.querySelector("#apoiadoresLista");
+    const cta=strip.querySelector(".apoio-cta");
+    if(title)aside.appendChild(title);
+    if(list)aside.appendChild(list);
+    if(cta)aside.appendChild(cta);
+    strip.remove();
+  }
+}
+
+function buildHomeRail(){
+  const path=location.pathname.split("/").pop()||"index.html";
+  if(path!=="index.html")return;
+  const home=document.querySelector(".home-social");
+  const aside=document.querySelector(".sponsors-sidebar");
+  if(!home||!aside)return;
+  moveSupportersBack();
+  let grid=document.querySelector(".v8-home-grid");
+  if(!grid){
+    grid=document.createElement("div");
+    grid.className="v8-home-grid";
+    home.parentNode?.insertBefore(grid,home);
+  }
+  if(home.parentNode!==grid)grid.appendChild(home);
+  if(aside.parentNode!==grid)grid.appendChild(aside);
+}
+
+function setAdminUI(isAdmin){
+  document.querySelectorAll('a[href="admin.html"],a[href$="/admin.html"],[data-v7-admin],#adminPanelCta').forEach(el=>{
+    if(el.matches?.("[data-v7-admin],#adminPanelCta"))el.hidden=!isAdmin;
+    else{
+      el.toggleAttribute("hidden",!isAdmin);
+      el.style.display=isAdmin?"":"none";
+      el.setAttribute("aria-hidden",isAdmin?"false":"true");
+    }
+  });
+  document.documentElement.dataset.isAdmin=isAdmin?"1":"0";
+}
+
+async function watchAdminAccess(){
+  setAdminUI(false);
+  try{
+    const [{getApp,getApps,initializeApp},{getAuth,onAuthStateChanged}]=await Promise.all([
+      import("https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"),
+      import("https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js")
+    ]);
+    const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
+    const app=getApps().length?getApp():initializeApp(cfg);
+    const auth=getAuth(app);
+    onAuthStateChanged(auth,async user=>{
+      if(!user){setAdminUI(false);return}
+      try{
+        const token=await user.getIdTokenResult();
+        const email=String(user.email||"").trim().toLowerCase();
+        setAdminUI(token.claims?.admin===true||email===ADMIN_EMAIL);
+      }catch{setAdminUI(String(user.email||"").trim().toLowerCase()===ADMIN_EMAIL)}
+    });
+  }catch(error){console.warn("V8 admin guard:",error);setAdminUI(false)}
+}
+
+function registerServiceWorker(){
+  if(!("serviceWorker" in navigator)||location.protocol!=="https:")return;
+  navigator.serviceWorker.register("sw.js?v=20260901-1",{scope:"./"}).catch(error=>console.warn("Service Worker:",error));
+}
+
+function addConnectionHints(){
+  const hosts=["https://www.gstatic.com","https://firestore.googleapis.com","https://res.cloudinary.com"];
+  for(const href of hosts){
+    if(document.querySelector(`link[rel="preconnect"][href="${href}"]`))continue;
+    const link=document.createElement("link");link.rel="preconnect";link.href=href;link.crossOrigin="anonymous";document.head.appendChild(link);
+  }
+}
+
+function addBasicSeo(){
+  const canonical=document.querySelector('link[rel="canonical"]')||document.createElement("link");
+  canonical.rel="canonical";canonical.href=location.origin+location.pathname+location.search; if(!canonical.parentNode)document.head.appendChild(canonical);
+  const ensure=(property,content)=>{let meta=document.head.querySelector(`meta[property="${property}"],meta[name="${property}"]`);if(!meta){meta=document.createElement("meta");if(property.startsWith("og:"))meta.setAttribute("property",property);else meta.name=property;document.head.appendChild(meta)}if(!meta.content)meta.content=content};
+  const description=document.querySelector('meta[name="description"]')?.content||"Rede esportiva para atletas, equipes, campeonatos e apoiadores do vôlei.";
+  ensure("og:title",document.title);ensure("og:description",description);ensure("og:url",location.href);ensure("og:type","website");ensure("twitter:card","summary_large_image");
+}
+
+function boot(){
+  loadV8Theme();
+  addConnectionHints();
+  addBasicSeo();
+  buildHomeRail();
+  const idle=window.requestIdleCallback||((fn)=>setTimeout(fn,450));
+  idle(()=>{watchAdminAccess();registerServiceWorker()});
+}
+
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
+
+let railTimer=0;
+const railObserver=new MutationObserver(mutations=>{
+  if(!mutations.some(m=>[...m.addedNodes].some(n=>n instanceof Element&&(n.matches?.(".sponsors-sidebar,.home-social,.site-supporters-strip")||n.querySelector?.(".sponsors-sidebar,.home-social,.site-supporters-strip")))))return;
+  clearTimeout(railTimer);railTimer=setTimeout(buildHomeRail,120);
+});
+railObserver.observe(document.documentElement,{childList:true,subtree:true});
