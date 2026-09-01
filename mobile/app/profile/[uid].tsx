@@ -6,6 +6,7 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from '
 import { PostCard } from '@/src/components/PostCard';
 import { db } from '@/src/config/firebase';
 import { useAuth } from '@/src/providers/AuthProvider';
+import { cancelFollowRequest, hasFollowRequest, isPrivateProfile, requestFollow } from '@/src/services/privacy';
 import { ensureConversation, followProfile, getFollowState, profileOf, unfollowProfile } from '@/src/services/socialActions';
 import type { FeedPost, PublicProfile } from '@/src/types/social';
 import { colors, radii, spacing } from '@/src/theme';
@@ -16,14 +17,26 @@ export default function PublicProfileScreen() {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [following, setFollowing] = useState(false);
+  const [privateProfile, setPrivateProfile] = useState(false);
+  const [requested, setRequested] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     if (!uid) return;
     setLoading(true);
-    profileOf(uid).then(setProfile).finally(() => setLoading(false));
-    if (user && uid !== user.uid) getFollowState(uid, user.uid).then(setFollowing).catch(() => undefined);
+    Promise.all([
+      profileOf(uid),
+      isPrivateProfile(uid).catch(() => false),
+      user && uid !== user.uid ? getFollowState(uid, user.uid).catch(() => false) : Promise.resolve(false),
+      user && uid !== user.uid ? hasFollowRequest(uid, user.uid).catch(() => false) : Promise.resolve(false),
+    ]).then(([nextProfile, isPrivate, isFollowing, hasRequest]) => {
+      setProfile(nextProfile);
+      setPrivateProfile(isPrivate);
+      setFollowing(isFollowing);
+      setRequested(hasRequest);
+    }).finally(() => setLoading(false));
+
     return onSnapshot(query(collection(db, 'publicacoes'), where('ownerUid', '==', uid), limit(60)), snapshot => {
       const next = snapshot.docs
         .map(item => ({ id: item.id, ...item.data() } as FeedPost))
@@ -41,9 +54,21 @@ export default function PublicProfileScreen() {
     if (!user || !uid || uid === user.uid || busy) return;
     setBusy(true);
     try {
-      if (following) await unfollowProfile(uid, user);
-      else await followProfile(uid, user);
-      setFollowing(value => !value);
+      if (following) {
+        await unfollowProfile(uid, user);
+        setFollowing(false);
+      } else if (privateProfile) {
+        if (requested) {
+          await cancelFollowRequest(uid, user.uid);
+          setRequested(false);
+        } else {
+          await requestFollow(uid, user.uid);
+          setRequested(true);
+        }
+      } else {
+        await followProfile(uid, user);
+        setFollowing(true);
+      }
     } finally {
       setBusy(false);
     }
@@ -64,11 +89,14 @@ export default function PublicProfileScreen() {
   if (!profile) return <View style={styles.center}><Text style={styles.muted}>Perfil não encontrado.</Text></View>;
 
   const own = user?.uid === uid;
+  const canSeePosts = own || !privateProfile || following;
+  const followLabel = following ? '✓ SEGUINDO' : privateProfile ? (requested ? '⌛ SOLICITADO' : '🔒 SOLICITAR') : '+ SEGUIR';
+
   return (
     <FlatList
       style={styles.page}
       contentContainerStyle={styles.list}
-      data={posts}
+      data={canSeePosts ? posts : []}
       keyExtractor={item => item.id}
       renderItem={({ item }) => <PostCard post={item} />}
       ListHeaderComponent={
@@ -76,20 +104,21 @@ export default function PublicProfileScreen() {
           <View style={styles.hero}>
             {profile.fotoUrl ? <Image source={{ uri: profile.fotoUrl }} style={styles.avatar} contentFit="cover" cachePolicy="memory-disk" /> : <View style={styles.avatarFallback}><Text style={{ fontSize: 30 }}>🏐</Text></View>}
             <View style={{ flex: 1 }}>
-              <Text style={styles.name}>{profile.nome || 'Atleta'}</Text>
+              <Text style={styles.name}>{profile.nome || 'Atleta'} {privateProfile ? '🔒' : ''}</Text>
               <Text style={styles.meta}>{[profile.cidade, profile.uf, profile.categoria].filter(Boolean).join(' • ')}</Text>
               <Text style={styles.meta}>{[profile.posicao, profile.time].filter(Boolean).join(' • ')}</Text>
             </View>
           </View>
           {!!profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
           {!own && <View style={styles.actions}>
-            <Pressable disabled={busy} style={[styles.follow, following && styles.following]} onPress={toggleFollow}><Text style={[styles.followText, following && styles.followingText]}>{following ? '✓ SEGUINDO' : '+ SEGUIR'}</Text></Pressable>
+            <Pressable disabled={busy} style={[styles.follow, (following || requested) && styles.following]} onPress={toggleFollow}><Text style={[styles.followText, (following || requested) && styles.followingText]}>{followLabel}</Text></Pressable>
             <Pressable disabled={busy} style={styles.message} onPress={message}><Text style={styles.messageText}>✉ MENSAGEM</Text></Pressable>
           </View>}
-          <Text style={styles.section}>PUBLICAÇÕES</Text>
+          {!canSeePosts && <View style={styles.privateBox}><Text style={styles.privateIcon}>🔒</Text><Text style={styles.privateTitle}>Este perfil é privado</Text><Text style={styles.privateText}>Siga o atleta e aguarde a aprovação para ver as publicações.</Text></View>}
+          {canSeePosts && <Text style={styles.section}>PUBLICAÇÕES</Text>}
         </View>
       }
-      ListEmptyComponent={<Text style={styles.empty}>Este atleta ainda não publicou no Feed.</Text>}
+      ListEmptyComponent={canSeePosts ? <Text style={styles.empty}>Este atleta ainda não publicou no Feed.</Text> : null}
     />
   );
 }
@@ -112,6 +141,10 @@ const styles = StyleSheet.create({
   followingText: { color: colors.cyan },
   message: { flex: 1, minHeight: 48, borderRadius: radii.md, backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center' },
   messageText: { color: colors.white, fontWeight: '900' },
+  privateBox: { backgroundColor: colors.surface, borderRadius: radii.lg, borderWidth: 1, borderColor: colors.border, padding: 24, alignItems: 'center', marginTop: 14 },
+  privateIcon: { fontSize: 34 },
+  privateTitle: { color: colors.ink, fontWeight: '900', fontSize: 18, marginTop: 8 },
+  privateText: { color: colors.muted, textAlign: 'center', lineHeight: 19, marginTop: 6 },
   section: { color: colors.ink, fontSize: 12, fontWeight: '900', letterSpacing: 1.4, marginTop: 18, marginBottom: -4 },
   empty: { color: colors.muted, textAlign: 'center', padding: 30 },
 });
