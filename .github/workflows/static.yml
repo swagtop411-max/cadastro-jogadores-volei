@@ -73,6 +73,11 @@ jobs:
           grep -q "match /equipes/{equipeId}/privado/{documento}" firestore.rules
           grep -q "match /perfis/{uid}/privado/{documento}" firestore.rules
           grep -q "approvedSocialTarget" firestore.rules
+          grep -q "match /conversas/{conversationId}" firestore.rules
+          grep -q "match /notificacoes/{targetUid}/itens/{notificationId}" firestore.rules
+          grep -q "match /story_views/{storyId}/usuarios/{viewerUid}" firestore.rules
+          grep -q "match /salvos/{uid}/publicacoes/{postId}" firestore.rules
+          grep -q "25 \* 1024 \* 1024" firestore.rules
           grep -q "allow update: if false" storage.rules
 
       - name: Compile Firebase rules in emulators
