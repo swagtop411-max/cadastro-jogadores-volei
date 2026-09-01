@@ -1,264 +1,60 @@
-import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{getStorage,ref,uploadBytesResumable,getDownloadURL,deleteObject}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-storage.js";
-import{getFirestore,getDoc,doc,collection,getDocs,query,where,orderBy,setDoc,deleteDoc,serverTimestamp,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"},app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),storage=getStorage(app),uid=new URLSearchParams(location.search).get("uid");
-const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML},fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
-let profile=null,currentUser=null,following=false,publishType="feed",selectedFile=null,selectedPreviewUrl=null;
-const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
-const img=v=>v||fallback;
-async function safeDocs(ref,...constraints){try{return await getDocs(query(ref,...constraints,orderBy("criadoEm","desc")))}catch{return await getDocs(query(ref,...constraints))}}
-async function getProfile(){
- if(!uid)return null;
- let snap=await getDoc(doc(db,"perfis",uid));
- if(snap.exists())return{uid,souce:"perfis",...snap.data()};
- const legacy=await getDoc(doc(db,"atletas",uid));
- if(legacy.exists())return{uid:legacy.data().ownerUid||uid,source:"atletas",...legacy.data()};
- const q=await getDocs(query(collection(db,"atletas"),where("ownerUid","==",uid)));
- if(!q.empty)return{uid,source:"atletas",...q.docs[0].data()};
- return null;
-}
-async function refreshCounts(){
- if(!uid)return;
- const count=async path=>{try{return(await getDocs(collection(db,path))).size}catch{return 0}};
- const [followers,followingCount]=await Promise.all([count("seguidores/"+uid+"/usuarios"),count("seguindo/"+uid+"/usuarios")]);
- $("followers").textContent=followers;$("following").textContent=followingCount;
-}
-async function getFollowState(){if(!currentUser||currentUser.uid===uid)return;try{following=(await getDoc(doc(db,"seguidores",uid,"usuarios",currentUser.uid))).exists()}catch{following=false}}
-async function toggleFollow(){
- if(!currentUser){location.href="conta.html?tab=login&return="+encodeURIComponent(location.pathname+location.search);return}
- if(currentUser.uid===uid)return;
- const a=doc(db,"seguidores",uid,"usuarios",currentUser.uid),b=doc(db,"seguindo",currentUser.uid,"usuarios",uid),button=$("followButton");
- if(button)button.disabled=true;
- try{if(following){await deleteDoc(a);await deleteDoc(b);following=false}else{await setDoc(a,{uid:currentUser.uid,criadoEm:serverTimestamp()});await setDoc(b,{uid,criadoEm:serverTimestamp()});following=true}await refreshCounts();renderActions()}catch(e){console.error(e);alert("Não foi possível atualizar o relacionamento agora.")}finally{if(button)button.disabled=false}
-}
-function renderActions(){
- const a=$("actions");if(!a)return;
- if(!currentUser)a.innerHTML='<a class="pp-btn primary" href="conta.html?tab=login">ENTRAR PARA SEGUIR</a>';
- else if(currentUser.uid===uid)a.innerHTML='<a class="pp-btn primary" href="meu-perfil.html?editar=1">✎ EDITAR MEU PERFIL</a><button type="button" id="publishButton" class="pp-btn">＋ PUBLICAR</button>';
- else a.innerHTML='<button id="followButton" class="pp-btn '+(following?"following":"primary")+'">'+(following?"✓ SEGUINDO":"SEGUIR")+'</button>';
- $("followButton")?.addEventListener("click",toggleFollow);$("publishButton")?.addEventListener("click",()=>openPublishModal());
-}
-function renderPosts(items){
- $("gallery").innerHTML=items.length?items.map(x=>x.t==="img"?'<div class="pp-grid-item"><img src="'+esc(x.url)+'" loading="lazy" alt="Publicação de '+esc(profile?.nome||"Atleta")+'"></div>':'<div class="pp-grid-item"><video src="'+esc(x.url)+'" controls preload="metadata"></video><span class="type">▶</span></div>').join(""):'<div class="pp-empty">Este atleta ainda não publicou conteúdo.</div>';
-}
-function renderStories(stories){
- const active=stories.filter(x=>(x.expira?.toDate?.()||new Date(0))>new Date());
- $("stories").textContent=active.length;
- $("storyList").innerHTML=active.length?active.map(x=>'<img class="pp-story" src="'+esc(x.url)+'" loading="lazy" alt="Story de '+esc(profile?.nome||"Atleta")+'">').join(""):'<div class="pp-empty">Nenhum story ativo.</div>';
-}
-async function loadMedia(){
- const empty={docs:[]};
- const [photos,videos,stories]=await Promise.all([
-  safeDocs(collection(db,"publicacoes"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
-  safeDocs(collection(db,"videos"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),
-  safeDocs(collection(db,"stories"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty)
- ]);
- const p=photos.docs.map(d=>({t:"img",url:d.data().imagemUrl||d.data().imagem})).filter(x=>x.url);
- const v=videos.docs.map(d=>({t:"video",url:d.data().videoUrl})).filter(x=>x.url);
- const s=stories.docs.map(d=>({url:d.data().mediaUrl,expira:d.data().expiraEm})).filter(x=>x.url);
- $("photos").textContent=p.length;$("videos").textContent=v.length;renderPosts([...p,...v]);renderStories(s);
-}
-async function loadSupporters(){
- const el=$("profileSponsors");if(!el)return;
- try{
-  const s=await getDocs(collection(db,"apoiadores"));
-  const arr=s.docs.map(d=>d.data()).filter(a=>a.ativo!==false).sort((a,b)=>(Number(a.ordem)||999)-(Number(b.ordem)||999));
-  el.innerHTML=arr.length?arr.map(a=>'<a class="ps-sponsor" href="'+esc(a.link||"#")+'" target="_blank" rel="noopener"><img src="'+esc(img(a.imagem))+'" alt="Logo de '+esc(a.nome||"Apoiador")+'"><span>'+esc(a.nome||"Apoiador")+'</span></a>').join(""):'<div class="ps-empty">Em breve, novas marcas.</div>';
- }catch(e){console.error("Apoiadores:",e);el.innerHTML='<div class="ps-empty">Apoiadores indisponíveis.</div>'}
-}
-async function load(){
- if(!uid){$("name").textContent="Perfil não encontrado";return}
- try{
-  const p=await getProfile();
-  if(!p){$("name").textContent="Perfil não encontrado";$("meta").textContent="Este perfil não está disponível.";return}
-  profile=p;document.title=(p.nome||"Perfil")+" | Banco de Atletas";
-  $("name").textContent=p.nome||"Atleta";
-  $("meta").textContent=[city(p.cidade),p.modalidade,p.posicao,p.categoria,p.time].filter(Boolean).join(" • ");
-  $("bio").textContent=p.bio||"Atleta da rede esportiva.";
-  $("avatar").src=img(p.fotoUrl||p.foto);
-  if(p.capaUrl)$("cover").style.backgroundImage='url("'+String(p.capaUrl).replace(/"/g,'&quot;')+'")';
-  await Promise.all([loadMedia(),loadSupporters(),getFollowState(),refreshCounts()]);
-  renderActions();
- }catch(e){console.error("Falha ao carregar perfil:",e);$("name").textContent="Não foi possível carregar este perfil";$("meta").textContent="Verifique sua conexão e atualize a página."}
-}
-async function loadFollowers(type){
- try{
-  const snap=await getDocs(collection(db,...(type==="followers"?["seguidores",uid,"usuarios"]:["seguindo",uid,"usuarios"])));
-  const users=(await Promise.all(snap.docs.slice(0,100).map(async d=>{const p=await getDoc(doc(db,"perfis",d.id));return p.exists()?{uid:d.id,...p.data()}:null}))).filter(Boolean);
-  $("modalTitle").textContent=type==="followers"?"Seguidores":"Seguindo";
-  $("userList").innerHTML=users.map(u=>'<a class="pp-user" href="perfil-social.html?uid='+encodeURIComponent(u.uid)+'"><img src="'+esc(img(u.fotoUrl))+'"><strong>'+esc(u.nome||"Atleta")+'</strong></a>').join("")||'<div class="pp-empty">Nenhuma pessoa por enquanto.</div>';
-  $("listModal").classList.add("open");
- }catch(e){console.error(e)}
-}
-document.querySelectorAll(".pp-tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".pp-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const st=b.dataset.tab==="stories";$("gallery").hidden=st;$("storyList").hidden=!st}));
-$("followersStat").onclick=()=>loadFollowers("followers");$("followingStat").onclick=()=>loadFollowers("following");$("closeModal").onclick=()=>$("listModal").classList.remove("open");$("listModal").addEventListener("click",e=>{if(e.target.id==="listModal")$("listModal").classList.remove("open")});
-load();
-onAuthStateChanged(auth,async u=>{currentUser=u;try{await getFollowState();await refreshCounts()}catch{}renderActions()});
+import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import {
+  collection, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, orderBy,
+  query, setDoc, Timestamp, updateDoc, where
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { uploadCloudinary } from "./cloudinary-upload.js?v=20260831-2";
+import { attachProfileStory, createNotification, getActiveStories, initSocialNetwork, mountMessageButton, openStoryViewer } from "./social-network.js?v=20260831-1";
 
-function openPublishModal(){const m=$("publishModal");if(!m)return;m.classList.add("open");m.setAttribute("aria-hidden","false")}
-function closePublishModal(){const m=$("publishModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true")}
+const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),uid=new URLSearchParams(location.search).get("uid");
+const $=id=>document.getElementById(id),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML};
+const fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#18221d"/><text x="150" y="180" text-anchor="middle" font-size="100">🏐</text></svg>');
+let profile=null,currentUser=null,following=false,publishType="feed",selectedFile=null,selectedPreviewUrl=null,mediaItems=[];
+const city=v=>String(v??"").trim().replace(/^([A-Z]{2})\s*[-,]\s*/i,"").replace(/\s+/g," ").trim();
+const ms=v=>v?.toMillis?.()??(v?.seconds?Number(v.seconds)*1000:new Date(v||0).getTime()||0);
+const img=v=>v||fallback;
+
+function installProfileStyles(){if(document.getElementById("profileSocialV4Styles"))return;const s=document.createElement("style");s.id="profileSocialV4Styles";s.textContent=`
+.pp-avatar.has-story{cursor:pointer}.pp-grid-item{cursor:pointer}.pp-grid-item:hover{filter:brightness(1.08)}.pp-grid-item .type{z-index:2}.pp-story-wrap{display:inline-flex;flex-direction:column;gap:4px;align-items:center;cursor:pointer}.pp-story-wrap small{color:#8e978f;font-size:8px}.pp-content-modal{position:fixed;inset:0;z-index:24000;background:rgba(0,0,0,.88);display:none;place-items:center;padding:16px}.pp-content-modal.open{display:grid}.pp-content-box{width:min(900px,100%);max-height:92vh;display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,.7fr);background:#090e0b;border:1px solid rgba(217,169,63,.25);border-radius:16px;overflow:hidden}.pp-content-media{background:#000;min-height:420px;display:grid;place-items:center}.pp-content-media img,.pp-content-media video{display:block;width:100%;height:100%;max-height:82vh;object-fit:contain}.pp-content-side{padding:18px;display:flex;flex-direction:column}.pp-content-side h3{margin:0 0 10px;color:#f2cc72}.pp-content-side p{white-space:pre-wrap;color:#ddd;font-size:12px;line-height:1.5;flex:1}.pp-content-tools{display:flex;gap:8px}.pp-content-tools button{flex:1;border:1px solid rgba(217,169,63,.3);border-radius:9px;background:#121914;color:#f2cc72;padding:10px;font-weight:900;cursor:pointer}.pp-content-tools .danger{color:#ff9a8b;border-color:rgba(255,100,80,.35)}.pp-content-close{position:absolute;right:18px;top:15px;border:0;background:#111a;color:#fff;border-radius:50%;width:40px;height:40px;font-size:24px;cursor:pointer}@media(max-width:720px){.pp-content-box{grid-template-columns:1fr}.pp-content-media{min-height:45vh}.pp-content-side{max-height:38vh}}
+`;document.head.appendChild(s)}
+
+async function safeDocs(ref,...constraints){try{return await getDocs(query(ref,...constraints,orderBy("criadoEm","desc"),limit(80)))}catch{return await getDocs(query(ref,...constraints,limit(80)))}}
+async function getProfile(){if(!uid)return null;let s=await getDoc(doc(db,"perfis",uid));if(s.exists())return{uid,...s.data()};const legacy=await getDoc(doc(db,"atletas",uid));if(legacy.exists())return{uid:legacy.data().ownerUid||uid,...legacy.data()};const q=await getDocs(query(collection(db,"atletas"),where("ownerUid","==",uid),limit(1)));return q.empty?null:{uid,...q.docs[0].data()}}
+async function refreshCounts(){if(!uid)return;const count=async path=>{try{return(await getDocs(collection(db,path))).size}catch{return 0}};const[a,b]=await Promise.all([count(`seguidores/${uid}/usuarios`),count(`seguindo/${uid}/usuarios`)]);if($("followers"))$("followers").textContent=a;if($("following"))$("following").textContent=b}
+async function getFollowState(){if(!currentUser||currentUser.uid===uid){following=false;return}try{following=(await getDoc(doc(db,"seguidores",uid,"usuarios",currentUser.uid))).exists()}catch{following=false}}
+async function toggleFollow(){if(!currentUser){location.href=`conta.html?tab=login&return=${encodeURIComponent(location.pathname+location.search)}`;return}if(currentUser.uid===uid)return;const a=doc(db,"seguidores",uid,"usuarios",currentUser.uid),b=doc(db,"seguindo",currentUser.uid,"usuarios",uid),button=$("followButton");if(button)button.disabled=true;try{if(following){await deleteDoc(a);await deleteDoc(b);following=false}else{await setDoc(a,{uid:currentUser.uid,criadoEm:Timestamp.now()});await setDoc(b,{uid,criadoEm:Timestamp.now()});following=true;await createNotification(uid,"follow",{sourceId:currentUser.uid})}await refreshCounts();renderActions()}catch(e){console.error(e);alert("Não foi possível atualizar o relacionamento.")}finally{if(button)button.disabled=false}}
+
+function renderActions(){const a=$("actions");if(!a)return;a.innerHTML="";if(!currentUser){a.innerHTML='<a class="pp-btn primary" href="conta.html?tab=login">ENTRAR PARA INTERAGIR</a>';return}if(currentUser.uid===uid){a.innerHTML='<a class="pp-btn primary" href="meu-perfil.html?editar=1">✎ EDITAR MEU PERFIL</a><button type="button" id="publishButton" class="pp-btn">＋ PUBLICAR</button>';$("publishButton").onclick=openPublishModal}else{a.innerHTML=`<button id="followButton" class="pp-btn ${following?"following":"primary"}">${following?"✓ SEGUINDO":"SEGUIR"}</button>`;$("followButton").onclick=toggleFollow;mountMessageButton(a,uid,profile?.nome||"Atleta",profile?.fotoUrl||profile?.foto||fallback)}}
+
+function renderPosts(items){mediaItems=items;const g=$("gallery");if(!g)return;g.innerHTML=items.length?items.map((x,i)=>x.kind==="image"?`<div class="pp-grid-item" data-media-index="${i}"><img src="${esc(x.url)}" loading="lazy" decoding="async" alt="Publicação de ${esc(profile?.nome||"Atleta")}"></div>`:`<div class="pp-grid-item" data-media-index="${i}"><video src="${esc(x.url)}" muted playsinline preload="metadata"></video><span class="type">▶</span></div>`).join(""):'<div class="pp-empty">Este atleta ainda não publicou conteúdo.</div>';g.querySelectorAll("[data-media-index]").forEach(el=>el.onclick=()=>openContent(Number(el.dataset.mediaIndex)))}
+
+async function renderStories(){const stories=await getActiveStories({ownerUid:uid,max:40}),box=$("storyList");if($("stories"))$("stories").textContent=stories.length;if(!box)return;if(!stories.length){box.innerHTML='<div class="pp-empty">Nenhum story ativo.</div>';return}box.innerHTML=stories.map((s,i)=>{const u=s.mediaUrl||"",video=(s.mediaType||s.tipo)==="video";return `<div class="pp-story-wrap" data-story-index="${i}">${video?`<video class="pp-story" src="${esc(u)}" muted playsinline></video>`:`<img class="pp-story" src="${esc(u)}" alt="Story">`}<small>${new Date(ms(s.criadoEm)).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</small></div>`}).join("");box.querySelectorAll("[data-story-index]").forEach(el=>el.onclick=()=>openStoryViewer(stories,Number(el.dataset.storyIndex)))}
+
+async function loadMedia(){const empty={docs:[]};const[p,v]=await Promise.all([safeDocs(collection(db,"publicacoes"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty),safeDocs(collection(db,"videos"),where("ownerUid","==",uid),where("aprovado","==",true)).catch(()=>empty)]);const photos=p.docs.map(d=>({id:d.id,collection:"publicacoes",kind:"image",url:d.data().imagemUrl||d.data().imagem,caption:d.data().legenda||d.data().texto||"",createdAt:d.data().criadoEm})).filter(x=>x.url),vids=v.docs.map(d=>({id:d.id,collection:"videos",kind:"video",url:d.data().videoUrl,caption:d.data().legenda||"",createdAt:d.data().criadoEm})).filter(x=>x.url);const all=[...photos,...vids].sort((a,b)=>ms(b.createdAt)-ms(a.createdAt));if($("photos"))$("photos").textContent=photos.length;if($("videos"))$("videos").textContent=vids.length;renderPosts(all);await renderStories();if($("avatar"))await attachProfileStory($("avatar"),uid)}
+
+async function loadSupporters(){const el=$("profileSponsors");if(!el)return;try{const s=await getDocs(collection(db,"apoiadores")),arr=s.docs.map(d=>d.data()).filter(a=>a.ativo!==false).sort((a,b)=>(Number(a.ordem)||999)-(Number(b.ordem)||999));el.innerHTML=arr.length?arr.map(a=>`<a class="ps-sponsor" href="${esc(a.link||"#")}" target="_blank" rel="noopener"><img src="${esc(img(a.imagem))}" alt="Logo de ${esc(a.nome||"Apoiador")}"><span>${esc(a.nome||"Apoiador")}</span></a>`).join(""):'<div class="ps-empty">Em breve, novas marcas.</div>'}catch{el.innerHTML='<div class="ps-empty">Apoiadores indisponíveis.</div>'}}
+
+async function load(){if(!uid){$("name").textContent="Perfil não encontrado";return}try{profile=await getProfile();if(!profile){$("name").textContent="Perfil não encontrado";return}document.title=`${profile.nome||"Perfil"} | Banco de Atletas`;$("name").textContent=profile.nome||"Atleta";$("meta").textContent=[city(profile.cidade),profile.modalidade,profile.posicao,profile.categoria,profile.time].filter(Boolean).join(" • ");$("bio").textContent=profile.bio||"Atleta da rede esportiva.";$("avatar").src=img(profile.fotoUrl||profile.foto);if(profile.capaUrl)$("cover").style.backgroundImage=`url("${String(profile.capaUrl).replace(/"/g,"%22")}")`;await Promise.all([loadMedia(),loadSupporters(),refreshCounts(),getFollowState()]);renderActions()}catch(e){console.error(e);$("name").textContent="Não foi possível carregar este perfil"}}
+
+async function loadFollowers(type){try{const snap=await getDocs(collection(db,...(type==="followers"?["seguidores",uid,"usuarios"]:["seguindo",uid,"usuarios"]))),users=(await Promise.all(snap.docs.slice(0,100).map(async d=>{const p=await getDoc(doc(db,"perfis",d.id));return p.exists()?{uid:d.id,...p.data()}:null}))).filter(Boolean);$("modalTitle").textContent=type==="followers"?"Seguidores":"Seguindo";$("userList").innerHTML=users.map(u=>`<a class="pp-user" href="perfil-social.html?uid=${encodeURIComponent(u.uid)}"><img src="${esc(img(u.fotoUrl))}"><strong>${esc(u.nome||"Atleta")}</strong></a>`).join("")||'<div class="pp-empty">Nenhuma pessoa por enquanto.</div>';$("listModal").classList.add("open")}catch(e){console.error(e)}}
+
+function ensureContentModal(){if($("ppContentModal"))return;document.body.insertAdjacentHTML("beforeend",'<div id="ppContentModal" class="pp-content-modal"><button class="pp-content-close">×</button><div class="pp-content-box"><div class="pp-content-media"></div><div class="pp-content-side"><h3>Publicação</h3><p></p><div class="pp-content-tools"></div></div></div></div>');const m=$("ppContentModal");m.querySelector(".pp-content-close").onclick=()=>m.classList.remove("open");m.onclick=e=>{if(e.target===m)m.classList.remove("open")}}
+function openContent(index){ensureContentModal();const item=mediaItems[index],m=$("ppContentModal");if(!item)return;m.querySelector(".pp-content-media").innerHTML=item.kind==="video"?`<video src="${esc(item.url)}" controls autoplay playsinline></video>`:`<img src="${esc(item.url)}" alt="Publicação">`;m.querySelector(".pp-content-side p").textContent=item.caption||"";const tools=m.querySelector(".pp-content-tools");tools.innerHTML="";if(currentUser?.uid===uid){tools.innerHTML='<button data-edit>EDITAR LEGENDA</button><button class="danger" data-delete>EXCLUIR</button>';tools.querySelector("[data-edit]").onclick=async()=>{const value=prompt("Editar legenda:",item.caption||"");if(value===null)return;try{const data=item.collection==="publicacoes"?{legenda:value.slice(0,2200),texto:value.slice(0,2200)}:{legenda:value.slice(0,2200)};await updateDoc(doc(db,item.collection,item.id),data);m.classList.remove("open");await loadMedia()}catch(e){console.error(e);alert("Não foi possível editar.")}};tools.querySelector("[data-delete]").onclick=async()=>{if(!confirm("Excluir esta publicação?"))return;try{await deleteDoc(doc(db,item.collection,item.id));m.classList.remove("open");await loadMedia()}catch(e){console.error(e);alert("Não foi possível excluir.")}}}m.classList.add("open")}
+
+function openPublishModal(){const m=$("publishModal");if(m){m.classList.add("open");m.setAttribute("aria-hidden","false")}}
+function closePublishModal(){const m=$("publishModal");if(m){m.classList.remove("open");m.setAttribute("aria-hidden","true")}}
 function openMediaModal(type){publishType=type;closePublishModal();resetComposer();const m=$("mediaModal");if(!m)return;$("mediaTitle").textContent=type==="story"?"Adicionar mídia ao Story":"Adicionar mídia ao Feed";m.classList.add("open");m.setAttribute("aria-hidden","false")}
-function closeMediaModal(){const m=$("mediaModal");if(!m)return;m.classList.remove("open");m.setAttribute("aria-hidden","true");resetComposer()}
-document.addEventListener("click",e=>{
- const b=e.target.closest?.(".publish-choice,#closePublish,#closeMedia,#cameraBtn,#galleryBtn");
- if(!b)return;
- if(b.classList.contains("publish-choice")){e.preventDefault();openMediaModal(b.dataset.publishType);return}
- if(b.id==="closePublish"){e.preventDefault();closePublishModal();return}
- if(b.id==="closeMedia"){e.preventDefault();closeMediaModal();return}
- if(b.id==="cameraBtn"||b.id==="galleryBtn"){
-  e.preventDefault();e.stopPropagation();
-  const input=$(b.id==="cameraBtn"?"cameraInput":"galleryInput");
-  if(!input){console.error("Input de mídia não encontrado:",b.id);return}
-  try{if(typeof input.showPicker==="function")input.showPicker();else input.click()}catch(err){try{input.click()}catch(err2){console.error("Não foi possível abrir seletor de mídia:",err2)}}
- }
-},true);
-$("publishModal")?.addEventListener("click",e=>{if(e.target.id==="publishModal")closePublishModal()});
-$("mediaModal")?.addEventListener("click",e=>{if(e.target.id==="mediaModal")closeMediaModal()});
-function resetComposer(){
- selectedFile=null;
- if(selectedPreviewUrl){URL.revokeObjectURL(selectedPreviewUrl);selectedPreviewUrl=null}
- const chooser=$("mediaChooser"),composer=$("composer"),imgEl=$("mediaPreviewImage"),vidEl=$("mediaPreviewVideo"),caption=$("captionInput"),status=$("uploadStatus"),button=$("postMediaBtn");
- if(chooser)chooser.hidden=false;if(composer)composer.hidden=true;
- if(imgEl){imgEl.hidden=true;imgEl.removeAttribute("src")}
- if(vidEl){vidEl.hidden=true;vidEl.pause?.();vidEl.removeAttribute("src");vidEl.load()}
- if(caption)caption.value="";
- if(status){status.hidden=true;status.textContent="";status.className="upload-status"}
- if(button){button.disabled=false;button.textContent="PUBLICAR"}
-}
-function mediaSelected(file){
- if(!file)return;
- if(!currentUser||currentUser.uid!==uid){alert("Entre na sua conta para publicar.");return}
- if(!file.type.startsWith("image/")&&!file.type.startsWith("video/")){alert("Selecione uma imagem ou vídeo válido.");return}
- if(file.size>45*1024*1024){alert("A mídia deve ter no máximo 45 MB.");return}
- if(selectedPreviewUrl)URL.revokeObjectURL(selectedPreviewUrl);
- selectedFile=file;selectedPreviewUrl=URL.createObjectURL(file);
- $("mediaChooser").hidden=true;$("composer").hidden=false;
- const image=$("mediaPreviewImage"),video=$("mediaPreviewVideo");
- if(file.type.startsWith("image/")){image.hidden=false;image.src=selectedPreviewUrl;video.hidden=true;video.removeAttribute("src");video.load()}
- else{video.hidden=false;video.src=selectedPreviewUrl;image.hidden=true;image.removeAttribute("src")}
- $("captionInput")?.focus()
-}
-async function prepareImageFile(file){
- return new Promise((resolve,reject)=>{
-  if(!file?.type.startsWith("image/"))return reject(new Error("Arquivo de imagem inválido."));
-  const reader=new FileReader();
-  reader.onerror=()=>reject(reader.error||new Error("Não foi possível ler a foto."));
-  reader.onload=()=>{
-   const image=new Image();
-   image.onerror=()=>reject(new Error("Não foi possível preparar a foto."));
-   image.onload=()=>{
-    const sw=image.naturalWidth||image.width,sh=image.naturalHeight||image.height;
-    const attempts=[[1600,.78],[1400,.72],[1200,.66],[1100,.60],[1000,.54],[900,.48],[800,.42]];
-    let i=0;
-    const attempt=()=>{
-     if(i>=attempts.length)return reject(new Error("A foto não pôde ser reduzida para um tamanho seguro."));
-     const[max,q]=attempts[i++],scale=Math.min(1,max/Math.max(sw,sh)),canvas=document.createElement("canvas");
-     canvas.width=Math.max(1,Math.round(sw*scale));canvas.height=Math.max(1,Math.round(sh*scale));
-     const ctx=canvas.getContext("2d");if(!ctx)return reject(new Error("Seu navegador não conseguiu processar a foto."));
-     ctx.drawImage(image,0,0,canvas.width,canvas.height);
-     canvas.toBlob(blob=>{
-      if(!blob)return reject(new Error("Não foi possível converter a foto."));
-      if(blob.size<=600000)return resolve(new File([blob],(file.name||"foto").replace(/\.[^.]+$/,"")+".jpg",{type:"image/jpeg",lastModified:Date.now()}));
-      setTimeout(attempt,0)
-     },"image/jpeg",q)
-    };
-    attempt()
-   };
-   image.src=reader.result
-  };
-  reader.readAsDataURL(file)
- })
-}
-function storagePathFor(file){
- const ext=file.type.startsWith("image/")?"jpg":((file.name||"mp4").split(".").pop()||"mp4").toLowerCase().replace(/[^a-z0-9]/g,"")||"mp4";
- const pasta=publishType==="story"?"stories":file.type.startsWith("video/")?"videos":"publicacoes";
- return"usuarios/"+uid+"/"+pasta+"/"+Date.now()+"_"+Math.random().toString(36).slice(2,10)+"."+ext
-}
-async function uploadWithProgress(file,path,status){
- const storageRef=ref(storage,path);
- status.textContent="Enviando mídia... 0%";
- status.className="upload-status";
- return await new Promise((resolve,reject)=>{
-  let task=null,finished=false;
-  const timeout=setTimeout(()=>{
-   if(finished)return;
-   try{task?.cancel()}catch{}
-   reject(new Error("O Firebase Storage demorou mais de 120 segundos para responder. Verifique sua conexão e tente novamente."));
-  },120000);
-  try{
-   task=uploadBytesResumable(storageRef,file,{contentType:file.type||"application/octet-stream",cacheControl:"public,max-age=31536000"});
-   task.on("state_changed",snap=>{
-    const total=Number(snap.totalBytes||0),sent=Number(snap.bytesTransferred||0);
-    const pct=total?Math.min(99,Math.max(1,Math.round(sent/total*100))):1;
-    status.textContent="Enviando mídia... "+pct+"%";
-   },err=>{
-    if(finished)return;
-    finished=true;clearTimeout(timeout);reject(err);
-   },()=>{
-    if(finished)return;
-    finished=true;clearTimeout(timeout);
-    status.textContent="Upload concluído. 100%";
-    resolve(task.snapshot.ref);
-   });
-  }catch(err){
-   if(finished)return;
-   finished=true;clearTimeout(timeout);reject(err);
-  }
- });
-}
-async function publishSelectedMedia(){
- if(!selectedFile||!currentUser||currentUser.uid!==uid)return;
- const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";
- if(!button||!status)return;
- button.disabled=true;button.textContent="PUBLICANDO...";status.hidden=false;status.className="upload-status";
- let uploadedRef=null;
- try{
-  let file=selectedFile;
-  const isImage=file.type.startsWith("image/"),isVideo=file.type.startsWith("video/");
-  if(!isImage&&!isVideo)throw new Error("Tipo de mídia não suportado.");
-  if(isImage){status.textContent="Preparando foto...";file=await prepareImageFile(file);if(file.size>600000)throw new Error("A foto ficou acima do tamanho seguro. Escolha outra imagem.")}
-  const path=storagePathFor(file);uploadedRef=await uploadWithProgress(file,path,status);
-  status.textContent="Gerando endereço da mídia...";const url=await getDownloadURL(uploadedRef);if(!url)throw new Error("O Firebase Storage não retornou o endereço da mídia.");
-  status.textContent="Salvando publicação...";
-  if(publishType==="story"){
-   await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),mediaUrl:url,mediaPath:path,mediaType:isImage?"image":"video",legenda:String(caption),tipo:isImage?"image":"video",aprovado:false,status:"pendente",criadoEm:serverTimestamp(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))});
-  }else if(isImage){
-   const postRef=doc(collection(db,"publicacoes"));
-   await setDoc(postRef,{ownerUid:uid,ownerEmail:String(currentUser.email||""),nome:String(profile?.nome||currentUser.displayName||"Atleta"),texto:String(caption),imagem:url,imagemUrl:url,imagemPath:path,imagemMime:String(file.type||"image/jpeg"),imagemTamanho:Number(file.size||0),legenda:String(caption),tipo:"imagem",armazenamento:"storage",aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
-  }else{
-   await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome:String(profile?.nome||currentUser.displayName||"Atleta"),videoUrl:url,videoPath:path,videoMime:String(file.type||"video/mp4"),videoTamanho:Number(file.size||0),legenda:String(caption),aprovado:false,status:"pendente",criadoEm:serverTimestamp()});
-  }
-  status.className="upload-status ok";status.textContent=publishType==="story"?"Story enviado para aprovação!":isImage?"Foto enviada para aprovação!":"Vídeo enviado para aprovação!";setTimeout(closeMediaModal,1100)
- }catch(e){
-  console.error("ERRO AO PUBLICAR:",e);const code=String(e?.code||"");let message="Não foi possível publicar a mídia.";
-  if(code.includes("storage/unauthorized"))message="Firebase Storage: envio não autorizado. Publique as regras do Storage e tente novamente.";
-  else if(code.includes("storage/unauthenticated"))message="Firebase: sua sessão não está autenticada. Entre novamente na conta.";
-  else if(code.includes("storage/canceled"))message="O envio da mídia foi cancelado.";
-  else if(code.includes("storage/retry-limit-exceeded"))message="Firebase Storage: limite de tentativas atingido. Tente novamente.";
-  else if(code.includes("permission-denied"))message="Firestore: a publicação foi recusada pelas regras.";
-  else if(e?.message)message=e.message;
-  status.className="upload-status error";status.textContent=message;button.textContent="TENTAR NOVAMENTE";
-  if(uploadedRef){try{await deleteObject(uploadedRef)}catch{}}
- }finally{button.disabled=false;if(button.textContent==="PUBLICANDO...")button.textContent="PUBLICAR"}
-}
-/*
- * CONTROLES DE PUBLICAÇÃO - V3
- * Usa delegação de eventos para continuar funcionando mesmo após
- * re-renderizações/alterações do DOM e impede duplo clique no publicar.
- */
-document.addEventListener("change",e=>{
- const input=e.target;
- if(input?.id==="cameraInput"||input?.id==="galleryInput"){
-   const file=input.files?.[0];
-   if(file)mediaSelected(file);
-   input.value="";
- }
-});
-document.addEventListener("click",e=>{
- const button=e.target.closest?.("#changeMediaBtn,#postMediaBtn");
- if(!button)return;
- e.preventDefault();
- if(button.id==="changeMediaBtn"){resetComposer();return}
- if(button.id==="postMediaBtn"){if(button.disabled)return;void publishSelectedMedia()}
-},false);
+function closeMediaModal(){const m=$("mediaModal");if(m){m.classList.remove("open");m.setAttribute("aria-hidden","true")};resetComposer()}
+function resetComposer(){selectedFile=null;if(selectedPreviewUrl){URL.revokeObjectURL(selectedPreviewUrl);selectedPreviewUrl=null}const chooser=$("mediaChooser"),composer=$("composer"),im=$("mediaPreviewImage"),vi=$("mediaPreviewVideo"),status=$("uploadStatus"),button=$("postMediaBtn");if(chooser)chooser.hidden=false;if(composer)composer.hidden=true;if(im){im.hidden=true;im.removeAttribute("src")}if(vi){vi.hidden=true;vi.pause?.();vi.removeAttribute("src");vi.load()}if($("captionInput"))$("captionInput").value="";if(status){status.hidden=true;status.textContent="";status.className="upload-status"}if(button){button.disabled=false;button.textContent="PUBLICAR"}}
+function mediaSelected(file){if(!file)return;if(!currentUser||currentUser.uid!==uid){alert("Entre na sua conta para publicar.");return}const image=file.type.startsWith("image/"),video=file.type.startsWith("video/");if(!image&&!video){alert("Selecione uma imagem ou vídeo válido.");return}if(image&&file.size>25*1024*1024){alert("A foto deve ter no máximo 25 MB. Ela será enviada sem compactação de qualidade.");return}if(video&&file.size>45*1024*1024){alert("O vídeo deve ter no máximo 45 MB.");return}if(selectedPreviewUrl)URL.revokeObjectURL(selectedPreviewUrl);selectedFile=file;selectedPreviewUrl=URL.createObjectURL(file);$("mediaChooser").hidden=true;$("composer").hidden=false;const im=$("mediaPreviewImage"),vi=$("mediaPreviewVideo");if(image){im.hidden=false;im.src=selectedPreviewUrl;vi.hidden=true;vi.removeAttribute("src");vi.load()}else{vi.hidden=false;vi.src=selectedPreviewUrl;im.hidden=true;im.removeAttribute("src")}$("captionInput")?.focus()}
+
+async function publishSelectedMedia(){if(!selectedFile||!currentUser||currentUser.uid!==uid)return;const button=$("postMediaBtn"),status=$("uploadStatus"),caption=$("captionInput")?.value.trim()||"";if(!button||!status)return;button.disabled=true;button.textContent="PUBLICANDO...";status.hidden=false;status.className="upload-status";try{const isVideo=selectedFile.type.startsWith("video/");status.textContent="Enviando arquivo original em alta qualidade...";const up=await uploadCloudinary(selectedFile,{maxBytes:isVideo?45*1024*1024:25*1024*1024,allowImage:true,allowVideo:true,tags:["cadastro-de-atletas",publishType==="story"?"stories":isVideo?"videos":"publicacoes"]});status.textContent="Publicando...";const nome=profile?.nome||currentUser.displayName||"Atleta";if(publishType==="story"){const type=isVideo?"video":"image";await setDoc(doc(collection(db,"stories")),{ownerUid:uid,nome,mediaUrl:up.url,mediaPath:up.path,mediaType:type,legenda:caption,tipo:type,aprovado:true,status:"publicado",criadoEm:Timestamp.now(),expiraEm:Timestamp.fromDate(new Date(Date.now()+24*60*60*1000))})}else if(isVideo){await setDoc(doc(collection(db,"videos")),{ownerUid:uid,nome,videoUrl:up.url,videoPath:up.path,videoMime:up.mime,videoTamanho:up.size,legenda:caption,aprovado:true,status:"publicado",criadoEm:Timestamp.now()})}else{await setDoc(doc(collection(db,"publicacoes")),{ownerUid:uid,ownerEmail:currentUser.email||"",nome,texto:caption,imagem:up.url,imagemUrl:up.url,imagemPath:up.path,imagemMime:up.mime,imagemTamanho:up.size,legenda:caption,tipo:"imagem",armazenamento:"cloudinary",aprovado:true,status:"publicado",criadoEm:Timestamp.now()})}status.className="upload-status ok";status.textContent=publishType==="story"?"Story publicado por 24 horas!":"Publicado no feed!";await loadMedia();setTimeout(closeMediaModal,800)}catch(e){console.error("Publicação:",e);status.className="upload-status error";status.textContent=e?.message||"Não foi possível publicar.";button.textContent="TENTAR NOVAMENTE"}finally{button.disabled=false;if(button.textContent==="PUBLICANDO...")button.textContent="PUBLICAR"}}
+
+function bindComposerCapture(){document.addEventListener("change",e=>{const input=e.target;if(input?.id!=="cameraInput"&&input?.id!=="galleryInput")return;e.stopImmediatePropagation();const file=input.files?.[0];if(file)mediaSelected(file);input.value=""},true);document.addEventListener("click",e=>{const b=e.target.closest?.(".publish-choice,#closePublish,#closeMedia,#cameraBtn,#galleryBtn,#changeMediaBtn,#postMediaBtn");if(!b)return;e.preventDefault();e.stopImmediatePropagation();if(b.classList.contains("publish-choice")){openMediaModal(b.dataset.publishType);return}if(b.id==="closePublish"){closePublishModal();return}if(b.id==="closeMedia"){closeMediaModal();return}if(b.id==="changeMediaBtn"){resetComposer();return}if(b.id==="postMediaBtn"){if(!b.disabled)publishSelectedMedia();return}if(b.id==="cameraBtn"||b.id==="galleryBtn"){const input=$(b.id==="cameraBtn"?"cameraInput":"galleryInput");try{input?.showPicker?input.showPicker():input?.click()}catch{input?.click()}}},true)}
+
+installProfileStyles();initSocialNetwork();bindComposerCapture();ensureContentModal();
+document.querySelectorAll(".pp-tab").forEach(b=>b.addEventListener("click",()=>{document.querySelectorAll(".pp-tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const st=b.dataset.tab==="stories";$("gallery").hidden=st;$("storyList").hidden=!st}));
+if($("followersStat"))$("followersStat").onclick=()=>loadFollowers("followers");if($("followingStat"))$("followingStat").onclick=()=>loadFollowers("following");if($("closeModal"))$("closeModal").onclick=()=>$("listModal").classList.remove("open");$("listModal")?.addEventListener("click",e=>{if(e.target.id==="listModal")$("listModal").classList.remove("open")});
+load();onAuthStateChanged(auth,async u=>{currentUser=u;await getFollowState();await refreshCounts();renderActions();if($("avatar"))await attachProfileStory($("avatar"),uid)});
