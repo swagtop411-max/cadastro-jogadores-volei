@@ -32,25 +32,23 @@ async function latestConversationState(chatId){
   try{const snap=await getDoc(doc(db,"conversas",chatId));return snap.exists()?snap.data():null}catch{return null}
 }
 
-async function rebuildConversationPreview(chatId){
-  try{
-    const snap=await getDocs(query(collection(db,"conversas",chatId,"mensagens"),orderBy("createdAt","desc"),limit(1)));
-    const latest=snap.docs[0]?.data();
-    await setDoc(doc(db,"conversas",chatId),latest?{
-      lastMessage:String(latest.text||"").slice(0,500),
-      lastSenderUid:latest.senderUid||"",
-      lastMessageAt:latest.createdAt||Timestamp.now()
-    }:{lastMessage:"",lastSenderUid:"",lastMessageAt:Timestamp.now()},{merge:true});
-  }catch(error){console.warn("Atualizar prévia da conversa:",error)}
-}
-
-async function unsend(chatId,messageId,button){
-  if(!auth.currentUser||!chatId||!messageId)return;
+async function unsend(chatId,messageId,messageText,button){
+  const user=auth.currentUser;
+  if(!user||!chatId||!messageId)return;
   if(!confirm("Desfazer o envio desta mensagem?"))return;
   button.disabled=true;
   try{
+    const state=await latestConversationState(chatId);
+    const removedWasPreview=state?.lastSenderUid===user.uid&&String(state?.lastMessage||"")===String(messageText||"").slice(0,500);
     await deleteDoc(doc(db,"conversas",chatId,"mensagens",messageId));
-    await rebuildConversationPreview(chatId);
+    if(removedWasPreview){
+      await setDoc(doc(db,"conversas",chatId),{
+        lastMessage:"Mensagem removida",
+        lastSenderUid:user.uid,
+        lastMessageAt:Timestamp.now(),
+        lastReadBy:[user.uid]
+      },{merge:true});
+    }
   }catch(error){console.error("Desfazer envio:",error);alert("Não foi possível desfazer o envio.");button.disabled=false}
 }
 
@@ -71,7 +69,7 @@ async function decorateMessages(){
       if(data.senderUid===user.uid&&!node.querySelector(".sn-msg-unsend")){
         const button=document.createElement("button");
         button.type="button";button.className="sn-msg-unsend";button.title="Desfazer envio";button.setAttribute("aria-label","Desfazer envio");button.textContent="×";
-        button.onclick=event=>{event.preventDefault();event.stopPropagation();unsend(chatId,docs[index].id,button)};
+        button.onclick=event=>{event.preventDefault();event.stopPropagation();unsend(chatId,docs[index].id,data.text||"",button)};
         node.appendChild(button);
       }
     });
