@@ -1,7 +1,8 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { collection, limit, onSnapshot, query } from 'firebase/firestore';
 import { useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { db } from '@/src/config/firebase';
 import type { PublicProfile } from '@/src/types/social';
 import { colors, radii, spacing } from '@/src/theme';
@@ -43,14 +44,15 @@ export default function ExploreScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>Nenhum atleta encontrado.</Text>}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <Pressable style={styles.card} onPress={() => router.push(`/profile/${item.uid}` as any)}>
             {item.fotoUrl ? <Image source={{ uri: item.fotoUrl }} style={styles.avatar} contentFit="cover" cachePolicy="memory-disk" /> : <View style={styles.avatarFallback}><Text>🏐</Text></View>}
             <View style={{ flex: 1 }}>
               <Text style={styles.name}>{item.nome || 'Atleta'}</Text>
               <Text style={styles.meta}>{[item.cidade, item.uf, item.categoria].filter(Boolean).join(' • ')}</Text>
               <Text style={styles.meta}>{[item.posicao, item.time].filter(Boolean).join(' • ')}</Text>
             </View>
-          </View>
+            <Text style={styles.arrow}>›</Text>
+          </Pressable>
         )}
       />
     </View>
@@ -69,5 +71,6 @@ const styles = StyleSheet.create({
   avatarFallback: { width: 64, height: 64, borderRadius: 32, backgroundColor: colors.surfaceMuted, alignItems: 'center', justifyContent: 'center' },
   name: { color: colors.ink, fontWeight: '900', fontSize: 16 },
   meta: { color: colors.muted, fontSize: 11, marginTop: 4 },
+  arrow: { color: colors.cyan, fontSize: 30, fontWeight: '700' },
   empty: { color: colors.muted, textAlign: 'center', marginTop: 50 },
 });
