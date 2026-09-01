@@ -18,6 +18,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ title: 'Editar perfil' }} />
         <Stack.Screen name="profile/[uid]" options={{ title: 'Perfil do atleta' }} />
         <Stack.Screen name="post/[id]" options={{ title: 'Publicação' }} />
         <Stack.Screen name="chat/[conversationId]" options={{ title: 'Direct' }} />
@@ -26,6 +27,7 @@ export default function RootLayout() {
         <Stack.Screen name="teams" options={{ title: 'Equipes' }} />
         <Stack.Screen name="saved" options={{ title: 'Salvos' }} />
         <Stack.Screen name="stories-archive" options={{ title: 'Stories postados' }} />
+        <Stack.Screen name="highlight/[id]" options={{ title: 'Destaque' }} />
         <Stack.Screen name="hashtag/[tag]" options={{ title: 'Hashtag' }} />
         <Stack.Screen name="story/[id]" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
         <Stack.Screen name="reels" options={{ headerShown: false, presentation: 'fullScreenModal' }} />
