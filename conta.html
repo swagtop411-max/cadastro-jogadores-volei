@@ -1,88 +1,32 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Acesse sua conta no Banco de Dados de Atletas.">
-  <title>Minha conta | Banco de Dados de Atletas</title>
-  <link rel="stylesheet" href="estilo.css?v=20260827-1">
-  <link rel="stylesheet" href="conta.css?v=20260827-3">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Acesse sua conta no Banco de Dados de Atletas.">
+<title>Minha conta | Banco de Dados de Atletas</title>
+<link rel="stylesheet" href="estilo.css?v=20260827-1">
+<link rel="stylesheet" href="conta.css?v=20260827-3">
+<link rel="stylesheet" href="site-theme.css?v=20260901-8">
+<style>
+.account-shell{max-width:1050px!important;margin:0 auto!important;padding:35px 18px 55px!important;display:grid!important;grid-template-columns:minmax(0,.85fr) minmax(360px,1fr)!important;gap:28px!important;align-items:center!important}.account-intro{padding:18px!important}.account-kicker{color:#2563eb!important}.account-intro h1{color:#172033!important;font-family:'Montserrat',Arial,sans-serif!important;font-size:38px!important;line-height:1.05!important;letter-spacing:-1.5px!important}.account-intro p{color:#667085!important}.account-promise{background:#fff!important;border:1px solid #e4e7ec!important;border-radius:13px!important;color:#344054!important;box-shadow:0 5px 20px rgba(15,23,42,.04)!important}.account-promise span{color:#2563eb!important}.account-card{background:#fff!important;border:1px solid #e4e7ec!important;border-radius:20px!important;box-shadow:0 15px 40px rgba(15,23,42,.08)!important}.account-card-head h2,.account-logged h3{color:#172033!important}.account-mark{color:#2563eb!important}.account-primary{background:#2563eb!important;color:#fff!important;border:1px solid #2563eb!important}.account-secondary,.account-link{color:#1d4ed8!important}.account-footnote,.account-logged p{color:#667085!important}@media(max-width:800px){.account-shell{grid-template-columns:1fr!important;max-width:620px!important}.account-intro{padding:5px!important}.account-intro h1{font-size:31px!important}}
+</style>
 </head>
 <body class="account-page">
-  <header class="header account-header">
-    <a class="header-brand" href="index.html" aria-label="Voltar ao Banco de Dados de Atletas">
-      <div class="brand-ball">🏐</div>
-      <div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div>
-    </a>
-    <nav class="header-actions" aria-label="Navegação principal">
-      <a class="championship-cta" href="comunidade.html">✦ COMUNIDADE</a>
-      <a class="championship-cta" href="index.html">🏐 ATLETAS</a>
-    </nav>
-  </header>
-
-  <main class="account-shell">
-    <section class="account-intro">
-      <span class="account-kicker">SUA PRESENÇA NO BANCO</span>
-      <h1>Entre para cuidar do seu perfil.</h1>
-      <p>Crie uma conta para enviar cadastros, acompanhar alterações e participar da comunidade com mais segurança.</p>
-      <div class="account-promise"><span>01</span><strong>Seu conteúdo fica vinculado à sua conta</strong></div>
-      <div class="account-promise"><span>02</span><strong>Você edita apenas os seus cadastros</strong></div>
-      <div class="account-promise"><span>03</span><strong>Publicações continuam passando por moderação</strong></div>
-    </section>
-
-    <section class="account-card" aria-labelledby="accountTitle">
-      <div class="account-card-head">
-        <span class="account-mark">✦</span>
-        <div><span class="account-kicker">ACESSO DE VISITANTES</span><h2 id="accountTitle">Minha conta</h2></div>
-      </div>
-
-      <div class="account-tabs" role="tablist" aria-label="Acesso e cadastro">
-        <button class="account-tab active" type="button" role="tab" aria-selected="true" data-account-tab="login">Entrar</button>
-        <button class="account-tab" type="button" role="tab" aria-selected="false" data-account-tab="register">Criar conta</button>
-      </div>
-
-      <div id="accountStatus" class="account-status" role="status" aria-live="polite"></div>
-
-      <form id="loginForm" class="account-form" novalidate>
-        <label for="loginEmail">E-mail</label>
-        <input id="loginEmail" type="email" autocomplete="email" required>
-        <label for="loginPassword">Senha</label>
-        <input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required>
-        <button class="account-primary" type="submit">ENTRAR <span>→</span></button>
-        <button class="account-link" type="button" id="forgotPassword">Esqueci minha senha</button>
-      </form>
-
-      <form id="registerForm" class="account-form hidden" novalidate>
-        <label for="registerName">Nome ou nome esportivo</label>
-        <input id="registerName" type="text" autocomplete="name" maxlength="80" required>
-        <label for="registerEmail">E-mail</label>
-        <input id="registerEmail" type="email" autocomplete="email" required>
-        <label for="registerPassword">Senha</label>
-        <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required>
-        <label for="registerPasswordConfirm">Confirme a senha</label>
-        <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required>
-        <label class="account-check">
-          <input id="acceptTerms" type="checkbox" required>
-          <span>Concordo com os <a href="termos-de-uso.html">termos de uso</a> e a <a href="politica-privacidade.html">política de privacidade</a>.</span>
-        </label>
-        <button class="account-primary" type="submit">CRIAR MINHA CONTA <span>→</span></button>
-      </form>
-
-      <section id="accountLogged" class="account-logged hidden" aria-live="polite">
-        <span class="account-kicker">ACESSO CONFIRMADO</span>
-        <h3 id="loggedName">Olá!</h3>
-        <p id="loggedEmail"></p>
-        <div class="account-logged-actions">
-          <a class="account-primary" href="meu-perfil.html">VER MEU PERFIL <span>→</span></a>
-          <a class="account-secondary" href="comunidade.html">IR PARA A COMUNIDADE</a>
-          <button id="logoutButton" class="account-link" type="button">Sair da conta</button>
-        </div>
-      </section>
-
-      <p class="account-footnote">Nunca compartilhe sua senha. A administração não solicita códigos de acesso por mensagem.</p>
-    </section>
-  </main>
-
-  <script type="module" src="conta.js?v=20260828-6"></script>
+<header class="header account-header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html" aria-label="Voltar ao Banco de Dados de Atletas"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a></header>
+<main class="account-shell">
+<section class="account-intro"><span class="account-kicker">SUA PRESENÇA NA REDE</span><h1>Entre para cuidar do seu perfil.</h1><p>Crie uma conta para publicar, conversar, seguir atletas, salvar conteúdos e manter seus dados esportivos atualizados.</p><div class="account-promise"><span>01</span><strong>Seu conteúdo fica vinculado à sua conta</strong></div><div class="account-promise"><span>02</span><strong>Você administra seu perfil e suas publicações</strong></div><div class="account-promise"><span>03</span><strong>Mensagens, seguidores e notificações em um só lugar</strong></div></section>
+<section class="account-card" aria-labelledby="accountTitle">
+<div class="account-card-head"><span class="account-mark">✦</span><div><span class="account-kicker">ACESSO À REDE</span><h2 id="accountTitle">Minha conta</h2></div></div>
+<div class="account-tabs" role="tablist" aria-label="Acesso e cadastro"><button class="account-tab active" type="button" role="tab" aria-selected="true" data-account-tab="login">Entrar</button><button class="account-tab" type="button" role="tab" aria-selected="false" data-account-tab="register">Criar conta</button></div>
+<div id="accountStatus" class="account-status" role="status" aria-live="polite"></div>
+<form id="loginForm" class="account-form" novalidate><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="email" required><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required><button class="account-primary" type="submit">ENTRAR <span>→</span></button><button class="account-link" type="button" id="forgotPassword">Esqueci minha senha</button></form>
+<form id="registerForm" class="account-form hidden" novalidate><label for="registerName">Nome ou nome esportivo</label><input id="registerName" type="text" autocomplete="name" maxlength="80" required><label for="registerEmail">E-mail</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Senha</label><input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required><label for="registerPasswordConfirm">Confirme a senha</label><input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required><label class="account-check"><input id="acceptTerms" type="checkbox" required><span>Concordo com os <a href="termos-de-uso.html">termos de uso</a> e a <a href="politica-privacidade.html">política de privacidade</a>.</span></label><button class="account-primary" type="submit">CRIAR MINHA CONTA <span>→</span></button></form>
+<section id="accountLogged" class="account-logged hidden" aria-live="polite"><span class="account-kicker">ACESSO CONFIRMADO</span><h3 id="loggedName">Olá!</h3><p id="loggedEmail"></p><div class="account-logged-actions"><a class="account-primary" href="meu-perfil.html">VER MEU PERFIL <span>→</span></a><a class="account-secondary" href="comunidade.html">IR PARA A COMUNIDADE</a><button id="logoutButton" class="account-link" type="button">Sair da conta</button></div></section>
+<p class="account-footnote">Nunca compartilhe sua senha. A administração não solicita códigos de acesso por mensagem.</p>
+</section>
+</main>
+<script type="module" src="site-v5.js?v=20260901-8"></script>
+<script type="module" src="conta.js?v=20260828-6"></script>
 </body>
 </html>
