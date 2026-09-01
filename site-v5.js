@@ -1,4 +1,4 @@
-const THEME_VERSION = "20260901-6";
+const THEME_VERSION = "20260901-7";
 
 function ensureTheme() {
   if (document.getElementById("siteThemeV5Runtime")) return;
@@ -23,8 +23,6 @@ function sharpenImage(img) {
     const available = parent.clientWidth || img.clientWidth || 0;
     if (!available) return;
 
-    // Não ampliar fotos além da resolução nativa. O arquivo original continua
-    // sendo entregue pelo Cloudinary, evitando a perda causada por upscale visual.
     if (img.naturalWidth < available && img.matches(
       ".social-media-frame img,.sn-story-media,.pp-content-media img,.pp-archive-item img,.pp-story,.community-media img,.explore-item img,.saved-item img"
     )) {
@@ -43,20 +41,82 @@ function enhanceMedia(root = document) {
   root.querySelectorAll?.("img").forEach(sharpenImage);
 }
 
-function addMenuLink(container, href, icon, label, marker) {
-  if (!container || container.querySelector(`[data-v5-link="${marker}"]`)) return;
-  const a = document.createElement("a");
-  a.href = href;
-  a.dataset.v5Link = marker;
-  a.innerHTML = `<span aria-hidden="true">${icon}</span><span>${label}</span>`;
-  container.appendChild(a);
+function addMenuLink(container, href, icon, label, marker, options = {}) {
+  if (!container) return null;
+  let link = container.querySelector(`[data-v5-link="${marker}"]`);
+  if (!link) {
+    link = document.createElement("a");
+    link.dataset.v5Link = marker;
+    container.appendChild(link);
+  }
+  link.href = href;
+  link.innerHTML = `<span aria-hidden="true">${icon}</span><span>${label}</span>`;
+  if (options.target) link.target = options.target;
+  if (options.rel) link.rel = options.rel;
+  return link;
 }
 
-function installDiscoveryLinks() {
-  document.querySelectorAll(".site-menu-nav,.pp-nav").forEach(nav => {
+function closeMainMenu() {
+  if (typeof window.closeSiteMenu === "function") window.closeSiteMenu();
+  else {
+    document.getElementById("siteMenuDrawer")?.classList.remove("open");
+    document.documentElement.classList.remove("site-menu-open");
+    document.body?.classList.remove("site-menu-open");
+  }
+}
+
+function addMenuAction(container, marker, icon, label, sourceId, badgeId) {
+  if (!container) return null;
+  let button = container.querySelector(`[data-v5-action="${marker}"]`);
+  if (!button) {
+    button = document.createElement("button");
+    button.type = "button";
+    button.dataset.v5Action = marker;
+    button.innerHTML = `<span aria-hidden="true">${icon}</span><span>${label}</span><b class="v5-menu-badge" hidden>0</b>`;
+    button.addEventListener("click", () => {
+      closeMainMenu();
+      setTimeout(() => document.getElementById(sourceId)?.click(), 30);
+    });
+    container.appendChild(button);
+  }
+
+  const source = document.getElementById(sourceId);
+  const sourceBadge = badgeId ? document.getElementById(badgeId) : null;
+  const badge = button.querySelector(".v5-menu-badge");
+  const count = Number(String(sourceBadge?.textContent || "0").replace(/\D/g, "")) || 0;
+  if (badge) {
+    badge.hidden = !count || sourceBadge?.hidden === true;
+    badge.textContent = count > 99 ? "99+" : String(count);
+  }
+  button.hidden = !source;
+  return button;
+}
+
+function installPrimaryMenuActions() {
+  document.querySelectorAll(".site-menu-nav").forEach(nav => {
     addMenuLink(nav, "explorar.html", "⌕", "EXPLORAR", "explorar");
     addMenuLink(nav, "reels.html", "▶", "REELS", "reels");
     addMenuLink(nav, "salvos.html", "▣", "SALVOS", "salvos");
+
+    const support = document.querySelector(".whatsapp-top-cta");
+    if (support?.href) {
+      addMenuLink(nav, support.href, "💬", "INFORMAÇÕES / APOIO", "apoio-info", {
+        target: "_blank",
+        rel: "noopener noreferrer"
+      });
+    }
+
+    addMenuAction(nav, "mensagens", "✉", "MENSAGENS", "snInboxButton", "snInboxBadge");
+    addMenuAction(nav, "notificacoes", "🔔", "NOTIFICAÇÕES", "snNotificationsButton", "snNotificationsBadge");
+
+    const adminSource = document.getElementById("adminPanelCta");
+    let adminLink = nav.querySelector('[data-v5-link="admin"]');
+    if (adminSource) {
+      adminLink = addMenuLink(nav, adminSource.href || "admin.html", "🔐", "PAINEL ADM", "admin");
+      adminLink.hidden = adminSource.hidden;
+    } else if (adminLink) {
+      adminLink.hidden = true;
+    }
   });
 }
 
@@ -87,8 +147,8 @@ function installProfileArchiveButton() {
 
 const MOBILE_HEADER_PROPERTIES = [
   "display","flex-wrap","align-items","justify-content","min-height","height","padding","gap","overflow",
-  "flex","width","min-width","max-width","margin-left","overflow-x","overflow-y","white-space","font-size",
-  "line-height","text-overflow","-webkit-overflow-scrolling"
+  "flex","width","min-width","max-width","margin-left","white-space","font-size","line-height","text-overflow",
+  "letter-spacing","text-align"
 ];
 
 function clearMobileHeaderStyles(element) {
@@ -116,83 +176,53 @@ function installMobileHeader() {
     if (!mobile) {
       [header, trigger, triggerLabel, brand, brandBall, brandTitle, brandSubtitle, center, actions]
         .forEach(clearMobileHeaderStyles);
-      actions?.querySelectorAll(":scope > *").forEach(clearMobileHeaderStyles);
       return;
     }
 
-    // Cabeçalho sempre em uma única linha no celular. Isto prevalece até
-    // sobre regras legadas com flex-wrap!important existentes no index.html.
     important(header, "display", "flex");
     important(header, "flex-wrap", "nowrap");
     important(header, "align-items", "center");
     important(header, "justify-content", "flex-start");
-    important(header, "min-height", "60px");
-    important(header, "height", "60px");
-    important(header, "padding", "7px 8px");
-    important(header, "gap", "7px");
+    important(header, "min-height", "58px");
+    important(header, "height", "58px");
+    important(header, "padding", "7px 12px");
+    important(header, "gap", "10px");
     important(header, "overflow", "hidden");
 
     if (center) important(center, "display", "none");
+    if (actions) important(actions, "display", "none");
 
     if (trigger) {
       important(trigger, "display", "inline-flex");
       important(trigger, "align-items", "center");
       important(trigger, "justify-content", "center");
-      important(trigger, "flex", "0 0 44px");
-      important(trigger, "width", "44px");
-      important(trigger, "min-width", "44px");
+      important(trigger, "flex", "0 0 42px");
+      important(trigger, "width", "42px");
+      important(trigger, "min-width", "42px");
       important(trigger, "height", "40px");
       important(trigger, "padding", "0");
     }
     if (triggerLabel) important(triggerLabel, "display", "none");
 
     if (brand) {
-      important(brand, "flex", "0 1 174px");
+      important(brand, "display", "flex");
+      important(brand, "align-items", "center");
+      important(brand, "justify-content", "flex-start");
+      important(brand, "flex", "1 1 auto");
       important(brand, "min-width", "0");
-      important(brand, "max-width", "36vw");
+      important(brand, "max-width", "none");
       important(brand, "overflow", "hidden");
     }
-    if (brandBall) {
-      important(brandBall, "flex", "0 0 34px");
-      important(brandBall, "width", "34px");
-      important(brandBall, "min-width", "34px");
-      important(brandBall, "height", "34px");
-    }
+    if (brandBall) important(brandBall, "display", "none");
+    if (brandSubtitle) important(brandSubtitle, "display", "none");
     if (brandTitle) {
-      important(brandTitle, "font-size", "9px");
-      important(brandTitle, "line-height", "1.05");
+      important(brandTitle, "display", "block");
+      important(brandTitle, "font-size", "12px");
+      important(brandTitle, "line-height", "1");
+      important(brandTitle, "letter-spacing", ".35px");
       important(brandTitle, "white-space", "nowrap");
       important(brandTitle, "overflow", "hidden");
       important(brandTitle, "text-overflow", "ellipsis");
-    }
-    if (brandSubtitle) important(brandSubtitle, "display", "none");
-
-    if (actions) {
-      important(actions, "display", "flex");
-      important(actions, "align-items", "center");
-      important(actions, "justify-content", "flex-start");
-      important(actions, "flex", "1 1 auto");
-      important(actions, "flex-wrap", "nowrap");
-      important(actions, "min-width", "0");
-      important(actions, "max-width", "none");
-      important(actions, "height", "42px");
-      important(actions, "margin-left", "0");
-      important(actions, "gap", "5px");
-      important(actions, "overflow-x", "auto");
-      important(actions, "overflow-y", "hidden");
-      important(actions, "-webkit-overflow-scrolling", "touch");
-
-      actions.querySelectorAll(":scope > *").forEach(action => {
-        important(action, "flex", "0 0 auto");
-        important(action, "width", "auto");
-        important(action, "min-width", "36px");
-        important(action, "max-width", "none");
-        important(action, "min-height", "36px");
-        important(action, "height", "36px");
-        important(action, "padding", action.classList.contains("sn-header-btn") ? "0" : "0 9px");
-        important(action, "font-size", "7px");
-        important(action, "white-space", "nowrap");
-      });
     }
   });
 }
@@ -200,7 +230,7 @@ function installMobileHeader() {
 function runEnhancements() {
   ensureTheme();
   enhanceMedia();
-  installDiscoveryLinks();
+  installPrimaryMenuActions();
   installProfileArchiveButton();
   installMobileHeader();
   import("./direct-v5.js?v=20260901-1").catch(error => console.warn("Direct V5:", error));
@@ -225,10 +255,16 @@ const observer = new MutationObserver(mutations => {
       if (node instanceof Element) enhanceMedia(node);
     }
   }
-  installDiscoveryLinks();
+  installPrimaryMenuActions();
   installProfileArchiveButton();
   installMobileHeader();
 });
 
-observer.observe(document.documentElement, { childList: true, subtree: true });
+observer.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  attributes: true,
+  attributeFilter: ["hidden"]
+});
+
 window.addEventListener("sn:story-deleted", () => setTimeout(installProfileArchiveButton, 50));
