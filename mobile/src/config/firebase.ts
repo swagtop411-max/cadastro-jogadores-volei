@@ -1,10 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  getReactNativePersistence,
-  initializeAuth,
-} from 'firebase/auth';
+// O Firebase publica getReactNativePersistence no bundle React Native, mas o resolvedor
+// TypeScript ainda pode enxergar apenas as declarações web do mesmo entry point.
+// @ts-expect-error Export disponível no bundle RN selecionado pelo Metro/Expo.
+import { getAuth, getReactNativePersistence, initializeAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
