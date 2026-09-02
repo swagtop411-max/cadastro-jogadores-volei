@@ -40,13 +40,23 @@ const urlParams = new URLSearchParams(location.search);
 const returnTarget = urlParams.get("return");
 const requestedTab = urlParams.get("tab");
 
-async function getLoginDestination(user) {
-  if (returnTarget) {
-    try {
-      const target = decodeURIComponent(returnTarget);
-      if (target.startsWith("/") && !target.startsWith("//")) return target;
-    } catch {}
+function safeReturnDestination(raw) {
+  if (!raw) return "";
+  try {
+    let value = raw;
+    try { value = decodeURIComponent(raw); } catch {}
+    const target = new URL(value, location.origin);
+    if (target.origin !== location.origin) return "";
+    if (!target.pathname.startsWith("/")) return "";
+    return `${target.pathname}${target.search}${target.hash}`;
+  } catch {
+    return "";
   }
+}
+
+async function getLoginDestination(user) {
+  const safeReturn = safeReturnDestination(returnTarget);
+  if (safeReturn) return safeReturn;
   if ((user.email || "").toLowerCase() === "swagtop411@gmail.com") return "index.html";
   try {
     const snap = await getDoc(doc(db, "perfis", user.uid));
@@ -93,7 +103,6 @@ function friendlyError(error, operation = "generic") {
     "auth/unauthorized-domain": "Este domínio ainda não está autorizado no Firebase Authentication. Adicione o domínio do site em Authentication → Settings → Authorized domains.",
     "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
     "auth/api-key-not-valid-please-pass-a-valid-api-key": "A chave da API do Firebase deste site está inválida ou foi revogada. Atualize o firebaseConfig do aplicativo Web no Firebase e publique novamente.",
-    "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
     "auth/app-not-authorized": "Esta aplicação não está autorizada pelo Firebase. Verifique o domínio e a configuração do projeto.",
     "permission-denied": "A conta foi criada, mas o perfil não pôde ser salvo. Avise a administração."
   };
@@ -101,8 +110,6 @@ function friendlyError(error, operation = "generic") {
   if (messages[code]) return messages[code];
 
   if (operation === "register") {
-    // Nunca esconder o código real durante o diagnóstico: isso permite identificar
-    // exatamente qual bloqueio o Firebase está devolvendo no ambiente publicado.
     const detail = [code, error?.message].filter(Boolean).join(" — ");
     return detail
       ? `Não foi possível criar a conta. Firebase: ${detail}`
@@ -277,9 +284,14 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Não foi possível enviar o e-mail de verificação agora:", verificationError);
     }
 
-    setStatus("Conta criada! Agora complete seu perfil para entrar na rede.", "success");
     showLogged(user);
-    await redirectToProfileIfNeeded(user, true);
+    if (safeReturnDestination(returnTarget)) {
+      setStatus("Conta criada! Voltando ao perfil para concluir sua reivindicação...", "success");
+      await goAfterLogin(user);
+    } else {
+      setStatus("Conta criada! Agora complete seu perfil para entrar na rede.", "success");
+      await redirectToProfileIfNeeded(user, true);
+    }
   } catch (error) {
     console.error("Falha no cadastro da conta:", { code: error?.code, message: error?.message });
     setStatus(friendlyError(error, "register"), "error");
@@ -320,7 +332,6 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     showLogged(user);
     if (!location.pathname.endsWith("/conta.html")) return;
-    // O redirecionamento do login é controlado pelo submit acima. O observer apenas atualiza a interface.
   } else {
     showSignedOut();
   }
