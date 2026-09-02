@@ -11,7 +11,7 @@ def exact(name,old,new,count=1):
     write(name,text.replace(old,new,count))
     print('OK exact',name)
 def regex(name,pattern,repl,count=1,flags=re.S):
-    text=read(name); out,n=re.subn(pattern,repl,text,count=count,flags=flags)
+    text=read(name); out,n=re.subn(pattern,lambda _m: repl,text,count=count,flags=flags)
     if n!=count: raise SystemExit(f'{name}: regex esperado {count}, encontrou {n}: {pattern[:100]!r}')
     write(name,out); print('OK regex',name)
 

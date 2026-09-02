@@ -1,4 +1,4 @@
-import { recordAuthEvent } from "./auth-audit-v10.js?v=20260902-1";
+import { recordAuthEvent } from "./auth-audit-v11.js?v=20260902-1";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {
   createUserWithEmailAndPassword,

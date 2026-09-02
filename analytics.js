@@ -10,13 +10,13 @@ function consent(){try{return localStorage.getItem(CONSENT_KEY)}catch{return nul
 async function initFirebaseStats(){
   if(firebaseReady)return;
   try{
-    const [{initializeApp},{getFirestore,collection,addDoc,serverTimestamp}]=await Promise.all([
+    const [{getApp,getApps,initializeApp},{getFirestore,collection,addDoc,Timestamp}]=await Promise.all([
       import("https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"),
       import("https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js")
     ]);
     const firebaseConfig={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015",measurementId:GA_ID};
-    initializeApp(firebaseConfig);
-    db=getFirestore();collectionFn=collection;addDocFn=addDoc;serverTimestampFn=serverTimestamp;firebaseReady=true;
+    const app=getApps().length?getApp():initializeApp(firebaseConfig);
+    db=getFirestore(app);collectionFn=collection;addDocFn=addDoc;serverTimestampFn=Timestamp;firebaseReady=true;
   }catch(e){console.warn("Analytics próprio indisponível:",e)}
 }
 
@@ -35,7 +35,7 @@ async function saveOwnEvent(name,p={}){
   if(isAdminPage||consent()!=="accepted")return;
   await initFirebaseStats();
   if(!firebaseReady)return;
-  try{await addDocFn(collectionFn(db,"site_stats"),{nome:String(name).slice(0,60),pagina:location.pathname.slice(0,200),visitante:visitorId(),dispositivo:device(),origem:String(p.origem||"site").slice(0,50),criadoEm:serverTimestampFn()})}catch(e){console.warn("Evento próprio não salvo:",e)}
+  try{const now=serverTimestampFn.now();await addDocFn(collectionFn(db,"site_stats"),{nome:String(name).slice(0,60),pagina:location.pathname.slice(0,200),visitante:visitorId(),dispositivo:device(),origem:String(p.origem||"site").slice(0,50),fonte:"cliente",confiavel:false,criadoEm:now,expiraEm:serverTimestampFn.fromMillis(now.toMillis()+90*86400000)})}catch(e){console.warn("Evento próprio não salvo:",e)}
 }
 
 export function trackEvent(name,p={}){

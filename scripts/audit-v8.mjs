@@ -15,7 +15,7 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
  'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js',
- 'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v10.js','reivindicacao.js','conta.js','firestore.rules'
+ 'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v11.js','admin-data-migration-v11.js','admin-commerce-v11.js','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
 // Recursos V8 solicitados.
@@ -56,9 +56,11 @@ requireText('site-v7-autoload.js','admin-claims-v9.js','central de UIDs carregad
 requireText('firestore.rules','match /reivindicacoes_perfis/{claimId}','regras de reivindicação presentes');
 
 // V10: contas, acessos, duplicidades e unificação segura.
-requireText('auth-audit-v10.js','export async function recordAuthEvent','registrador central de eventos autenticados');
-requireText('auth-audit-v10.js','collection(db,"access_logs")','logs de acesso em coleção dedicada');
-requireText('auth-audit-v10.js','sessionStorage','sessão registrada uma vez por aba/sessão');
+requireText('auth-audit-v11.js','export async function recordAuthEvent','registrador central de eventos autenticados V11');
+requireText('auth-audit-v11.js','fonte:"cliente"','telemetria identificada como cliente');
+requireText('auth-audit-v11.js','confiavel:false','telemetria não tratada como auditoria autoritativa');
+requireText('auth-audit-v11.js','expiraEm','retenção preparada para TTL');
+requireText('auth-audit-v11.js','sessionStorage','sessão registrada uma vez por aba/sessão');
 requireText('conta.js','recordAuthEvent(credential.user, "login")','login sincronizado com painel ADM');
 requireText('conta.js','recordAuthEvent(user, "cadastro")','cadastro sincronizado com painel ADM');
 requireText('admin-profile-link-v10.js','export async function linkLegacyProfile','unificação segura de legado e perfil social');
@@ -67,12 +69,15 @@ requireText('admin-profile-link-v10.js','ownerEmail:deleteField()','e-mail remov
 requireText('admin-control-center-v10.js','Todas as contas cadastradas','painel geral de contas');
 requireText('admin-control-center-v10.js','UNIFICAR PERFIS','ação de unificação de duplicidades');
 requireText('admin-control-center-v10.js','plataforma = app','modelo preparado para futuro aplicativo');
-requireText('site-v7-autoload.js','auth-audit-v10.js','auditoria de sessão carregada globalmente');
+requireText('site-v7-autoload.js','auth-audit-v11.js','telemetria V11 carregada globalmente');
 requireText('site-v7-autoload.js','admin-control-center-v10.js','centro de controle carregado no ADM');
 requireText('firestore.rules','match /access_logs/{eventId}','coleção de logs protegida por regras');
 requireText('firestore.rules',"request.resource.data.tipo in ['cadastro','login','sessao']",'tipos de evento permitidos');
 requireText('firestore.rules',"request.resource.data.plataforma in ['web','app']",'origem web/app validada');
-requireText('firestore.rules',"'ultimoLoginEm','ultimoAcessoEm','totalLogins'",'metadados de atividade permitidos em usuarios');
+forbidText('firestore.rules',"'ultimoLoginEm','ultimoAcessoEm','totalLogins'",'métricas mutáveis pelo usuário em usuarios');
+requireText('firestore.rules','match /site_stats/{eventId}','regras de analytics próprio');
+requireText('firestore.rules','match /solicitacoes_planos/{uid}','solicitação segura de plano');
+requireText('firestore.rules','match /handles/{handle}','índice seguro de handles');
 
 // Fluxos novos não podem voltar ao Firebase Storage/base64 destrutivo.
 for(const file of ['cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','comunidade.js']){
@@ -96,7 +101,7 @@ forbidText('admin-v8-hardening.js','nascimento:String(a.nascimento||""),cidade',
 forbidText('admin-v8-hardening.js','responsavel:String(a.responsavel||""),uf','responsável misturado no payload público da equipe');
 
 const rules=read('firestore.rules');
-const athletePublicUpdate="'nome','cidade','uf','modalidades','posicoes','modalidade','posicao','categoria',\n          'time','historicoEquipes','historicoCampeonatos','observacoes','foto','ownerUid','atualizadoEm'";
+const athletePublicUpdate="'nome','cidade','uf','modalidades','posicoes','modalidade','posicao','categoria',\n          'time','historicoEquipes','historicoCampeonatos','observacoes','instagramUrl','foto','ownerUid','atualizadoEm'";
 const teamPublicUpdate="affectedKeys().hasOnly(['nome','uf','cidade','modalidade','categoria','logo','atletas'])";
 rules.includes(athletePublicUpdate)?ok('firestore.rules: nascimento/e-mail fora da atualização pública de atleta'):fail('firestore.rules: allowlist pública endurecida do atleta ausente');
 rules.includes(teamPublicUpdate)?ok('firestore.rules: responsável fora da atualização pública de equipe'):fail('firestore.rules: allowlist pública endurecida da equipe ausente');
@@ -157,3 +162,10 @@ if(failures.length){
  process.exit(1);
 }
 console.log('\nAUDITORIA V8/V10 APROVADA ✓');
+
+// V11 core hardening.
+forbidText('meu-perfil.js','firebase-storage','Firebase Storage no editor de perfil');
+requireText('meu-perfil.js','solicitacoes_planos','alteração de plano vira solicitação administrativa');
+requireText('admin.js','cadastro-atleta-v11','aprovação base do atleta sem dados privados públicos');
+requireText('admin.js','cadastro-equipe-v11','aprovação base da equipe sem dados privados públicos');
+requireText('analytics.js','confiavel:false','analytics próprio marcado como telemetria');
