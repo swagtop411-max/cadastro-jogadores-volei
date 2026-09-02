@@ -88,6 +88,7 @@ function card(c, tipo) {
     : `<button class="btn-secondary btn-campeonato-delete" data-action="delete" data-id="${esc(c.id)}">🗑 APAGAR POSTAGEM</button>`;
 
   const parsed = parseDescription(c.descricao);
+  parsed.link = String(c.linkOrganizador || parsed.link || "");
   return `<article class="campeonato-admin-card"><img class="campeonato-admin-image" src="${esc(c.imagem || "")}" alt="Cartaz de ${esc(c.nome || "campeonato")}" loading="lazy" decoding="async"><div class="campeonato-admin-info"><span class="campeonato-admin-status">${rotulo}</span><h3 class="campeonato-admin-title">${esc(c.nome || "Sem nome")}</h3><div class="campeonato-admin-meta"><strong>📅 ${formatarData(c.data)}</strong><br>📍 ${esc(c.local || "Não informado")}<br>👤 ${esc(c.organizador || "Não informado")}</div>${parsed.description ? `<div class="campeonato-admin-desc">${esc(parsed.description)}</div>` : ""}${parsed.link ? `<a class="campeonato-admin-link" href="${esc(parsed.link)}" target="_blank" rel="noopener noreferrer">🔗 ABRIR LINK DO ORGANIZADOR →</a>` : ""}<div class="campeonato-admin-actions">${botoes}</div></div></article>`;
 }
 
@@ -281,6 +282,7 @@ async function acao(id, action) {
         data: String(c.data || ""),
         local: String(c.local || ""),
         descricao: String(c.descricao || ""),
+        linkOrganizador: String(c.linkOrganizador || parseDescription(c.descricao).link || ""),
         imagem: String(c.imagem || ""),
         publicado: true,
         status: "aprovado",

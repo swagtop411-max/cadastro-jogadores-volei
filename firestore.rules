@@ -51,12 +51,43 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/bloqueios/$(a)/usuarios/$(b)) ||
         exists(/databases/$(database)/documents/bloqueios/$(b)/usuarios/$(a));
     }
-    function socialTargetAllowed(id) {
-      return signedIn() && approvedSocialTarget(id) && !isBlocked(request.auth.uid,targetOwner(id));
-    }
     function profilePrivate(uid) {
       return exists(/databases/$(database)/documents/config_perfis/$(uid)) &&
         get(/databases/$(database)/documents/config_perfis/$(uid)).data.privado == true;
+    }
+    function followsProfile(uid) {
+      return signedIn() && exists(/databases/$(database)/documents/seguidores/$(uid)/usuarios/$(request.auth.uid));
+    }
+    function canReadSocialOwner(uid, visibility) {
+      return visibility == 'publico' || isAdmin() || isOwner(uid) || followsProfile(uid);
+    }
+    function socialTargetReadable(id) {
+      return (
+        exists(/databases/$(database)/documents/publicacoes/$(id)) &&
+        get(/databases/$(database)/documents/publicacoes/$(id)).data.aprovado == true &&
+        canReadSocialOwner(
+          get(/databases/$(database)/documents/publicacoes/$(id)).data.ownerUid,
+          get(/databases/$(database)/documents/publicacoes/$(id)).data.get('visibilidade','privado')
+        )
+      ) || (
+        exists(/databases/$(database)/documents/videos/$(id)) &&
+        get(/databases/$(database)/documents/videos/$(id)).data.aprovado == true &&
+        canReadSocialOwner(
+          get(/databases/$(database)/documents/videos/$(id)).data.ownerUid,
+          get(/databases/$(database)/documents/videos/$(id)).data.get('visibilidade','privado')
+        )
+      );
+    }
+    function socialTargetAllowed(id) {
+      return signedIn() && socialTargetReadable(id) && !isBlocked(request.auth.uid,targetOwner(id));
+    }
+    function storyReadable(id) {
+      return exists(/databases/$(database)/documents/stories/$(id))
+        && get(/databases/$(database)/documents/stories/$(id)).data.aprovado == true
+        && canReadSocialOwner(
+          get(/databases/$(database)/documents/stories/$(id)).data.ownerUid,
+          get(/databases/$(database)/documents/stories/$(id)).data.get('visibilidade','privado')
+        );
     }
     function conversationParticipant(cid) {
       return signedIn()
@@ -225,7 +256,7 @@ service cloud.firestore {
     }
 
     match /destaques/{uid}/itens/{highlightId} {
-      allow read: if true;
+      allow read: if canReadSocialOwner(uid, profilePrivate(uid) ? 'privado' : 'publico');
       allow create: if isOwner(uid)
         && request.resource.data.ownerUid == uid
         && request.resource.data.titulo is string && request.resource.data.titulo.size() >= 1 && request.resource.data.titulo.size() <= 30
@@ -296,13 +327,14 @@ service cloud.firestore {
 
     match /campeonatos/{campeonatoId} { allow read: if isAdmin() || resource.data.publicado == true; allow create, update, delete: if isAdmin(); }
     match /campeonatos_pendentes/{campeonatoId} {
-      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
-        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','publicado','status','aprovacao','criadoEm'])
+      allow create: if request.resource.data.keys().hasAll(['nome','organizador','data','local','descricao','imagem','linkOrganizador','publicado','status','aprovacao','criadoEm'])
+        && request.resource.data.keys().hasOnly(['nome','organizador','data','local','descricao','imagem','linkOrganizador','publicado','status','aprovacao','criadoEm'])
         && request.resource.data.nome is string && request.resource.data.nome.size() >= 2 && request.resource.data.nome.size() <= 100
         && request.resource.data.organizador is string && request.resource.data.organizador.size() >= 2 && request.resource.data.organizador.size() <= 100
         && request.resource.data.data is string && request.resource.data.data.size() >= 8 && request.resource.data.data.size() <= 20
         && request.resource.data.local is string && request.resource.data.local.size() >= 2 && request.resource.data.local.size() <= 120
         && request.resource.data.descricao is string && request.resource.data.descricao.size() <= 700
+        && request.resource.data.get('linkOrganizador','') is string && request.resource.data.get('linkOrganizador','').size() <= 500
         && request.resource.data.imagem is string && request.resource.data.imagem.size() <= 850000
         && request.resource.data.publicado == false && request.resource.data.status == 'pendente' && request.resource.data.aprovacao == 'pendente'
         && request.resource.data.criadoEm is string && request.resource.data.criadoEm.size() >= 10 && request.resource.data.criadoEm.size() <= 40;
@@ -365,13 +397,15 @@ service cloud.firestore {
     }
 
     match /publicacoes/{publicacaoId} {
-      allow read: if resource.data.aprovado == true || isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado'));
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.get('ownerEmail','') == authEmail()
         && request.resource.data.imagemUrl is string && request.resource.data.imagemUrl.size() <= 2000
         && request.resource.data.legenda is string && request.resource.data.legenda.size() <= 2200
         && request.resource.data.tipo in ['imagem','carrossel']
+        && request.resource.data.visibilidade in ['publico','privado']
+        && ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))
         && request.resource.data.aprovado == true && request.resource.data.status == 'publicado'
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.get('nome','Atleta') is string && request.resource.data.get('nome','Atleta').size() <= 100
@@ -384,13 +418,14 @@ service cloud.firestore {
         && ((request.resource.data.tipo == 'imagem' && request.resource.data.get('midias',[]).size() == 0) || (request.resource.data.tipo == 'carrossel' && request.resource.data.get('midias',[]).size() >= 2))
         && request.resource.data.get('hashtags',[]) is list && request.resource.data.get('hashtags',[]).size() <= 30
         && request.resource.data.get('mencoes',[]) is list && request.resource.data.get('mencoes',[]).size() <= 20
-        && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath','imagemMime','imagemTamanho','legenda','tipo','midias','hashtags','mencoes','armazenamento','aprovado','status','criadoEm']);
-      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','texto','hashtags','mencoes']));
+        && request.resource.data.keys().hasOnly(['ownerUid','ownerEmail','nome','texto','imagem','imagemUrl','imagemPath','imagemMime','imagemTamanho','legenda','tipo','midias','hashtags','mencoes','armazenamento','visibilidade','aprovado','status','criadoEm']);
+      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','texto','hashtags','mencoes','visibilidade'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['visibilidade']) || ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))));
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 
     match /comentarios_publicacoes/{comentarioId} {
-      allow read: if resource.data.aprovado == true || isAdmin();
+      allow read: if isAdmin() || (resource.data.aprovado == true && socialTargetReadable(resource.data.publicacaoId));
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.ownerEmail == authEmail()
@@ -406,7 +441,7 @@ service cloud.firestore {
     }
 
     match /curtidas_publicacoes/{publicacaoId}/usuarios/{uid} {
-      allow read: if true;
+      allow read: if socialTargetReadable(publicacaoId);
       allow create: if isOwner(uid) && request.resource.data.keys().hasOnly(['uid','criadoEm']) && request.resource.data.uid == uid && request.resource.data.criadoEm is timestamp && socialTargetAllowed(publicacaoId);
       allow delete: if isOwner(uid); allow update: if false;
     }
@@ -428,24 +463,28 @@ service cloud.firestore {
     }
 
     match /stories/{storyId} {
-      allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado'));
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.keys().hasAll(['ownerUid','mediaUrl','legenda','tipo','criadoEm','expiraEm','aprovado','status'])
-        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo','criadoEm','expiraEm','aprovado','status'])
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo','visibilidade','criadoEm','expiraEm','aprovado','status'])
         && request.resource.data.get('nome','Atleta') is string && request.resource.data.get('nome','Atleta').size() <= 100
         && request.resource.data.mediaUrl is string && request.resource.data.mediaUrl.size() <= 2000
         && request.resource.data.get('mediaPath','') is string && request.resource.data.get('mediaPath','').size() <= 1000
         && request.resource.data.get('mediaType', request.resource.data.tipo) in ['image','video']
         && request.resource.data.legenda is string && request.resource.data.legenda.size() <= 2200
         && request.resource.data.tipo in ['image','video']
+        && request.resource.data.visibilidade in ['publico','privado']
+        && ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))
         && request.resource.data.criadoEm is timestamp && request.resource.data.expiraEm is timestamp && request.resource.data.expiraEm > request.resource.data.criadoEm
         && request.resource.data.aprovado == true && request.resource.data.status == 'publicado';
-      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda']));
+      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','visibilidade'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['visibilidade']) || ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))));
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
     match /story_views/{storyId}/usuarios/{viewerUid} {
       allow read: if isAdmin() || isOwner(viewerUid) || (signedIn() && exists(/databases/$(database)/documents/stories/$(storyId)) && get(/databases/$(database)/documents/stories/$(storyId)).data.ownerUid == request.auth.uid);
       allow create, update: if isOwner(viewerUid)
+        && storyReadable(storyId)
         && request.resource.data.viewerUid == viewerUid
         && request.resource.data.viewedAt is timestamp
         && request.resource.data.keys().hasOnly(['viewerUid','viewedAt']);
@@ -453,19 +492,22 @@ service cloud.firestore {
     }
 
     match /videos/{videoId} {
-      allow read: if isAdmin() || resource.data.aprovado == true || (signedIn() && resource.data.ownerUid == request.auth.uid);
+      allow read: if resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado'));
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.videoUrl is string && request.resource.data.videoUrl.size() <= 2000
         && request.resource.data.get('videoPath','') is string && request.resource.data.get('videoPath','').size() <= 1000
         && request.resource.data.get('videoMime','video/mp4') in ['video/mp4','video/webm','video/quicktime']
         && request.resource.data.get('videoTamanho',0) is number && request.resource.data.get('videoTamanho',0) >= 0 && request.resource.data.get('videoTamanho',0) <= 45 * 1024 * 1024
         && request.resource.data.get('legenda','') is string && request.resource.data.get('legenda','').size() <= 2200
+        && request.resource.data.visibilidade in ['publico','privado']
+        && ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))
         && request.resource.data.get('hashtags',[]) is list && request.resource.data.get('hashtags',[]).size() <= 30
         && request.resource.data.get('mencoes',[]) is list && request.resource.data.get('mencoes',[]).size() <= 20
         && request.resource.data.criadoEm is timestamp
         && request.resource.data.aprovado == true && request.resource.data.status == 'publicado'
-        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho','legenda','hashtags','mencoes','aprovado','status','criadoEm']);
-      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','hashtags','mencoes']));
+        && request.resource.data.keys().hasOnly(['ownerUid','nome','videoUrl','videoPath','videoMime','videoTamanho','legenda','hashtags','mencoes','visibilidade','aprovado','status','criadoEm']);
+      allow update: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.aprovado == resource.data.aprovado && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['legenda','hashtags','mencoes','visibilidade'])
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['visibilidade']) || ((profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'privado') || (!profilePrivate(request.auth.uid) && request.resource.data.visibilidade == 'publico'))));
       allow delete: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid);
     }
 

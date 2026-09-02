@@ -169,3 +169,17 @@ requireText('meu-perfil.js','solicitacoes_planos','alteração de plano vira sol
 requireText('admin.js','cadastro-atleta-v11','aprovação base do atleta sem dados privados públicos');
 requireText('admin.js','cadastro-equipe-v11','aprovação base da equipe sem dados privados públicos');
 requireText('analytics.js','confiavel:false','analytics próprio marcado como telemetria');
+
+// V11 stage 2: privacidade, performance e PWA.
+requireText('firestore.rules','socialTargetReadable','leitura social protegida por privacidade');
+requireText('firestore.rules',"request.resource.data.visibilidade in ['publico','privado']",'visibilidade social obrigatória');
+requireText('home-social.js','where(\"visibilidade\",\"==\",\"publico\")','Home consulta apenas conteúdo público');
+requireText('social-network.js','where(\"visibilidade\",\"==\",\"publico\")','Stories globais consultam apenas conteúdo público');
+forbidText('social-v6.js','getDocs(collection(db,\"perfis\"))','diretório completo de perfis para menções');
+requireText('social-v6.js','collection(db,\"handles\")','menções resolvidas por índice de handles');
+requireText('cadastro-direto.js','sessionStorage.getItem(DRAFT_KEY)','rascunho sensível limitado à sessão');
+forbidText('cadastro-direto.js','localStorage.getItem(DRAFT_KEY)','rascunho persistente com dados sensíveis');
+requireText('firebase-app-check-v11.js','initializeAppCheck','cliente preparado para Firebase App Check');
+requireText('manifest.webmanifest','app-icon.svg','ícone instalável PWA');
+requireText('site-v8.js','og:image','imagem social para compartilhamento');
+requireText('campeonatos-public.js','linkOrganizador: link','link de campeonato estruturado');

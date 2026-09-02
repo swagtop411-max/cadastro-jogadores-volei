@@ -45,7 +45,7 @@ async function saveProfile(){
   const nascimento=$("birth").value,contato=$("contato").value.trim(),modalidade=$("modalidade").value.trim(),posicao=$("posicao").value.trim(),categoria=$("categoria").value,time=$("time").value.trim(),bio=$("bio").value.trim();
   const handle=profileHandle(nome,user.uid),instagramUrl=String(profile?.instagramUrl||"").slice(0,300);
   const usuarioRef=doc(db,"usuarios",user.uid),usuarioSnap=await getDoc(usuarioRef),base=usuarioSnap.exists()?usuarioSnap.data():{};
-  await setDoc(usuarioRef,{uid:user.uid,nome,email:user.email||base.email||"",papel:base.papel||"usuario",status:base.status||"ativo",criadoEm:base.criadoEm||serverTimestamp(),atualizadoEm:serverTimestamp(),nascimento,cidade,uf,modalidade,posicao,categoria,time,contato,bio,historicoCampeonatos,fotoUrl,fotoPath,capaUrl,capaPath,instagramUrl},{merge:true});
+  const usuarioPayload={uid:user.uid,nome,email:user.email||base.email||"",papel:base.papel||"usuario",status:base.status||"ativo",atualizadoEm:serverTimestamp(),nascimento,cidade,uf,modalidade,posicao,categoria,time,contato,bio,historicoCampeonatos,fotoUrl,fotoPath,capaUrl,capaPath,instagramUrl};if(!usuarioSnap.exists())usuarioPayload.criadoEm=serverTimestamp();await setDoc(usuarioRef,usuarioPayload,{merge:true});
   const antigoHandle=String(profile?.handle||"");
   const perfilPublico={uid:user.uid,nome,cidade,uf,modalidade,posicao,categoria,time,bio,fotoUrl,fotoPath,capaUrl,capaPath,historicoCampeonatos,handle,instagramUrl};
   await setDoc(doc(db,"perfis",user.uid),perfilPublico,{merge:true});

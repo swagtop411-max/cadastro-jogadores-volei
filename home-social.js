@@ -41,7 +41,7 @@ function setupVisibleHydration(items){hydrationObserver?.disconnect();hydrationO
 function resetPersonalHydration(){liked=new Set();saved=new Set();personalHydrated.clear();personalInflight.clear()}
 
 async function loadContent(){
- const loadCollection=async(name,max)=>{try{return await getDocs(query(collection(db,name),where("aprovado","==",true),orderBy("criadoEm","desc"),limit(max)))}catch{return getDocs(query(collection(db,name),where("aprovado","==",true),limit(max)))}};
+ const loadCollection=async(name,max)=>{try{return await getDocs(query(collection(db,name),where("aprovado","==",true),where("visibilidade","==","publico"),orderBy("criadoEm","desc"),limit(max)))}catch{return getDocs(query(collection(db,name),where("aprovado","==",true),where("visibilidade","==","publico"),limit(max)))}};
  const[p,v]=await Promise.all([loadCollection("publicacoes",18).catch(()=>({docs:[]})),loadCollection("videos",8).catch(()=>({docs:[]}))]);
  posts=p.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.status!=="removido");videos=v.docs.map(d=>({id:d.id,...d.data(),_kind:"video"})).filter(x=>x.status!=="removido")
 }

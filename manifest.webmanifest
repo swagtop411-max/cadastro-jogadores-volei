@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Banco de Dados de Atletas",
   "short_name": "Banco de Atletas",
   "description": "Rede esportiva para atletas, equipes, campeonatos e oportunidades do vôlei.",
@@ -8,5 +9,34 @@
   "display": "standalone",
   "background_color": "#e9eff5",
   "theme_color": "#071827",
-  "orientation": "any"
+  "orientation": "any",
+  "categories": [
+    "sports",
+    "social"
+  ],
+  "icons": [
+    {
+      "src": "/assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Feed",
+      "short_name": "Feed",
+      "url": "/#feed"
+    },
+    {
+      "name": "Atletas",
+      "short_name": "Atletas",
+      "url": "/atletas.html"
+    },
+    {
+      "name": "Campeonatos",
+      "short_name": "Campeonatos",
+      "url": "/proximos-campeonatos.html"
+    }
+  ]
 }

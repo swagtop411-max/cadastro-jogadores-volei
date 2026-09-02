@@ -23,8 +23,8 @@ async function searchTag(tag){
  const grid=$("tagGrid"),status=$("tagStatus"),count=$("tagCount");grid.innerHTML='<div class="tag-empty">Buscando na rede...</div>';status.textContent=`Buscando #${tag}...`;count.textContent="";
  try{
   const [p,v]=await Promise.all([
-   getDocs(query(collection(db,"publicacoes"),where("aprovado","==",true),limit(150))),
-   getDocs(query(collection(db,"videos"),where("aprovado","==",true),limit(100)))
+   getDocs(query(collection(db,"publicacoes"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(150))),
+   getDocs(query(collection(db,"videos"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(100)))
   ]);
   const candidates=[...p.docs.map(d=>({id:d.id,kind:"post",...d.data()})),...v.docs.map(d=>({id:d.id,kind:"video",...d.data()}))].filter(x=>x.status!=="removido"&&tagsOf(x).includes(tag)).sort((a,b)=>ms(b.criadoEm)-ms(a.criadoEm));
   const filtered=[];for(const item of candidates)if(await visible(item))filtered.push(item);results=filtered;

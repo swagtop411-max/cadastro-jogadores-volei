@@ -82,7 +82,7 @@ async function render(){
 
 async function load(){
   try{
-    const snap=await getDocs(query(collection(db,"videos"),where("aprovado","==",true),limit(120)));
+    const snap=await getDocs(query(collection(db,"videos"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(120)));
     videos=snap.docs.map(d=>({id:d.id,...d.data()})).filter(v=>v.videoUrl&&v.ownerUid).sort((a,b)=>ms(b.criadoEm)-ms(a.criadoEm));
     await loadLiked();
     await render();

@@ -82,7 +82,8 @@ function ensureUI(){
 }
 
 async function readCollection(name){
-  const snap=await getDocs(collection(db,name));
+  const cap=["usuarios","atletas","perfis"].includes(name)?800:400;
+  const snap=await getDocs(query(collection(db,name),limit(cap)));
   return snap.docs.map(item=>({id:item.id,...item.data()}));
 }
 

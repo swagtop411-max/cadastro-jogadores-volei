@@ -50,8 +50,8 @@ async function load(){
   try{
     const [profilesSnap,postsSnap,videosSnap]=await Promise.all([
       getDocs(query(collection(db,"perfis"),limit(160))),
-      getDocs(query(collection(db,"publicacoes"),where("aprovado","==",true),limit(160))),
-      getDocs(query(collection(db,"videos"),where("aprovado","==",true),limit(100)))
+      getDocs(query(collection(db,"publicacoes"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(160))),
+      getDocs(query(collection(db,"videos"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(100)))
     ]);
     profiles=profilesSnap.docs.map(d=>({uid:d.id,...d.data()})).sort((a,b)=>String(a.nome||"").localeCompare(String(b.nome||""),"pt-BR"));
     const posts=postsSnap.docs.map(d=>{const x=d.data();return{id:d.id,kind:"image",ownerUid:x.ownerUid||"",nome:x.nome||"",url:x.imagemUrl||x.imagem||"",caption:x.legenda||x.texto||"",createdAt:x.criadoEm}}).filter(x=>x.url&&x.ownerUid);

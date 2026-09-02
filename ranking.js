@@ -1,6 +1,6 @@
 import "./site-v5.js?v=20260901-5";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, getDocs, getFirestore, limit, query } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const cfg = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
@@ -48,6 +48,7 @@ function points(value) {
 let athletes = [];
 let filters = { year: "", category: "", modality: "" };
 let loadPromise = null;
+const RANK_CACHE_KEY="bd_ranking_v11",RANK_CACHE_MS=5*60*1000;
 let lastFocused = null;
 let savedOverflow = "";
 
@@ -195,9 +196,11 @@ async function loadRanking() {
   if (loadPromise) return loadPromise;
   loadPromise = (async () => {
     try {
+      let cached=null;try{cached=JSON.parse(sessionStorage.getItem(RANK_CACHE_KEY)||"null")}catch{}
+      if(cached?.at&&Date.now()-cached.at<RANK_CACHE_MS&&Array.isArray(cached.athletes)){athletes=cached.athletes;buildFilters();render();return}
       const [athletesSnap, profilesSnap] = await Promise.all([
-        getDocs(collection(db, "atletas")),
-        getDocs(collection(db, "perfis"))
+        getDocs(query(collection(db, "atletas"),limit(1000))),
+        getDocs(query(collection(db, "perfis"),limit(1000)))
       ]);
       const profiles = profilesSnap.docs.map(d => ({ id: d.id, ...(d.data() || {}) }));
       const byUid = new Map(profiles.map(p => [String(p.uid || p.id), p]));
@@ -235,6 +238,7 @@ async function loadRanking() {
           historicoCampeonatos: dedupeHistory(history)
         });
       }
+      try{sessionStorage.setItem(RANK_CACHE_KEY,JSON.stringify({at:Date.now(),athletes}))}catch{}
       buildFilters();
       render();
     } catch (error) {

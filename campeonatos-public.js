@@ -122,6 +122,7 @@ async function carregar() {
     box.innerHTML = campeonatos.length
       ? campeonatos.map(item => {
           const parsed = extractLink(item.descricao);
+          parsed.link = safeUrl(item.linkOrganizador || parsed.link);
           const image = feedImageUrl(item.imagem || "");
           const media = parsed.link
             ? `<a class="champ-image-link" href="${esc(parsed.link)}" target="_blank" rel="noopener noreferrer" aria-label="Abrir página do organizador de ${esc(item.nome || "campeonato")}"><img class="champ-image" src="${esc(image)}" alt="Cartaz de ${esc(item.nome || "campeonato")}" loading="lazy" decoding="async"></a>`
@@ -264,6 +265,7 @@ async function submit(event) {
       data,
       local,
       descricao: embedLink(descricao, link),
+      linkOrganizador: link,
       imagem: upload.url,
       publicado: false,
       status: "pendente",

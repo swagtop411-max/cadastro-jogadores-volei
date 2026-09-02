@@ -124,11 +124,14 @@ async function renderInboxDocs(docs) {
   const list = document.getElementById("snInboxList");
   if (!list || !currentUser) return;
   const rows = [];
-  for (const d of docs.sort((a,b)=>millis(b.data().lastMessageAt)-millis(a.data().lastMessageAt))) {
+  const sorted=docs.sort((a,b)=>millis(b.data().lastMessageAt)-millis(a.data().lastMessageAt));
+  const otherUids=[...new Set(sorted.map(d=>(d.data().participants||[]).find(x=>x!==currentUser.uid)).filter(Boolean))];
+  await Promise.all(otherUids.map(profileOf));
+  for (const d of sorted) {
     const data = d.data();
     const otherUid = (data.participants || []).find(x => x !== currentUser.uid);
     if (!otherUid) continue;
-    const p = await profileOf(otherUid);
+    const p = profileCache.get(otherUid)||await profileOf(otherUid);
     const unread = data.lastSenderUid && data.lastSenderUid !== currentUser.uid && !(data.lastReadBy || []).includes(currentUser.uid);
     rows.push(`<div class="sn-row${unread ? " unread" : ""}" data-sn-conversation="${esc(d.id)}" data-sn-other="${esc(otherUid)}"><img src="${esc(p.fotoUrl || fallbackAvatar)}" alt=""><div class="sn-row-main"><strong>${esc(p.nome || "Atleta")}</strong><span>${esc(data.lastMessage || "Inicie uma conversa")}</span></div><time>${data.lastMessageAt ? new Date(millis(data.lastMessageAt)).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}) : ""}</time></div>`);
   }
@@ -282,7 +285,7 @@ export async function getActiveStories({ownerUid="",max=40}={}){
   try{
     let q;
     if(ownerUid)q=query(collection(socialDb,"stories"),where("ownerUid","==",ownerUid),where("aprovado","==",true),limit(max));
-    else q=query(collection(socialDb,"stories"),where("aprovado","==",true),limit(max));
+    else q=query(collection(socialDb,"stories"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(max));
     const snap=await getDocs(q),now=Date.now();
     return snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>!millis(x.expiraEm)||millis(x.expiraEm)>now).sort((a,b)=>millis(a.criadoEm)-millis(b.criadoEm));
   }catch(e){console.warn("Stories:",e);return[]}
