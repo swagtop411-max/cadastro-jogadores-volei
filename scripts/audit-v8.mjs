@@ -14,7 +14,7 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
- 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js','admin-v8-hardening.js','firestore.rules'
+ 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js','admin-v8-hardening.js','admin-claims-v9.js','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
 // Recursos V8 solicitados.
@@ -38,6 +38,18 @@ requireText('site-v8.css','.v8-home-grid','layout V8 da Home');
 requireText('home-social.js','feedImageUrl','feed usa imagem derivada otimizada');
 requireText('home-social.js','IntersectionObserver','feed hidrata interações por visibilidade');
 requireText('sw.js','request.mode==="navigate"','cache de navegação controlado');
+
+// Reivindicação de perfis e diagnóstico administrativo.
+requireText('reivindicacao.js','claimReturnUrl','retorno automático ao perfil antigo');
+requireText('reivindicacao.js','claim=1','marcador de reivindicação após autenticação');
+requireText('reivindicacao.js','deterministicTaken','nova tentativa após reivindicação recusada');
+requireText('conta.js','safeReturnDestination(returnTarget)','cadastro de conta respeita retorno da reivindicação');
+requireText('conta.js','Voltando ao perfil para concluir sua reivindicação','mensagem de retorno após criação de conta');
+requireText('admin-claims-v9.js','CONTAS CADASTRADAS / UIDs','central administrativa de UIDs');
+requireText('admin-claims-v9.js','PERFIS ANTIGOS SEM DONO','lista de perfis legados sem ownerUid');
+requireText('admin-claims-v9.js','vinculoUid','preenchimento assistido do vínculo manual');
+requireText('site-v7-autoload.js','admin-claims-v9.js','central de UIDs carregada no ADM');
+requireText('firestore.rules','match /reivindicacoes_perfis/{claimId}','regras de reivindicação presentes');
 
 // Fluxos novos não podem voltar ao Firebase Storage/base64 destrutivo.
 for(const file of ['cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','comunidade.js']){
