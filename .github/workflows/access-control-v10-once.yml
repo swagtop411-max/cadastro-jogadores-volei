@@ -1,0 +1,84 @@
+name: One-time access control V10 rules patch
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/access-control-v10-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Patch access audit rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('firestore.rules')
+          text=path.read_text(encoding='utf-8')
+
+          old="""          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId'\n        ]);"""
+          new="""          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId',\n          'ultimoLoginEm','ultimoAcessoEm','totalLogins','emailVerificado','provedor','ultimaPlataforma'\n        ]);"""
+          count=text.count(old)
+          if count != 2:
+              raise SystemExit(f'Expected 2 usuario allowlists, found {count}')
+          text=text.replace(old,new)
+
+          anchor="""      allow delete: if isAdmin();\n    }\n\n    match /perfis/{uid} {"""
+          access="""      allow delete: if isAdmin();\n    }\n\n    match /access_logs/{eventId} {\n      allow read, delete: if isAdmin();\n      allow create: if signedIn()\n        && request.resource.data.uid == request.auth.uid\n        && request.resource.data.email == authEmail()\n        && request.resource.data.nome is string && request.resource.data.nome.size() <= 100\n        && request.resource.data.tipo in ['cadastro','login','sessao']\n        && request.resource.data.plataforma in ['web','app']\n        && request.resource.data.dispositivo is string && request.resource.data.dispositivo.size() <= 30\n        && request.resource.data.pagina is string && request.resource.data.pagina.size() <= 200\n        && request.resource.data.criadoEm is timestamp\n        && request.resource.data.keys().hasOnly(['uid','email','nome','tipo','plataforma','dispositivo','pagina','criadoEm']);\n      allow update: if false;\n    }\n\n    match /perfis/{uid} {"""
+          if text.count(anchor) != 1:
+              raise SystemExit('Could not locate unique usuarios/perfis insertion point')
+          text=text.replace(anchor,access,1)
+          path.write_text(text,encoding='utf-8')
+          print('Access-control V10 rules patched.')
+          PY
+
+      - name: Verify patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "match /access_logs/{eventId}" firestore.rules
+          grep -q "'ultimoLoginEm','ultimoAcessoEm','totalLogins'" firestore.rules
+          grep -q "request.resource.data.tipo in \['cadastro','login','sessao'\]" firestore.rules
+          grep -q "allow update: if false" firestore.rules
+
+      - name: Compile Firebase rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.1.0 emulators:exec \
+            --project demo-cadastro-atletas \
+            --only firestore,storage \
+            "node -e \"console.log('Access-control V10 rules compiled successfully')\""
+
+      - name: Commit rules patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add firestore.rules
+          git diff --cached --quiet && exit 0
+          git commit -m "security: registrar acessos autenticados com leitura exclusiva do ADM"
+          git push
