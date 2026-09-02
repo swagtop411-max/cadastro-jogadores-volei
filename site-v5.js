@@ -1,3 +1,4 @@
+await import("./firebase-app-check-v11.js?v=20260902-2");
 const THEME_VERSION="20260901-9";
 const MENU_ID="siteMenuDrawer";
 const MENU_TRIGGER_ID="siteMenuTrigger";
