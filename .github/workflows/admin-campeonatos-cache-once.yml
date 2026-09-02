@@ -1,0 +1,45 @@
+name: One-time admin campeonatos cache bump
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/admin-campeonatos-cache-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+
+      - name: Atualizar versão do módulo de campeonatos ADM
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path=Path('admin.html')
+          text=path.read_text(encoding='utf-8')
+          old='campeonatos-admin.js?v=20260828-3'
+          new='campeonatos-admin.js?v=20260902-4'
+          if old not in text:
+              raise SystemExit('Versão antiga do campeonatos-admin.js não encontrada em admin.html')
+          path.write_text(text.replace(old,new,1),encoding='utf-8')
+          print('admin.html atualizado para campeonatos-admin.js?v=20260902-4')
+          PY
+
+      - name: Commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add admin.html
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: forçar módulo atualizado de campeonatos no ADM"
+          git push
