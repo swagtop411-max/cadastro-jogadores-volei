@@ -41,11 +41,17 @@ jobs:
             node --check "$file"
           done < <(find . -maxdepth 3 -type f -name '*.js' -print0)
 
-      - name: Run V8 regression audit
+      - name: Run legacy regression audit
         shell: bash
         run: |
           set -euo pipefail
           node scripts/audit-v8.mjs
+
+      - name: Run V11 security and performance audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-v11.mjs
 
       - name: Validate JSON files
         shell: bash
@@ -79,11 +85,15 @@ jobs:
           grep -q "match /atletas/{atletaId}/privado/{documento}" firestore.rules
           grep -q "match /equipes/{equipeId}/privado/{documento}" firestore.rules
           grep -q "match /perfis/{uid}/privado/{documento}" firestore.rules
-          grep -q "approvedSocialTarget" firestore.rules
+          grep -q "socialTargetReadable" firestore.rules
+          grep -q "match /solicitacoes_planos/{uid}" firestore.rules
+          grep -q "match /site_stats/{eventId}" firestore.rules
+          grep -q "match /handles/{handle}" firestore.rules
           grep -q "match /conversas/{conversationId}" firestore.rules
           grep -q "match /notificacoes/{targetUid}/itens/{notificationId}" firestore.rules
           grep -q "match /story_views/{storyId}/usuarios/{viewerUid}" firestore.rules
           grep -q "match /salvos/{uid}/publicacoes/{postId}" firestore.rules
+          grep -q "request.resource.data.visibilidade in \['publico','privado'\]" firestore.rules
           grep -q "25 \* 1024 \* 1024" firestore.rules
           grep -q "allow update: if false" storage.rules
 
