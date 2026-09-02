@@ -17,7 +17,7 @@ function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`)
  'firestore.rules','storage.rules','cloudinary-upload.js','firebase-app-check-v11.js','auth-audit-v11.js',
  'admin-data-migration-v11.js','admin-commerce-v11.js','meu-perfil.js','cadastro-direto.js','cadastro-equipe.js',
  'campeonatos-public.js','campeonatos-admin.js','comunidade.js','home-social.js','social-network.js','social-v6.js',
- 'admin.js','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js'
+ 'admin.js','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js'
 ].forEach(requireFile);
 
 // Autoridade e privacidade.
@@ -32,6 +32,14 @@ forbidText('auth-audit-v11.js','totalLogins','cliente não incrementa contadores
 forbidText('auth-audit-v11.js','planoStatus','telemetria não altera plano');
 requireText('admin-commerce-v11.js','CONFIRMAR PAGAMENTO','pagamento confirmado pelo ADM');
 requireText('admin-data-migration-v11.js','migracao-v11','migração de legado disponível');
+
+// App Check Enterprise.
+requireText('firebase-app-check-v11.js','ReCaptchaEnterpriseProvider','provedor Enterprise');
+requireText('firebase-app-check-v11.js','isTokenAutoRefreshEnabled:true','renovação automática');
+requireText('firebase-app-check-v11.js','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR','site key pública configurada');
+forbidText('firebase-app-check-v11.js','ReCaptchaV3Provider','provedor V3 antigo');
+requireText('site-v5.js','firebase-app-check-v11.js?v=20260902-2','shell aguarda App Check');
+requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
 
 // Mídia e editor.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage legado no editor');
