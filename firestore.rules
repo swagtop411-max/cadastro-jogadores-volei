@@ -79,7 +79,8 @@ service cloud.firestore {
           'uid','nome','email','papel','status','criadoEm','atualizadoEm','nascimento','cidade','uf',
           'modalidade','modalidades','posicao','posicoes','categoria','time','contato','bio',
           'historicoCampeonatos','fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId',
-          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId'
+          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId',
+          'ultimoLoginEm','ultimoAcessoEm','totalLogins','emailVerificado','provedor','ultimaPlataforma'
         ]);
       allow update: if isOwner(uid)
         && request.resource.data.uid == resource.data.uid
@@ -89,9 +90,25 @@ service cloud.firestore {
           'uid','nome','email','papel','status','criadoEm','atualizadoEm','nascimento','cidade','uf',
           'modalidade','modalidades','posicao','posicoes','categoria','time','contato','bio',
           'historicoCampeonatos','fotoUrl','fotoPath','capaUrl','capaPath','plano','planoId',
-          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId'
+          'valorPlano','planoStatus','pagamentoConfirmado','legadoAtletaId',
+          'ultimoLoginEm','ultimoAcessoEm','totalLogins','emailVerificado','provedor','ultimaPlataforma'
         ]);
       allow delete: if isAdmin();
+    }
+
+    match /access_logs/{eventId} {
+      allow read, delete: if isAdmin();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email == authEmail()
+        && request.resource.data.nome is string && request.resource.data.nome.size() <= 100
+        && request.resource.data.tipo in ['cadastro','login','sessao']
+        && request.resource.data.plataforma in ['web','app']
+        && request.resource.data.dispositivo is string && request.resource.data.dispositivo.size() <= 30
+        && request.resource.data.pagina is string && request.resource.data.pagina.size() <= 200
+        && request.resource.data.criadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['uid','email','nome','tipo','plataforma','dispositivo','pagina','criadoEm']);
+      allow update: if false;
     }
 
     match /perfis/{uid} {
