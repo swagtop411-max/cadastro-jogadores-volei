@@ -1,3 +1,5 @@
+const APP_CHECK_BOOT=import('./firebase-app-check-v11.js?v=20260902-2').catch(error=>{console.warn('App Check V11:',error);return null});
+
 function ensureBaseHeader(){
   if(document.querySelector('.header')) return;
   const header=document.createElement('header');
@@ -7,8 +9,8 @@ function ensureBaseHeader(){
 }
 
 async function boot(){
+  await APP_CHECK_BOOT;
   ensureBaseHeader();
-  import('./firebase-app-check-v11.js?v=20260902-1').catch(error=>console.warn('App Check V11:',error));
   import('./auth-audit-v11.js?v=20260902-1').catch(error=>console.warn('Telemetria de sessão V11:',error));
   try{await import('./site-v5.js?v=20260901-9')}catch(error){console.error('Shell V8:',error)}
   if((location.pathname.split('/').pop()||'')==='admin.html'){
