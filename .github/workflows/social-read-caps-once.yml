@@ -1,0 +1,64 @@
+name: One-time social read caps
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/social-read-caps-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: true
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Patch exact social reads
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('social-network.js')
+          text=p.read_text(encoding='utf-8')
+          reps=[
+            ('const q = query(collection(socialDb, "conversas"), where("participants", "array-contains", currentUser.uid));','const q = query(collection(socialDb, "conversas"), where("participants", "array-contains", currentUser.uid), limit(200));'),
+            ('const snap = await getDocs(query(collection(socialDb,"conversas"),where("participants","array-contains",currentUser.uid)));','const snap = await getDocs(query(collection(socialDb,"conversas"),where("participants","array-contains",currentUser.uid),limit(200)));'),
+            ('unsubNotifications = onSnapshot(collection(socialDb,"notificacoes",currentUser.uid,"itens"), snap => {','unsubNotifications = onSnapshot(query(collection(socialDb,"notificacoes",currentUser.uid,"itens"),limit(150)), snap => {'),
+            ('try{const snap=await getDocs(collection(socialDb,"notificacoes",currentUser.uid,"itens"));await renderNotifications([...snap.docs]);}','try{const snap=await getDocs(query(collection(socialDb,"notificacoes",currentUser.uid,"itens"),limit(150)));await renderNotifications([...snap.docs]);}'),
+            ('export async function getActiveStories({ownerUid="",max=80}={}){','export async function getActiveStories({ownerUid="",max=40}={}){')
+          ]
+          for old,new in reps:
+            n=text.count(old)
+            if n!=1: raise SystemExit(f'Expected one exact match, got {n}: {old[:80]}')
+            text=text.replace(old,new,1)
+          p.write_text(text,encoding='utf-8')
+          print('Social read caps applied safely.')
+          PY
+      - name: Validate patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check social-network.js
+          grep -q 'array-contains", currentUser.uid), limit(200)' social-network.js
+          grep -q 'notificacoes",currentUser.uid,"itens"),limit(150)' social-network.js
+          grep -q 'getActiveStories({ownerUid="",max=40}' social-network.js
+          node scripts/audit-v8.mjs
+      - name: Commit social caps
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add social-network.js
+          git diff --cached --quiet && exit 0
+          git commit -m "perf: limitar leituras em tempo real da rede social"
+          git push
