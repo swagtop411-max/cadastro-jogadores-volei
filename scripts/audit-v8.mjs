@@ -36,6 +36,7 @@ requireText('site-v8.js','buildHomeRail','banners verticais de apoiadores');
 requireText('site-v8.js','ensureUtilityHost','host oculto de Direct/notificações');
 requireText('site-v8.css','.v8-home-grid','layout V8 da Home');
 requireText('home-social.js','feedImageUrl','feed usa imagem derivada otimizada');
+requireText('home-social.js','IntersectionObserver','feed hidrata interações por visibilidade');
 requireText('sw.js','request.mode==="navigate"','cache de navegação controlado');
 
 // Fluxos novos não podem voltar ao Firebase Storage/base64 destrutivo.
@@ -58,6 +59,16 @@ requireText('admin-v8-hardening.js','secureApproveTeam','aprovação segura de e
 requireText('campeonatos-admin.js','admin-v8-hardening.js','hardening carregado pelo painel ADM');
 forbidText('admin-v8-hardening.js','nascimento:String(a.nascimento||""),cidade','nascimento misturado no payload público');
 forbidText('admin-v8-hardening.js','responsavel:String(a.responsavel||""),uf','responsável misturado no payload público da equipe');
+
+const rules=read('firestore.rules');
+const athletePublicUpdate="'nome','cidade','uf','modalidades','posicoes','modalidade','posicao','categoria',\n          'time','historicoEquipes','historicoCampeonatos','observacoes','foto','ownerUid','atualizadoEm'";
+const teamPublicUpdate="affectedKeys().hasOnly(['nome','uf','cidade','modalidade','categoria','logo','atletas'])";
+rules.includes(athletePublicUpdate)?ok('firestore.rules: nascimento/e-mail fora da atualização pública de atleta'):fail('firestore.rules: allowlist pública endurecida do atleta ausente');
+rules.includes(teamPublicUpdate)?ok('firestore.rules: responsável fora da atualização pública de equipe'):fail('firestore.rules: allowlist pública endurecida da equipe ausente');
+if(rules.includes("'nome','nascimento','cidade','uf','modalidades','posicoes'"))fail('firestore.rules: nascimento voltou à allowlist pública do atleta');
+else ok('firestore.rules: nascimento não pode retornar ao documento público do atleta');
+if(rules.includes("affectedKeys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'])"))fail('firestore.rules: responsável voltou à allowlist pública da equipe');
+else ok('firestore.rules: responsável não pode retornar ao documento público da equipe');
 
 // Validação de referências locais em HTML e imports locais em JS.
 function normalizeRef(from,value){
