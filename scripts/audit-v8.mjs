@@ -27,6 +27,9 @@ requireText('cadastro-equipe.js','uploadCloudinary','logo de equipe usa Cloudina
 requireText('campeonatos-public.js','uploadCloudinary','cartaz usa Cloudinary');
 requireText('campeonatos-public.js','linkOrganizador','link do organizador');
 requireText('campeonatos-public.js','champ-image-link','imagem clicável do campeonato');
+requireText('campeonatos-public.js','const form = event.currentTarget instanceof HTMLFormElement','referência estável do formulário antes dos awaits');
+requireText('campeonatos-public.js','limparFormulario(form)','limpeza segura após salvar campeonato');
+forbidText('campeonatos-public.js','event.currentTarget.reset()','reset assíncrono inseguro do formulário');
 requireText('comunidade.js','uploadCloudinary','Comunidade usa Cloudinary');
 requireText('perfil-social.js','getUserMedia','câmera real no perfil');
 requireText('perfil-social.js','mountMessageButton','botão de mensagem no perfil');
