@@ -14,7 +14,8 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
- 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js','admin-v8-hardening.js','admin-claims-v9.js','reivindicacao.js','conta.js','firestore.rules'
+ 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js',
+ 'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v10.js','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
 // Recursos V8 solicitados.
@@ -51,6 +52,25 @@ requireText('admin-claims-v9.js','vinculoUid','preenchimento assistido do víncu
 requireText('site-v7-autoload.js','admin-claims-v9.js','central de UIDs carregada no ADM');
 requireText('firestore.rules','match /reivindicacoes_perfis/{claimId}','regras de reivindicação presentes');
 
+// V10: contas, acessos, duplicidades e unificação segura.
+requireText('auth-audit-v10.js','export async function recordAuthEvent','registrador central de eventos autenticados');
+requireText('auth-audit-v10.js','collection(db,"access_logs")','logs de acesso em coleção dedicada');
+requireText('auth-audit-v10.js','sessionStorage','sessão registrada uma vez por aba/sessão');
+requireText('conta.js','recordAuthEvent(credential.user, "login")','login sincronizado com painel ADM');
+requireText('conta.js','recordAuthEvent(user, "cadastro")','cadastro sincronizado com painel ADM');
+requireText('admin-profile-link-v10.js','export async function linkLegacyProfile','unificação segura de legado e perfil social');
+requireText('admin-profile-link-v10.js','event.stopImmediatePropagation()','bloqueio do handler legado quebrado');
+requireText('admin-profile-link-v10.js','ownerEmail:deleteField()','e-mail removido do documento público do atleta');
+requireText('admin-control-center-v10.js','Todas as contas cadastradas','painel geral de contas');
+requireText('admin-control-center-v10.js','UNIFICAR PERFIS','ação de unificação de duplicidades');
+requireText('admin-control-center-v10.js','plataforma = app','modelo preparado para futuro aplicativo');
+requireText('site-v7-autoload.js','auth-audit-v10.js','auditoria de sessão carregada globalmente');
+requireText('site-v7-autoload.js','admin-control-center-v10.js','centro de controle carregado no ADM');
+requireText('firestore.rules','match /access_logs/{eventId}','coleção de logs protegida por regras');
+requireText('firestore.rules',"request.resource.data.tipo in ['cadastro','login','sessao']",'tipos de evento permitidos');
+requireText('firestore.rules',"request.resource.data.plataforma in ['web','app']",'origem web/app validada');
+requireText('firestore.rules',"'ultimoLoginEm','ultimoAcessoEm','totalLogins'",'metadados de atividade permitidos em usuarios');
+
 // Fluxos novos não podem voltar ao Firebase Storage/base64 destrutivo.
 for(const file of ['cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','comunidade.js']){
  forbidText(file,'firebase-storage','Firebase Storage no fluxo novo');
@@ -80,7 +100,11 @@ rules.includes(teamPublicUpdate)?ok('firestore.rules: responsável fora da atual
 if(rules.includes("'nome','nascimento','cidade','uf','modalidades','posicoes'"))fail('firestore.rules: nascimento voltou à allowlist pública do atleta');
 else ok('firestore.rules: nascimento não pode retornar ao documento público do atleta');
 if(rules.includes("affectedKeys().hasOnly(['nome','responsavel','uf','cidade','modalidade','categoria','logo','atletas'])"))fail('firestore.rules: responsável voltou à allowlist pública da equipe');
-else ok('firestore.rules: responsável não pode retornar ao documento público da equipe');
+else ok('firestore.rules: responsável não pode retornar à allowlist pública da equipe');
+if(!rules.includes('match /access_logs/{eventId}'))fail('firestore.rules: coleção access_logs ausente');
+else ok('firestore.rules: access_logs presente');
+if(!rules.includes('allow read, delete: if isAdmin();'))fail('firestore.rules: leitura administrativa de auditoria ausente');
+else ok('firestore.rules: auditoria restrita ao ADM para leitura');
 
 // Validação de referências locais em HTML e imports locais em JS.
 function normalizeRef(from,value){
@@ -122,11 +146,11 @@ for(const file of ['firebase.json','appsscript.json','manifest.webmanifest']){
  try{JSON.parse(read(file));ok(`${file}: JSON válido`)}catch(error){fail(`${file}: JSON inválido (${error.message})`)}
 }
 
-console.log(`\nAUDITORIA V8: ${notes.length} verificações aprovadas`);
+console.log(`\nAUDITORIA V8/V10: ${notes.length} verificações aprovadas`);
 for(const line of notes)console.log(line);
 if(failures.length){
- console.error(`\nAUDITORIA V8 FALHOU: ${failures.length} problema(s)`);
+ console.error(`\nAUDITORIA V8/V10 FALHOU: ${failures.length} problema(s)`);
  for(const line of failures)console.error(`ERRO ${line}`);
  process.exit(1);
 }
-console.log('\nAUDITORIA V8 APROVADA ✓');
+console.log('\nAUDITORIA V8/V10 APROVADA ✓');
