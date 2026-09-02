@@ -142,7 +142,7 @@ async function renderInboxDocs(docs) {
 function watchInbox() {
   if (unsubInbox) { unsubInbox(); unsubInbox = null; }
   if (!currentUser) { setBadge("snInboxBadge", 0); return; }
-  const q = query(collection(socialDb, "conversas"), where("participants", "array-contains", currentUser.uid));
+  const q = query(collection(socialDb, "conversas"), where("participants", "array-contains", currentUser.uid), limit(200));
   unsubInbox = onSnapshot(q, snap => {
     const unread = snap.docs.filter(d => {
       const x=d.data(); return x.lastSenderUid && x.lastSenderUid !== currentUser.uid && !(x.lastReadBy||[]).includes(currentUser.uid);
@@ -160,7 +160,7 @@ export async function openInbox() {
   const list = document.getElementById("snInboxList");
   list.innerHTML = '<div class="sn-empty">Carregando conversas...</div>';
   try {
-    const snap = await getDocs(query(collection(socialDb,"conversas"),where("participants","array-contains",currentUser.uid)));
+    const snap = await getDocs(query(collection(socialDb,"conversas"),where("participants","array-contains",currentUser.uid),limit(200)));
     await renderInboxDocs([...snap.docs]);
   } catch (e) {
     console.error(e);
@@ -197,7 +197,7 @@ function notificationText(x) {
 function watchNotifications() {
   if (unsubNotifications) { unsubNotifications(); unsubNotifications = null; }
   if (!currentUser) { setBadge("snNotificationsBadge",0); return; }
-  unsubNotifications = onSnapshot(collection(socialDb,"notificacoes",currentUser.uid,"itens"), snap => {
+  unsubNotifications = onSnapshot(query(collection(socialDb,"notificacoes",currentUser.uid,"itens"),limit(150)), snap => {
     setBadge("snNotificationsBadge", snap.docs.filter(d=>d.data().lida!==true).length);
     if (document.getElementById("snNotificationsOverlay")?.classList.contains("open")) renderNotifications([...snap.docs]);
   }, err=>console.warn("Notificações realtime:",err));
@@ -219,7 +219,7 @@ export async function openNotifications(){
   ensureBaseUI(); if(!socialGate())return;
   const overlay=document.getElementById("snNotificationsOverlay");overlay.classList.add("open");
   const list=document.getElementById("snNotificationsList");list.innerHTML='<div class="sn-empty">Carregando...</div>';
-  try{const snap=await getDocs(collection(socialDb,"notificacoes",currentUser.uid,"itens"));await renderNotifications([...snap.docs]);}
+  try{const snap=await getDocs(query(collection(socialDb,"notificacoes",currentUser.uid,"itens"),limit(150)));await renderNotifications([...snap.docs]);}
   catch(e){console.error(e);list.innerHTML='<div class="sn-empty">Não foi possível carregar as notificações.</div>'}
 }
 
@@ -278,7 +278,7 @@ export function mountMessageButton(container, targetUid, targetName="Atleta", ta
   b.onclick=()=>openChatWith(targetUid,targetName,targetAvatar);container.appendChild(b);
 }
 
-export async function getActiveStories({ownerUid="",max=80}={}){
+export async function getActiveStories({ownerUid="",max=40}={}){
   try{
     let q;
     if(ownerUid)q=query(collection(socialDb,"stories"),where("ownerUid","==",ownerUid),where("aprovado","==",true),limit(max));
