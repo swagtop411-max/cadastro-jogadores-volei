@@ -41,7 +41,7 @@ requireText('sw.js','request.mode==="navigate"','cache de navegação controlado
 
 // Reivindicação de perfis e diagnóstico administrativo.
 requireText('reivindicacao.js','claimReturnUrl','retorno automático ao perfil antigo');
-requireText('reivindicacao.js','claim=1','marcador de reivindicação após autenticação');
+requireText('reivindicacao.js','url.searchParams.set("claim", "1")','marcador de reivindicação após autenticação');
 requireText('reivindicacao.js','deterministicTaken','nova tentativa após reivindicação recusada');
 requireText('conta.js','safeReturnDestination(returnTarget)','cadastro de conta respeita retorno da reivindicação');
 requireText('conta.js','Voltando ao perfil para concluir sua reivindicação','mensagem de retorno após criação de conta');
