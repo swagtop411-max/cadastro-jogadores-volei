@@ -1,3 +1,4 @@
+import { recordAuthEvent } from "./auth-audit-v10.js?v=20260902-1";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {
   createUserWithEmailAndPassword,
@@ -209,6 +210,7 @@ loginForm.addEventListener("submit", async (event) => {
 
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
+    await recordAuthEvent(credential.user, "login");
     setStatus(`Login realizado. Bem-vindo, ${credential.user.displayName || "atleta"}!`, "success");
     await goAfterLogin(credential.user);
   } catch (error) {
@@ -284,6 +286,7 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Não foi possível enviar o e-mail de verificação agora:", verificationError);
     }
 
+    await recordAuthEvent(user, "cadastro");
     showLogged(user);
     if (safeReturnDestination(returnTarget)) {
       setStatus("Conta criada! Voltando ao perfil para concluir sua reivindicação...", "success");
