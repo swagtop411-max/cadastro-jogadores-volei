@@ -39,7 +39,13 @@ jobs:
           while IFS= read -r -d '' file; do
             echo "Checking $file"
             node --check "$file"
-          done < <(find . -maxdepth 2 -type f -name '*.js' -print0)
+          done < <(find . -maxdepth 3 -type f -name '*.js' -print0)
+
+      - name: Run V8 regression audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-v8.mjs
 
       - name: Validate JSON files
         shell: bash
@@ -48,7 +54,7 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for path in [Path('firebase.json'), Path('appsscript.json')]:
+          for path in [Path('firebase.json'), Path('appsscript.json'), Path('manifest.webmanifest')]:
               if path.exists():
                   with path.open(encoding='utf-8') as f:
                       json.load(f)
@@ -70,6 +76,7 @@ jobs:
         run: |
           set -euo pipefail
           grep -q "pagamentoConfirmado', false) == false" firestore.rules
+          grep -q "match /atletas/{atletaId}/privado/{documento}" firestore.rules
           grep -q "match /equipes/{equipeId}/privado/{documento}" firestore.rules
           grep -q "match /perfis/{uid}/privado/{documento}" firestore.rules
           grep -q "approvedSocialTarget" firestore.rules
