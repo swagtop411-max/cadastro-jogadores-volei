@@ -10,7 +10,10 @@ async function boot(){
   ensureBaseHeader();
   try{await import('./site-v5.js?v=20260901-9')}catch(error){console.error('Shell V8:',error)}
   if((location.pathname.split('/').pop()||'')==='admin.html'){
-    import('./admin-v8-hardening.js?v=20260901-1').catch(error=>console.error('Admin V8:',error));
+    Promise.all([
+      import('./admin-v8-hardening.js?v=20260902-2'),
+      import('./admin-claims-v9.js?v=20260902-1')
+    ]).catch(error=>console.error('Admin V9:',error));
   }
 }
 
