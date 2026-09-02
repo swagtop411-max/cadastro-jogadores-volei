@@ -14,8 +14,8 @@ const ms=v=>v?.toMillis?.()??(v?.seconds?Number(v.seconds)*1000:new Date(v||0).g
 const slug=v=>String(v||"").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,28)||"atleta";
 const handleOf=p=>`${slug(p?.nome||"atleta")}-${String(p?.uid||p?.id||"").slice(0,4).toLowerCase()}`;
 const fallback="data:image/svg+xml;charset=UTF-8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180"><rect width="180" height="180" fill="#18221d"/><text x="90" y="110" text-anchor="middle" font-size="64">🏐</text></svg>');
-let user=auth.currentUser,directoryPromise=null,activeDirectOtherUid="",scheduleTimer=0,directDecorating=false;
-const profileCache=new Map(),privacyCache=new Map(),blockCache=new Map(),followCache=new Map(),carouselCache=new Map(),highlightCache=new Map();
+let user=auth.currentUser,activeDirectOtherUid="",scheduleTimer=0,directDecorating=false;
+const profileCache=new Map(),privacyCache=new Map(),blockCache=new Map(),followCache=new Map(),handleCache=new Map(),carouselCache=new Map(),highlightCache=new Map();
 
 function installStyles(){if($("socialV6Styles"))return;const s=document.createElement("style");s.id="socialV6Styles";s.textContent=`
 .v6-rich a{color:#f2cc72;text-decoration:none;font-weight:850}.v6-rich a:hover{text-decoration:underline}.v6-handle{display:block;margin:-2px 0 7px;color:#838c85;font:700 9px Arial}.v6-handle button{border:0;background:transparent;color:#9fa8a1;padding:0;font:inherit;cursor:pointer}.v6-private-chip{display:inline-flex;margin-left:7px;padding:3px 7px;border-radius:20px;background:#17211a;color:#f2cc72;font:800 7px Arial;vertical-align:middle}

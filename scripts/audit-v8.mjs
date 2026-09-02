@@ -176,10 +176,14 @@ requireText('firestore.rules',"request.resource.data.visibilidade in ['publico',
 requireText('home-social.js','where(\"visibilidade\",\"==\",\"publico\")','Home consulta apenas conteúdo público');
 requireText('social-network.js','where(\"visibilidade\",\"==\",\"publico\")','Stories globais consultam apenas conteúdo público');
 forbidText('social-v6.js','getDocs(collection(db,\"perfis\"))','diretório completo de perfis para menções');
-requireText('social-v6.js','collection(db,\"handles\")','menções resolvidas por índice de handles');
+requireText('social-v6.js','doc(db,\"handles\",key)','menções resolvidas por índice de handles');
 requireText('cadastro-direto.js','sessionStorage.getItem(DRAFT_KEY)','rascunho sensível limitado à sessão');
 forbidText('cadastro-direto.js','localStorage.getItem(DRAFT_KEY)','rascunho persistente com dados sensíveis');
 requireText('firebase-app-check-v11.js','initializeAppCheck','cliente preparado para Firebase App Check');
 requireText('manifest.webmanifest','app-icon.svg','ícone instalável PWA');
 requireText('site-v8.js','og:image','imagem social para compartilhamento');
 requireText('campeonatos-public.js','linkOrganizador: link','link de campeonato estruturado');
+
+console.log(`\nAUDITORIA V11 LEGADA: ${notes.length} verificações acumuladas`);
+if(failures.length){console.error(`AUDITORIA V11 LEGADA FALHOU: ${failures.length} problema(s)`);for(const line of failures)console.error(`ERRO ${line}`);process.exit(1)}
+console.log('AUDITORIA V11 LEGADA APROVADA ✓');
