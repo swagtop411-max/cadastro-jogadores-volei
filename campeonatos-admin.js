@@ -1,3 +1,4 @@
+import"./admin-v8-hardening.js?v=20260902-1";
 import{initializeApp,getApp,getApps}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{getFirestore,collection,getDoc,getDocs,doc,setDoc,updateDoc,deleteDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
