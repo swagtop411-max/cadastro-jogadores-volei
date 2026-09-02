@@ -14,7 +14,7 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
- 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','comunidade.js','perfil-social.js','public.js','home-social.js','admin-v8-hardening.js','firestore.rules'
+ 'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js','admin-v8-hardening.js','firestore.rules'
 ].forEach(requireFile);
 
 // Recursos V8 solicitados.
@@ -33,6 +33,7 @@ requireText('public.js','res.cloudinary.com','Cloudinary permitido nas listagens
 requireText('site-v8.js','setAdminUI(false)','ADM oculto por padrão');
 requireText('site-v8.js','ADMIN_EMAIL','validação administrativa');
 requireText('site-v8.js','buildHomeRail','banners verticais de apoiadores');
+requireText('site-v8.js','ensureUtilityHost','host oculto de Direct/notificações');
 requireText('site-v8.css','.v8-home-grid','layout V8 da Home');
 requireText('home-social.js','feedImageUrl','feed usa imagem derivada otimizada');
 requireText('sw.js','request.mode==="navigate"','cache de navegação controlado');
@@ -53,7 +54,10 @@ requireText('firestore.rules','match /perfis/{uid}/privado/{documento}','dados p
 requireText('firestore.rules','approvedSocialTarget','proteção de alvo social');
 requireText('firestore.rules','match /conversas/{conversationId}','regras do Direct');
 requireText('admin-v8-hardening.js','secureApprovePending','aprovação segura de atleta');
+requireText('admin-v8-hardening.js','secureApproveTeam','aprovação segura de equipe');
+requireText('campeonatos-admin.js','admin-v8-hardening.js','hardening carregado pelo painel ADM');
 forbidText('admin-v8-hardening.js','nascimento:String(a.nascimento||""),cidade','nascimento misturado no payload público');
+forbidText('admin-v8-hardening.js','responsavel:String(a.responsavel||""),uf','responsável misturado no payload público da equipe');
 
 // Validação de referências locais em HTML e imports locais em JS.
 function normalizeRef(from,value){
@@ -73,7 +77,6 @@ for(const file of htmlFiles){
  for(const match of source.matchAll(re)){
   const target=normalizeRef(file,match[1]);
   if(!target)continue;
-  // Âncoras podem apontar para rotas/arquivos; só cobramos arquivos com extensão local conhecida.
   if(!/\.(?:html|js|css|json|webmanifest|png|jpe?g|webp|svg|ico|txt|xml)$/i.test(target))continue;
   if(!fs.existsSync(target))fail(`${file}: referência local quebrada -> ${match[1]}`);
  }
@@ -91,7 +94,6 @@ for(const file of jsFiles){
  }
 }
 
-// Manifests e arquivos estruturados.
 for(const file of ['firebase.json','appsscript.json','manifest.webmanifest']){
  if(!exists(file))continue;
  try{JSON.parse(read(file));ok(`${file}: JSON válido`)}catch(error){fail(`${file}: JSON inválido (${error.message})`)}
