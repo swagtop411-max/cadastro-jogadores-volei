@@ -11,14 +11,26 @@
       "policy": "appVersion"
     },
     "android": {
-      "package": "br.com.cadastrodeatletas.app"
+      "package": "br.com.cadastrodeatletas.app",
+      "googleServicesFile": "./google-services.json"
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app"
     },
     "plugins": [
       "expo-router",
-      "expo-dev-client"
+      "expo-dev-client",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/app-check",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
