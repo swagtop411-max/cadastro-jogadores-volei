@@ -53,6 +53,12 @@ jobs:
           set -euo pipefail
           node scripts/audit-v11.mjs
 
+      - name: Report mobile P0 blockers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/audit-mobile-blockers.mjs
+
       - name: Test mobile organizer domain
         shell: bash
         run: |
