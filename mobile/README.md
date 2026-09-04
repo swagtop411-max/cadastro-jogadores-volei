@@ -96,8 +96,8 @@ Rotas secundárias futuras:
 - [ ] consolidar Firestore Rules de `perfis/{uid}`;
 - [ ] remover fallback de autorização ADM por e-mail;
 - [~] remover/rotacionar credenciais client-side nos legados;
-  - `mix-play-web`: correção aberta em branch/PR próprio;
-  - `Sorteio-de-times`: senha ainda bloqueia reutilização da interface legada;
+  - `mix-play-web`: PR #2 em validação;
+  - `Sorteio-de-times`: PR #1 corrige/testa o motor; senha da interface ainda bloqueia seu reaproveitamento;
 - [ ] migrar apoiadores base64 para Cloudinary;
 - [ ] criar upload Cloudinary assinado;
 - [ ] tornar billing server-owned;
