@@ -2,6 +2,8 @@
 
 Este diretório inicia a continuidade do aplicativo como **novo cliente do mesmo produto**, não como uma base isolada.
 
+> Acompanhe o andamento em `PHASE0_STATUS.md`.
+
 ## Princípios
 
 1. O app usa o mesmo projeto Firebase canônico da Web: `jogadores-de-volei`.
@@ -59,6 +61,7 @@ mobile/
   tests/
     organizer.test.mjs
   ADR-001-firebase-native.md
+  PHASE0_STATUS.md
   app.json
   package.json
   tsconfig.json
