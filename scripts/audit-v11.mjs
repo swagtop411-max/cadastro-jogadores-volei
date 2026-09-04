@@ -17,7 +17,8 @@ function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`)
  'firestore.rules','storage.rules','cloudinary-upload.js','firebase-app-check-v11.js','auth-audit-v11.js',
  'admin-data-migration-v11.js','admin-commerce-v11.js','meu-perfil.js','cadastro-direto.js','cadastro-equipe.js',
  'campeonatos-public.js','campeonatos-admin.js','comunidade.js','home-social.js','social-network.js','social-v6.js',
- 'admin.js','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js'
+ 'admin.js','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js',
+ 'profile-autosync-v13.js','admin-profile-browser-v13.js'
 ].forEach(requireFile);
 
 // Autoridade e privacidade.
@@ -84,8 +85,21 @@ requireText('admin-data-migration-v11.js','repairVisibility','reparo automático
 requireText('comunidade-admin.js','Promise.allSettled','comunidade ADM tolera falha parcial');
 requireText('public.js','const results=await Promise.allSettled','atletas toleram falha parcial');
 requireText('admin.js','const result=await Promise.allSettled','monetização tolera falha parcial');
-requireText('atletas.html','public.js?v=20260904-2','cache bust público atualizado');
+requireText('atletas.html','public.js?v=20260904-3','cache bust público V13 atualizado');
 for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','admin.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260904-2',`App Check antes de ${mod}`);
+
+// V13: conta sempre ganha identidade social mínima, sem inventar dados esportivos.
+requireText('firestore.rules','// V13_PERFIL_SOCIAL_BASICO','regra de perfil social básico');
+requireText('firestore.rules',"request.resource.data.get('completo',false) == false",'perfil incompleto permitido com validação');
+requireText('profile-autosync-v13.js','ensureSocialProfile','sincronização automática de conta para perfil');
+requireText('profile-autosync-v13.js','completo:false','perfil automático nasce incompleto');
+requireText('site-v5.js','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado globalmente');
+requireText('conta.js','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado no cadastro/login');
+requireText('meu-perfil.js','completo:true','perfil completo marcado ao salvar');
+requireText('public.js','profiles=[...profileMap.values()].filter(a=>a.nome&&normal(a.status)!=="inativo")','diretório inclui perfil básico sem cidade');
+requireText('admin-profile-browser-v13.js','CRIAR E ABRIR PERFIL','ADM pode criar e abrir perfil ausente');
+requireText('admin-profile-browser-v13.js','ABRIR PERFIL','ADM pode abrir perfil existente');
+requireText('site-v7-autoload.js','admin-profile-browser-v13.js?v=20260904-3','browser de perfil V13 carregado no ADM');
 
 // Aprovação segura sem campos pessoais no documento público.
 requireText('admin.js','cadastro-atleta-v11','aprovação segura de atleta na fonte');
@@ -103,10 +117,11 @@ forbidText('cloudinary-upload.js','api_secret','Cloudinary API secret no fronten
 for(const p of [
  '.github/workflows/social-read-caps-once.yml','.github/workflows/v11-core-hardening-once.yml',
  '.github/workflows/v11-core-hardening-retry.yml','.github/workflows/v11-core-hardening-final.yml',
- '.github/workflows/v11-stage2-once.yml','firestore-debug.log','scripts/apply-v11-core.py','scripts/apply-v11-stage2.py'
+ '.github/workflows/v11-stage2-once.yml','.github/workflows/apply-profile-v13-once.yml',
+ '.profile-v13-trigger','firestore-debug.log','scripts/apply-v11-core.py','scripts/apply-v11-stage2.py','scripts/apply-profile-v13.py'
 ]) exists(p)?fail(`resíduo temporário ainda existe: ${p}`):ok(`resíduo removido: ${p}`);
 
-console.log(`\nAUDITORIA V11: ${passes.length} verificações aprovadas`);
+console.log(`\nAUDITORIA V11/V13: ${passes.length} verificações aprovadas`);
 for(const line of passes)console.log(`OK ${line}`);
-if(failures.length){console.error(`\nAUDITORIA V11 FALHOU: ${failures.length} problema(s)`);for(const line of failures)console.error(`ERRO ${line}`);process.exit(1)}
-console.log('\nAUDITORIA V11 APROVADA ✓');
+if(failures.length){console.error(`\nAUDITORIA V11/V13 FALHOU: ${failures.length} problema(s)`);for(const line of failures)console.error(`ERRO ${line}`);process.exit(1)}
+console.log('\nAUDITORIA V11/V13 APROVADA ✓');
