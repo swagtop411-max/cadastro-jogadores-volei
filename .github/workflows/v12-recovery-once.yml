@@ -41,6 +41,12 @@ jobs:
           p.write_text(s,encoding='utf-8')
           PY
           python3 scripts/apply-v12.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/audit-v11.mjs')
+          s=p.read_text(encoding='utf-8').replace('firebase-app-check-v11.js?v=20260902-2','firebase-app-check-v11.js?v=20260904-2')
+          p.write_text(s,encoding='utf-8')
+          PY
 
       - name: Validate changed JavaScript
         shell: bash
