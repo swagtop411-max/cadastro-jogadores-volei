@@ -2,7 +2,9 @@
 
 Este diretório inicia a continuidade do aplicativo como **novo cliente do mesmo produto**, não como uma base isolada.
 
-> Acompanhe o andamento em `PHASE0_STATUS.md`.
+> Plano completo: `PLANO_MESTRE_APP_V1.md`.
+>
+> Acompanhe o andamento técnico em `PHASE0_STATUS.md`.
 
 ## Princípios
 
@@ -56,13 +58,19 @@ mobile/
       ScreenPlaceholder.tsx
     contracts/
       schema-v1.ts
+    core/
+      appEnvironment.ts
     domain/
       organizer.mjs
+    repositories/
+      contracts.ts
   tests/
     organizer.test.mjs
   ADR-001-firebase-native.md
   PHASE0_STATUS.md
+  PLANO_MESTRE_APP_V1.md
   app.json
+  eas.json
   package.json
   tsconfig.json
 ```
@@ -107,7 +115,10 @@ Rotas secundárias futuras:
 - [x] centralizar contratos de dados V1 em TypeScript;
 - [x] criar CI para testar o domínio mobile em PR;
 - [x] impedir deploy do GitHub Pages a partir de PR;
-- [x] iniciar workspace Expo Router com TypeScript estrito.
+- [x] iniciar workspace Expo Router com TypeScript estrito;
+- [x] adicionar plano mestre V1;
+- [x] adicionar perfis EAS development/preview/production;
+- [x] definir contratos de repositories.
 
 ## Sprint 1 — identidade Web ↔ App
 
@@ -116,7 +127,8 @@ Critério principal: uma conta criada no app deve aparecer imediatamente no site
 Entregas:
 
 - [x] workspace Expo + TypeScript + Expo Router iniciado;
-- [ ] ambientes dev/staging/prod;
+- [x] perfis de build development/preview/production definidos;
+- [ ] configuração Firebase nativa por ambiente;
 - [ ] React Native Firebase centralizado;
 - [ ] App Check mobile preparado;
 - [ ] login funcional;
