@@ -16,6 +16,19 @@ Data: 04/09/2026
 - [x] TypeScript estrito configurado;
 - [x] CI de PR com testes de domínio e typecheck;
 - [x] proteção para impedir deploy do Pages em PR;
+- [x] React Native Firebase App/Auth/Firestore/App Check instalado;
+- [x] Android registrado no Firebase com package `br.com.cadastrodeatletas.app`;
+- [x] `google-services.json` validado sem commitá-lo no repositório;
+- [x] EAS preparado para receber Firebase config como secret file;
+- [x] login mobile conectado ao Firebase Auth;
+- [x] cadastro mobile conectado ao Firebase Auth;
+- [x] recuperação de senha conectada ao Firebase Auth;
+- [x] logout e restauração de sessão implementados;
+- [x] criação/reparo de `usuarios/{uid}` integrada;
+- [x] criação/reparo de `perfis/{uid}` integrada;
+- [x] Meu Perfil lendo o Firestore pelo mesmo UID do site;
+- [x] App Check inicializado no código com debug/Play Integrity/App Attest fallback;
+- [x] CI verde após integração Firebase nativa;
 - [x] `mix-play-web` saneado em branch própria, removendo gate de senha client-side;
 - [x] `Sorteio-de-times` com motor corrigido/testado em branch própria.
 
@@ -34,16 +47,19 @@ Data: 04/09/2026
 - [ ] migrar imagens base64 de apoiadores para mídia externa;
 - [ ] criar testes Firestore allow/deny por cenário;
 - [ ] criar paginação/campos de busca mobile-friendly;
-- [ ] preparar App Check Play Integrity/App Attest;
+- [~] App Check mobile: código pronto; falta registrar debug token e configurar providers/enforcement no Firebase Console;
+- [ ] registrar app iOS no Firebase e fornecer `GoogleService-Info.plist`;
 - [ ] definir fluxo de exclusão de conta e dados;
 - [ ] criar backend de push e ações privilegiadas.
 
-## Próxima sequência de código
+## Próxima sequência de execução
 
-1. regras Firestore V15;
-2. testes de regras;
-3. módulo de roles/claims;
-4. configuração React Native Firebase;
-5. Auth real no app;
-6. teste Web ↔ App com mesmo UID;
-7. perfil e diretório paginado.
+1. confirmar Authentication > E-mail/Senha no Firebase Console;
+2. conectar o projeto ao Expo/EAS;
+3. cadastrar `GOOGLE_SERVICES_JSON` como file secret no EAS development;
+4. gerar primeiro Development Build Android;
+5. registrar App Check debug token do aparelho;
+6. testar cadastro/login/recuperação/perfil/logout no celular;
+7. confirmar Web ↔ App com mesmo UID;
+8. consolidar Firestore Rules e adicionar testes allow/deny;
+9. configurar iOS quando o Android estiver validado.
