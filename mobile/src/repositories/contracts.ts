@@ -44,7 +44,10 @@ export interface AccountRepository {
 export interface ProfileRepository {
   getByUid(uid: string): Promise<PublicProfileV1 | null>;
   ensureInitialProfile(input: Pick<PublicProfileV1, "uid" | "nome">): Promise<void>;
-  updateOwnProfile(uid: string, patch: Partial<PublicProfileV1>): Promise<void>;
+  updateOwnProfile(
+    uid: string,
+    patch: Partial<Omit<PublicProfileV1, "uid">>,
+  ): Promise<void>;
   listProfiles(input: {
     limit: number;
     cursor?: PageCursor | null;
