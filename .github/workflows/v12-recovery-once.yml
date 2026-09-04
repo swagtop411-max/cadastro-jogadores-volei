@@ -23,8 +23,22 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Apply V12 patch
-        run: python3 scripts/apply-v12.py
+      - name: Fix V12 matcher and apply patch
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('scripts/apply-v12.py')
+          s=p.read_text(encoding='utf-8')
+          pattern=r"social_read = .*?rules = rules\.replace\(social_read, social_read_admin\)"
+          replacement='''social_read = "      allow read: if resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get(\\'visibilidade\\',\\'privado\\'));"\nsocial_read_admin = "      allow read: if isAdmin() || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get(\\'visibilidade\\',\\'privado\\')));"\ncount = rules.count(social_read)\nrequire(count >= 3, f'esperava 3 regras sociais sem bypass ADM, encontrei {count}')\nrules = rules.replace(social_read, social_read_admin)'''
+          s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n != 1:
+              raise SystemExit(f'V12 matcher patch falhou: {n}')
+          p.write_text(s,encoding='utf-8')
+          PY
+          python3 scripts/apply-v12.py
 
       - name: Validate changed JavaScript
         shell: bash
