@@ -1,0 +1,1 @@
+Trigger temporário da recuperação V12. Remover após execução do workflow.
