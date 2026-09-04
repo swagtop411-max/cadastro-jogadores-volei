@@ -222,6 +222,109 @@ service cloud.firestore {
       allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
     }
 
+    // V13_PERFIL_SOCIAL_BASICO
+    // Toda conta pode possuir um perfil público mínimo antes de concluir os dados esportivos.
+    // completo=false aceita somente campos públicos vazios/limitados; completo=true exige cidade, UF e categoria válidas.
+    match /perfis/{uid} {
+      allow create: if (isOwner(uid) || isAdmin())
+        && request.resource.data.uid == uid
+        && request.resource.data.keys().hasOnly([
+          'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
+          'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos','handle','instagramUrl','completo'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.get('cidade','') is string
+        && request.resource.data.get('cidade','').size() <= 100
+        && request.resource.data.get('uf','') is string
+        && request.resource.data.get('uf','').size() <= 2
+        && request.resource.data.get('modalidade','') is string
+        && request.resource.data.get('modalidade','').size() <= 100
+        && request.resource.data.get('posicao','') is string
+        && request.resource.data.get('posicao','').size() <= 100
+        && request.resource.data.get('categoria','') is string
+        && request.resource.data.get('categoria','').size() <= 40
+        && request.resource.data.get('time','') is string
+        && request.resource.data.get('time','').size() <= 100
+        && request.resource.data.get('bio','') is string
+        && request.resource.data.get('bio','').size() <= 500
+        && request.resource.data.get('fotoUrl','') is string
+        && request.resource.data.get('fotoUrl','').size() <= 2000
+        && request.resource.data.get('fotoPath','') is string
+        && request.resource.data.get('fotoPath','').size() <= 1000
+        && request.resource.data.get('capaUrl','') is string
+        && request.resource.data.get('capaUrl','').size() <= 2000
+        && request.resource.data.get('capaPath','') is string
+        && request.resource.data.get('capaPath','').size() <= 1000
+        && request.resource.data.get('historicoCampeonatos',[]) is list
+        && request.resource.data.get('historicoCampeonatos',[]).size() <= 30
+        && request.resource.data.get('handle','') is string
+        && request.resource.data.get('handle','').size() <= 40
+        && request.resource.data.get('instagramUrl','') is string
+        && request.resource.data.get('instagramUrl','').size() <= 300
+        && request.resource.data.get('completo',false) is bool
+        && (
+          request.resource.data.get('completo',false) == false
+          || (
+            request.resource.data.cidade.size() >= 2
+            && validUf(request.resource.data.uf)
+            && validCategoria(request.resource.data.categoria)
+          )
+        );
+
+      allow update: if (isOwner(uid) || isAdmin())
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.keys().hasOnly([
+          'uid','nome','cidade','uf','modalidade','posicao','categoria','time','bio',
+          'fotoUrl','fotoPath','capaUrl','capaPath','historicoCampeonatos','handle','instagramUrl','completo'
+        ])
+        && request.resource.data.nome is string
+        && request.resource.data.nome.size() >= 2
+        && request.resource.data.nome.size() <= 100
+        && request.resource.data.get('cidade','') is string
+        && request.resource.data.get('cidade','').size() <= 100
+        && request.resource.data.get('uf','') is string
+        && request.resource.data.get('uf','').size() <= 2
+        && request.resource.data.get('modalidade','') is string
+        && request.resource.data.get('modalidade','').size() <= 100
+        && request.resource.data.get('posicao','') is string
+        && request.resource.data.get('posicao','').size() <= 100
+        && request.resource.data.get('categoria','') is string
+        && request.resource.data.get('categoria','').size() <= 40
+        && request.resource.data.get('time','') is string
+        && request.resource.data.get('time','').size() <= 100
+        && request.resource.data.get('bio','') is string
+        && request.resource.data.get('bio','').size() <= 500
+        && request.resource.data.get('fotoUrl','') is string
+        && request.resource.data.get('fotoUrl','').size() <= 2000
+        && request.resource.data.get('fotoPath','') is string
+        && request.resource.data.get('fotoPath','').size() <= 1000
+        && request.resource.data.get('capaUrl','') is string
+        && request.resource.data.get('capaUrl','').size() <= 2000
+        && request.resource.data.get('capaPath','') is string
+        && request.resource.data.get('capaPath','').size() <= 1000
+        && request.resource.data.get('historicoCampeonatos',[]) is list
+        && request.resource.data.get('historicoCampeonatos',[]).size() <= 30
+        && request.resource.data.get('handle','') is string
+        && request.resource.data.get('handle','').size() <= 40
+        && request.resource.data.get('instagramUrl','') is string
+        && request.resource.data.get('instagramUrl','').size() <= 300
+        && request.resource.data.get('completo',false) is bool
+        && (
+          (
+            resource.data.get('completo',false) == false
+            && request.resource.data.get('completo',false) == false
+          )
+          || (
+            request.resource.data.get('completo',false) == true
+            && request.resource.data.cidade.size() >= 2
+            && validUf(request.resource.data.uf)
+            && validCategoria(request.resource.data.categoria)
+          )
+        );
+    }
+
     match /config_perfis/{uid} {
       allow read: if true;
       allow create, update: if isOwner(uid)

@@ -12,7 +12,7 @@ async function boot(){
   await APP_CHECK_BOOT;
   ensureBaseHeader();
   import('./auth-audit-v11.js?v=20260904-2').catch(error=>console.warn('Telemetria de sessão V11:',error));
-  try{await import('./site-v5.js?v=20260904-2')}catch(error){console.error('Shell V8:',error)}
+  try{await import('./site-v5.js?v=20260904-3')}catch(error){console.error('Shell V8:',error)}
   if((location.pathname.split('/').pop()||'')==='admin.html'){
     Promise.all([
       import('./admin-v8-hardening.js?v=20260904-2'),
@@ -20,7 +20,8 @@ async function boot(){
       import('./admin-profile-link-v10.js?v=20260904-2'),
       import('./admin-control-center-v10.js?v=20260904-2'),
       import('./admin-data-migration-v11.js?v=20260904-2'),
-      import('./admin-commerce-v11.js?v=20260904-2')
+      import('./admin-commerce-v11.js?v=20260904-2'),
+      import('./admin-profile-browser-v13.js?v=20260904-3')
     ]).catch(error=>console.error('Admin V10:',error));
   }
 }

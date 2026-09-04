@@ -48,7 +48,7 @@ async function saveProfile(){
   const usuarioRef=doc(db,"usuarios",user.uid),usuarioSnap=await getDoc(usuarioRef),base=usuarioSnap.exists()?usuarioSnap.data():{};
   const usuarioPayload={uid:user.uid,nome,email:user.email||base.email||"",papel:base.papel||"usuario",status:base.status||"ativo",atualizadoEm:serverTimestamp(),nascimento,cidade,uf,modalidade,posicao,categoria,time,contato,bio,historicoCampeonatos,fotoUrl,fotoPath,capaUrl,capaPath,instagramUrl};if(!usuarioSnap.exists())usuarioPayload.criadoEm=serverTimestamp();await setDoc(usuarioRef,usuarioPayload,{merge:true});
   const antigoHandle=String(profile?.handle||"");
-  const perfilPublico={uid:user.uid,nome,cidade,uf,modalidade,posicao,categoria,time,bio,fotoUrl,fotoPath,capaUrl,capaPath,historicoCampeonatos,handle,instagramUrl};
+  const perfilPublico={uid:user.uid,nome,cidade,uf,modalidade,posicao,categoria,time,bio,fotoUrl,fotoPath,capaUrl,capaPath,historicoCampeonatos,handle,instagramUrl,completo:true};
   await setDoc(doc(db,"perfis",user.uid),perfilPublico,{merge:true});
   await setDoc(doc(db,"handles",handle),{uid:user.uid,handle,atualizadoEm:Timestamp.now()},{merge:true});
   if(antigoHandle&&antigoHandle!==handle){try{const old=await getDoc(doc(db,"handles",antigoHandle));if(old.exists()&&old.data()?.uid===user.uid)await deleteDoc(old.ref)}catch{}}

@@ -1,4 +1,5 @@
 await import("./firebase-app-check-v11.js?v=20260904-2");
+import("./profile-autosync-v13.js?v=20260904-3").catch(error=>console.warn("Perfil automático V13:",error));
 const THEME_VERSION="20260901-9";
 const MENU_ID="siteMenuDrawer";
 const MENU_TRIGGER_ID="siteMenuTrigger";
