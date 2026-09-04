@@ -3,15 +3,15 @@ name: Validate and deploy static content to Pages
 on:
   push:
     branches: ["main"]
+  pull_request:
+    branches: ["main"]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
@@ -39,7 +39,7 @@ jobs:
           while IFS= read -r -d '' file; do
             echo "Checking $file"
             node --check "$file"
-          done < <(find . -maxdepth 3 -type f -name '*.js' -print0)
+          done < <(find . -maxdepth 5 -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
 
       - name: Run legacy regression audit
         shell: bash
@@ -52,6 +52,12 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/audit-v11.mjs
+
+      - name: Test mobile organizer domain
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test mobile/tests/organizer.test.mjs
 
       - name: Validate JSON files
         shell: bash
@@ -107,7 +113,12 @@ jobs:
             "node -e \"console.log('Firebase rules compiled successfully')\""
 
   deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
