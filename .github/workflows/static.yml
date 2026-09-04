@@ -59,6 +59,14 @@ jobs:
           set -euo pipefail
           node --test mobile/tests/organizer.test.mjs
 
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck mobile workspace
+        working-directory: mobile
+        run: npm run typecheck
+
       - name: Validate JSON files
         shell: bash
         run: |
@@ -66,7 +74,10 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          for path in [Path('firebase.json'), Path('appsscript.json'), Path('manifest.webmanifest')]:
+          for path in [
+              Path('firebase.json'), Path('appsscript.json'), Path('manifest.webmanifest'),
+              Path('mobile/package.json'), Path('mobile/app.json')
+          ]:
               if path.exists():
                   with path.open(encoding='utf-8') as f:
                       json.load(f)
