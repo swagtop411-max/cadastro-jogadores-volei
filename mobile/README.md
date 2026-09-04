@@ -15,72 +15,53 @@ Este diretório inicia a continuidade do aplicativo como **novo cliente do mesmo
 9. Regras de negócio reutilizáveis devem ser puras, sem DOM e sem Firebase.
 10. O painel administrativo completo permanece Web na primeira versão.
 
-## Stack
+## Stack decidida
 
-- React Native
-- Expo
-- TypeScript
-- Expo Router
-- Development builds / EAS quando houver dependências nativas
-- Firebase Auth / Firestore
-- App Check nativo
-- Cloudinary via upload assinado
-- backend mínimo para operações privilegiadas
+- Expo SDK 57;
+- React Native 0.86;
+- React 19.2;
+- TypeScript estrito;
+- Expo Router;
+- Expo Development Builds / EAS;
+- React Native Firebase para integrações nativas;
+- Firebase Auth / Firestore do projeto `jogadores-de-volei`;
+- App Check nativo;
+- Cloudinary via upload assinado;
+- backend mínimo para operações privilegiadas.
 
-A criação efetiva do projeto deve ser feita com o template oficial atual do `create-expo-app`, em vez de congelar manualmente versões de dependências neste repositório.
+Ver `ADR-001-firebase-native.md`.
 
-## Estrutura alvo
+## Estrutura atual
 
 ```text
 mobile/
   app/
     (auth)/
+      _layout.tsx
       login.tsx
       register.tsx
       forgot-password.tsx
     (tabs)/
+      _layout.tsx
       index.tsx
       explore.tsx
       publish.tsx
       championships.tsx
       profile.tsx
-    athlete/[uid].tsx
-    team/[id].tsx
-    championship/[id].tsx
-    messages/index.tsx
-    messages/[conversationId].tsx
-    notifications.tsx
-    saved.tsx
-    reels.tsx
-    organizer/
-      index.tsx
-      draw-teams.tsx
+    _layout.tsx
   src/
-    core/
-      firebase.ts
-      appCheck.ts
-      env.ts
-    domain/
-      contracts.ts
-      organizer.ts
-      ranking.ts
-    repositories/
-      authRepository.ts
-      profileRepository.ts
-      athleteRepository.ts
-      feedRepository.ts
-      socialRepository.ts
-      championshipRepository.ts
-      teamRepository.ts
-    services/
-      uploads.ts
-      notifications.ts
-      payments.ts
-    hooks/
     components/
-    design-system/
-    utils/
+      ScreenPlaceholder.tsx
+    contracts/
+      schema-v1.ts
+    domain/
+      organizer.mjs
   tests/
+    organizer.test.mjs
+  ADR-001-firebase-native.md
+  app.json
+  package.json
+  tsconfig.json
 ```
 
 ## Navegação V1
@@ -93,12 +74,12 @@ Bottom tabs:
 4. Campeonatos
 5. Perfil
 
-Ações globais:
+Ações globais futuras:
 
 - Mensagens
 - Notificações
 
-Rotas secundárias:
+Rotas secundárias futuras:
 
 - perfil público de atleta
 - equipes
@@ -109,18 +90,21 @@ Rotas secundárias:
 
 ## Fase 0 — não pular
 
-Antes de começar telas:
-
 - [ ] consolidar Firestore Rules de `perfis/{uid}`;
 - [ ] remover fallback de autorização ADM por e-mail;
-- [ ] remover/rotacionar credenciais client-side nos legados;
+- [~] remover/rotacionar credenciais client-side nos legados;
+  - `mix-play-web`: correção aberta em branch/PR próprio;
+  - `Sorteio-de-times`: senha ainda bloqueia reutilização da interface legada;
 - [ ] migrar apoiadores base64 para Cloudinary;
 - [ ] criar upload Cloudinary assinado;
 - [ ] tornar billing server-owned;
 - [ ] implementar testes allow/deny das regras;
-- [ ] corrigir e testar algoritmo de sorteio;
+- [x] corrigir e testar algoritmo de sorteio no módulo mobile;
 - [ ] definir exclusão de conta/dados;
-- [ ] centralizar contratos de dados.
+- [x] centralizar contratos de dados V1 em TypeScript;
+- [x] criar CI para testar o domínio mobile em PR;
+- [x] impedir deploy do GitHub Pages a partir de PR;
+- [x] iniciar workspace Expo Router com TypeScript estrito.
 
 ## Sprint 1 — identidade Web ↔ App
 
@@ -128,35 +112,33 @@ Critério principal: uma conta criada no app deve aparecer imediatamente no site
 
 Entregas:
 
-- [ ] projeto Expo + TypeScript + Expo Router;
+- [x] workspace Expo + TypeScript + Expo Router iniciado;
 - [ ] ambientes dev/staging/prod;
-- [ ] Firebase centralizado;
+- [ ] React Native Firebase centralizado;
 - [ ] App Check mobile preparado;
-- [ ] login;
-- [ ] cadastro;
+- [ ] login funcional;
+- [ ] cadastro funcional;
 - [ ] logout;
-- [ ] recuperação de senha;
+- [ ] recuperação de senha funcional;
 - [ ] verificação de e-mail;
-- [ ] `usuarios/{uid}`;
-- [ ] `perfis/{uid}`;
-- [ ] Meu Perfil;
+- [ ] `usuarios/{uid}` integrado;
+- [ ] `perfis/{uid}` integrado;
+- [x] rota Meu Perfil criada;
 - [ ] Perfil Público;
 - [ ] Todos os Atletas paginado;
 - [ ] teste cruzado Web ↔ App.
 
-## Regra do sorteador para o futuro módulo Organizador
-
-A regra canônica deve ser:
+## Regra canônica do sorteador
 
 - 2 homens + 2 mulheres;
 - nível: Iniciante = 1, Intermediário = 2, Avançado = 3;
 - alvo por time = 9;
-- limite absoluto = 10;
+- limite absoluto configurado = 10;
 - no máximo 1 Avançado por time;
 - soma abaixo de 9 continua válida quando necessária;
 - objetivo de equilíbrio mínimo = 90%, buscando o melhor arranjo possível.
 
-O código atual de `Sorteio-de-times/js/sorteio.js` precisa ser corrigido porque hoje só cria candidatos de 9 ou 10 pontos.
+Observação: com quatro atletas, níveis máximos `3/2/2/2` e apenas um Avançado, a soma máxima efetivamente alcançável hoje é 9. O teto 10 foi mantido no contrato para preservar a regra de negócio e permitir evolução futura do sistema de pesos.
 
 ## Definition of Done para beta interno
 
@@ -168,4 +150,5 @@ O código atual de `Sorteio-de-times/js/sorteio.js` precisa ser corrigido porque
 - tratamento loading/empty/error/retry;
 - crash/error logging;
 - exclusão de conta planejada e implementável;
-- documentação de migrations de schema.
+- documentação de migrations de schema;
+- CI com testes de domínio e typecheck mobile verdes.
