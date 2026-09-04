@@ -38,6 +38,13 @@ async function ensureIdentityDocuments(session: AuthSession, preferredName?: str
 export async function registerIdentity(input: SignUpInput): Promise<AuthSession> {
   const session = await firebaseAuthRepository.signUp(input);
   await ensureIdentityDocuments(session, input.name);
+
+  try {
+    await firebaseAuthRepository.sendEmailVerification();
+  } catch {
+    // A conta e o perfil já existem. A verificação poderá ser reenviada depois.
+  }
+
   return session;
 }
 
