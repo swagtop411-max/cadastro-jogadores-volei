@@ -2,6 +2,7 @@ import { getAuth } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
