@@ -1,8 +1,8 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{addDoc,collection,doc,getDoc,getDocs,getFirestore,limit,orderBy,query,serverTimestamp,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{mountMessageButton,initSocialNetwork}from"./social-network.js?v=20260901-3";
-import{feedImageUrl,thumbImageUrl}from"./media-utils.js?v=20260901-1";
+import{mountMessageButton,initSocialNetwork}from"./social-network.js?v=20260904-2";
+import{feedImageUrl,thumbImageUrl}from"./media-utils.js?v=20260904-2";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015",measurementId:"G-K033D1K41Y"};
 const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app),auth=getAuth(app),root=document.getElementById("perfilConteudo"),id=new URLSearchParams(location.search).get("id");
 const TIMEOUT=12000,withTimeout=(p,ms=TIMEOUT)=>Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(new Error("Tempo esgotado")),ms))]),esc=v=>{const d=document.createElement("div");d.textContent=v??"";return d.innerHTML};

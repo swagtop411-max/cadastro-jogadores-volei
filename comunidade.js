@@ -1,8 +1,9 @@
+await import("./firebase-app-check-v11.js?v=20260904-2");
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{addDoc,collection,deleteDoc,doc,getCountFromServer,getDoc,getDocs,getFirestore,limit,orderBy,query,setDoc,Timestamp,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{uploadCloudinary}from"./cloudinary-upload.js?v=20260901-8";
-import{feedImageUrl,thumbImageUrl}from"./media-utils.js?v=20260901-1";
+import{uploadCloudinary}from"./cloudinary-upload.js?v=20260904-2";
+import{feedImageUrl,thumbImageUrl}from"./media-utils.js?v=20260904-2";
 
 const firebaseConfig={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(firebaseConfig),db=getFirestore(app),auth=getAuth(app),$=id=>document.getElementById(id),publishForm=$("publishForm"),feed=$("communityFeed"),feedStatus=$("feedStatus"),publishStatus=$("publishStatus"),photoInput=$("postPhoto"),photoPreview=$("photoPreview"),postText=$("postText"),postCounter=$("postCounter");

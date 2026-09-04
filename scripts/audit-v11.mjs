@@ -38,7 +38,7 @@ requireText('firebase-app-check-v11.js','ReCaptchaEnterpriseProvider','provedor 
 requireText('firebase-app-check-v11.js','isTokenAutoRefreshEnabled:true','renovação automática');
 requireText('firebase-app-check-v11.js','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR','site key pública configurada');
 forbidText('firebase-app-check-v11.js','ReCaptchaV3Provider','provedor V3 antigo');
-requireText('site-v5.js','firebase-app-check-v11.js?v=20260902-2','shell aguarda App Check');
+requireText('site-v5.js','firebase-app-check-v11.js?v=20260904-2','shell aguarda App Check');
 requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
 
 // Mídia e editor.
@@ -77,6 +77,15 @@ requireText('firebase-app-check-v11.js','initializeAppCheck','cliente pronto par
 requireText('manifest.webmanifest','app-icon.svg','ícone PWA');
 requireText('site-v8.js','og:image','Open Graph image');
 requireText('site-v8.js','twitter:image','Twitter image');
+
+// Recuperação V12.
+requireText('firestore.rules','allow create: if isAdmin() || (\n        signedIn()','ADM pode criar handles na migração');
+requireText('admin-data-migration-v11.js','repairVisibility','reparo automático de visibilidade legado');
+requireText('comunidade-admin.js','Promise.allSettled','comunidade ADM tolera falha parcial');
+requireText('public.js','const results=await Promise.allSettled','atletas toleram falha parcial');
+requireText('admin.js','const result=await Promise.allSettled','monetização tolera falha parcial');
+requireText('atletas.html','public.js?v=20260904-2','cache bust público atualizado');
+for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','admin.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260904-2',`App Check antes de ${mod}`);
 
 // Aprovação segura sem campos pessoais no documento público.
 requireText('admin.js','cadastro-atleta-v11','aprovação segura de atleta na fonte');

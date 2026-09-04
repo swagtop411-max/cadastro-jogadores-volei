@@ -1,4 +1,5 @@
-import "./site-v7-autoload.js?v=20260901-1";
+await import("./firebase-app-check-v11.js?v=20260904-2");
+import "./site-v7-autoload.js?v=20260904-2";
 // Analytics + consentimento de cookies
 const GA_ID="G-K033D1K41Y";
 const CONSENT_KEY="bd_atletas_cookie_consent";
@@ -87,7 +88,7 @@ function inserirBannerComercial(){
 
 function repararPosicoesAdmin(){if(!isAdminPage)return;const form=document.getElementById("atletaForm");if(!form)return;const antigo=document.getElementById("posicao");if(!antigo)return;let box=document.getElementById("adminPosicoesBox");if(!box){const label=antigo.closest("label");box=document.createElement("div");box.id="adminPosicoesBox";box.className="multi-box";box.innerHTML='<label>POSIÇÕES *</label><div class="multi-options"><label class="multi-option"><input type="checkbox" value="Levantador">Levantador</label><label class="multi-option"><input type="checkbox" value="Ponteiro">Ponteiro</label><label class="multi-option"><input type="checkbox" value="Oposto">Oposto</label><label class="multi-option"><input type="checkbox" value="Central">Central</label><label class="multi-option"><input type="checkbox" value="Líbero">Líbero</label><label class="multi-option"><input type="checkbox" value="Universal">Universal</label></div><small class="multi-help">Selecione uma ou mais posições.</small>';antigo.type="hidden";antigo.value="";if(label){label.parentNode.insertBefore(box,label);label.remove()}else antigo.parentNode.insertBefore(box,antigo)}else antigo.style.display="none";box.querySelectorAll("input[type=checkbox]").forEach(c=>{if(c.dataset.bound)return;c.dataset.bound="1";c.addEventListener("change",()=>{antigo.value=[...box.querySelectorAll("input:checked")].map(x=>x.value).join(", ")})})}
 
-if(isAdminPage){import(`./estatisticas-admin.js?v=20260826-5`);if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(repararPosicoesAdmin,100));else setTimeout(repararPosicoesAdmin,100);new MutationObserver(()=>repararPosicoesAdmin()).observe(document.documentElement,{childList:true,subtree:true})}
+if(isAdminPage){import(`./estatisticas-admin.js?v=20260904-2`);if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>setTimeout(repararPosicoesAdmin,100));else setTimeout(repararPosicoesAdmin,100);new MutationObserver(()=>repararPosicoesAdmin()).observe(document.documentElement,{childList:true,subtree:true})}
 
 document.addEventListener("DOMContentLoaded",()=>{
   if(isAdminPage)return;

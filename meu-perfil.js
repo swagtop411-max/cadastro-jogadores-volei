@@ -1,4 +1,5 @@
-import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";import{getFirestore,doc,getDoc,setDoc,collection,addDoc,query,where,orderBy,getDocs,serverTimestamp,deleteField,deleteDoc,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";import{uploadCloudinary}from"./cloudinary-upload.js?v=20260901-8";
+await import("./firebase-app-check-v11.js?v=20260904-2");
+import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";import{getFirestore,doc,getDoc,setDoc,collection,addDoc,query,where,orderBy,getDocs,serverTimestamp,deleteField,deleteDoc,Timestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";import{uploadCloudinary}from"./cloudinary-upload.js?v=20260904-2";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);const $=id=>document.getElementById(id);let user=null,profile=null;
 const status=(m,media=false)=>{($(media?"mediaStatus":"profileStatus")).textContent=m};
 function esc(v){const d=document.createElement("div");d.textContent=v??"";return d.innerHTML}
@@ -71,7 +72,7 @@ async function loadClaimableProfiles(){
       Isso impede que um perfil reapareça para reivindicação depois da aprovação.
     */
     const [claimsSnap, athletesSnap] = await Promise.all([
-      getDocs(collection(db,"reivindicacoes_perfis")),
+      getDocs(query(collection(db,"reivindicacoes_perfis"),where("solicitanteUid","==",user.uid))),
       getDocs(collection(db,"atletas"))
     ]);
     const claims=claimsSnap.docs.map(d=>({id:d.id,...d.data()}));

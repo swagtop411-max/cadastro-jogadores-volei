@@ -1,11 +1,12 @@
+await import("./firebase-app-check-v11.js?v=20260904-2");
 import { getApp,getApps,initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   addDoc,collection,deleteDoc,doc,getDoc,getDocs,getFirestore,limit,orderBy,
   query,setDoc,Timestamp,updateDoc,where
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { uploadCloudinary } from "./cloudinary-upload.js?v=20260831-2";
-import { createNotification,openStoryViewer } from "./social-network.js?v=20260901-2";
+import { uploadCloudinary } from "./cloudinary-upload.js?v=20260904-2";
+import { createNotification,openStoryViewer } from "./social-network.js?v=20260904-2";
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);

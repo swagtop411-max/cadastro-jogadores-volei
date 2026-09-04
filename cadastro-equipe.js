@@ -1,7 +1,8 @@
+await import("./firebase-app-check-v11.js?v=20260904-2");
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{getFirestore,collection,addDoc}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{uploadCloudinary}from"./cloudinary-upload.js?v=20260901-8";
+import{uploadCloudinary}from"./cloudinary-upload.js?v=20260904-2";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app),auth=getAuth(app),TIMEOUT=20000,withTimeout=(p,ms=TIMEOUT)=>Promise.race([p,new Promise((_,reject)=>setTimeout(()=>reject(Object.assign(new Error("O banco demorou para responder. Tente novamente em alguns segundos."),{code:"deadline-exceeded"})),ms))]),f=document.getElementById("equipeForm"),st=document.getElementById("eqStatus"),logoInput=document.getElementById("eqLogo"),logoPreview=document.getElementById("eqLogoPreview");
 let authReady=false;onAuthStateChanged(auth,()=>{authReady=true});const waitAuth=()=>authReady?Promise.resolve():new Promise(resolve=>{const stop=onAuthStateChanged(auth,()=>{stop();authReady=true;resolve()})});
