@@ -1,11 +1,16 @@
-import { Stack } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 
 import { bootstrapFirebase } from "@/firebase/bootstrap";
+import type { AuthSession } from "@/repositories/contracts";
+import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
 
 export default function RootLayout() {
+  const segments = useSegments();
   const [ready, setReady] = useState(false);
+  const [sessionResolved, setSessionResolved] = useState(false);
+  const [session, setSession] = useState<AuthSession | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -26,6 +31,30 @@ export default function RootLayout() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!ready) return;
+
+    return firebaseAuthRepository.observeSession((nextSession) => {
+      setSession(nextSession);
+      setSessionResolved(true);
+    });
+  }, [ready]);
+
+  useEffect(() => {
+    if (!ready || !sessionResolved) return;
+
+    const insideAuthGroup = segments[0] === "(auth)";
+
+    if (!session && !insideAuthGroup) {
+      router.replace("/login");
+      return;
+    }
+
+    if (session && insideAuthGroup) {
+      router.replace("/");
+    }
+  }, [ready, segments, session, sessionResolved]);
+
   if (error) {
     return (
       <View
@@ -45,7 +74,7 @@ export default function RootLayout() {
     );
   }
 
-  if (!ready) {
+  if (!ready || !sessionResolved) {
     return (
       <View
         style={{
