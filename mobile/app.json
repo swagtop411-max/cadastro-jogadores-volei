@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "Banco de Atletas",
+    "slug": "cadastro-de-atletas",
+    "scheme": "cadastrodeatletas",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "android": {
+      "package": "br.com.cadastrodeatletas.app"
+    },
+    "ios": {
+      "bundleIdentifier": "br.com.cadastrodeatletas.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
