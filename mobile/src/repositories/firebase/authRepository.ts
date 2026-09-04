@@ -53,7 +53,6 @@ export const firebaseAuthRepository: AuthRepository = {
       displayName: input.name.trim(),
     });
 
-    await sendEmailVerification(credential.user);
     return toSession(credential.user);
   },
 
