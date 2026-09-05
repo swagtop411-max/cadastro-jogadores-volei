@@ -170,10 +170,7 @@ function buildResolvedProfile(
     athlete?.historicoCampeonatos,
   );
   const uf = choose(profile?.uf, account?.uf, athlete?.uf).toUpperCase().slice(0, 2);
-  const cidade = normalizeCity(
-    choose(profile?.cidade, account?.cidade, athlete?.cidade),
-    uf,
-  );
+  const cidade = normalizeCity(choose(profile?.cidade, account?.cidade, athlete?.cidade), uf);
   const categoria = normalizeCategory(profile?.categoria, account?.categoria, athlete?.categoria);
 
   return {
@@ -229,8 +226,8 @@ function sourceLabel(
 
 export async function resolveProfile(uid: string): Promise<ResolvedProfile> {
   const [profile, account, legacyAthlete] = await Promise.all([
-    firebaseProfileRepository.getByUid(uid),
-    firebaseAccountRepository.getByUid(uid),
+    firebaseProfileRepository.getByUid(uid).catch(() => null),
+    firebaseAccountRepository.getByUid(uid).catch(() => null),
     getLegacyAthleteByOwnerUid(uid).catch(() => null),
   ]);
 
