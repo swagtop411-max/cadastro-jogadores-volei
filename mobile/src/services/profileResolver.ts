@@ -1,4 +1,13 @@
-import { collection, getDocs, getFirestore, limit, query, where } from "@react-native-firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  limit,
+  query,
+  where,
+} from "@react-native-firebase/firestore";
 
 import type {
   AthleteCategory,
@@ -11,7 +20,8 @@ import {
   firebaseProfileRepository,
 } from "../repositories/firebase/firestoreRepositories";
 
-type LegacyAthlete = Partial<{
+export type LegacyAthlete = Partial<{
+  id: string;
   ownerUid: string;
   nome: string;
   cidade: string;
@@ -28,6 +38,7 @@ type LegacyAthlete = Partial<{
   fotoUrl: string;
   instagramUrl: string;
   historicoCampeonatos: ChampionshipHistoryItemV1[];
+  historicoEquipes: unknown[];
 }>;
 
 export type ResolvedProfile = {
@@ -46,7 +57,9 @@ export type ResolvedProfile = {
 };
 
 function text(value: unknown): string {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number") return String(value);
+  return "";
 }
 
 function joinList(value: unknown): string {
@@ -99,8 +112,31 @@ function normalizeCity(value: unknown, uf: string): string {
   return city;
 }
 
-function shouldReadLegacyAthlete(profile: PublicProfileV1 | null): boolean {
-  return !profile || profile.completo !== true;
+function historyKey(item: ChampionshipHistoryItemV1): string {
+  return [
+    item.campeonato || item.nome || item.evento,
+    item.colocacao || item.resultado,
+    item.ano || item.data,
+  ]
+    .map((value) => text(value).toLocaleLowerCase("pt-BR"))
+    .join("|");
+}
+
+function mergeHistory(...values: unknown[]): ChampionshipHistoryItemV1[] {
+  const seen = new Set<string>();
+  const merged: ChampionshipHistoryItemV1[] = [];
+  for (const value of values) {
+    if (!Array.isArray(value)) continue;
+    for (const raw of value) {
+      if (!raw || typeof raw !== "object") continue;
+      const item = raw as ChampionshipHistoryItemV1;
+      const key = historyKey(item);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      merged.push(item);
+    }
+  }
+  return merged.slice(0, 30);
 }
 
 async function getLegacyAthleteByOwnerUid(uid: string): Promise<LegacyAthlete | null> {
@@ -108,7 +144,16 @@ async function getLegacyAthleteByOwnerUid(uid: string): Promise<LegacyAthlete | 
   const request = query(collection(db, "atletas"), where("ownerUid", "==", uid), limit(1));
   const snapshot = await getDocs(request);
   const document = snapshot.docs[0];
-  return document ? (document.data() as LegacyAthlete) : null;
+  return document ? ({ id: document.id, ...(document.data() as LegacyAthlete) }) : null;
+}
+
+export async function getLegacyAthleteById(id: string): Promise<LegacyAthlete | null> {
+  const normalized = String(id || "").trim();
+  if (!normalized) return null;
+  const snapshot = await getDoc(doc(getFirestore(), "atletas", normalized));
+  return snapshot.exists()
+    ? ({ id: snapshot.id, ...(snapshot.data() as LegacyAthlete) })
+    : null;
 }
 
 function buildResolvedProfile(
@@ -119,15 +164,11 @@ function buildResolvedProfile(
 ): PublicProfileV1 | null {
   if (!profile && !account && !athlete) return null;
 
-  const history =
-    Array.isArray(profile?.historicoCampeonatos) && profile.historicoCampeonatos.length > 0
-      ? profile.historicoCampeonatos
-      : Array.isArray(account?.historicoCampeonatos) && account.historicoCampeonatos.length > 0
-        ? account.historicoCampeonatos
-        : Array.isArray(athlete?.historicoCampeonatos)
-          ? athlete.historicoCampeonatos
-          : [];
-
+  const history = mergeHistory(
+    profile?.historicoCampeonatos,
+    account?.historicoCampeonatos,
+    athlete?.historicoCampeonatos,
+  );
   const uf = choose(profile?.uf, account?.uf, athlete?.uf).toUpperCase().slice(0, 2);
   const cidade = normalizeCity(
     choose(profile?.cidade, account?.cidade, athlete?.cidade),
@@ -135,7 +176,7 @@ function buildResolvedProfile(
   );
   const categoria = normalizeCategory(profile?.categoria, account?.categoria, athlete?.categoria);
 
-  const resolved: PublicProfileV1 = {
+  return {
     uid,
     nome: chooseName(profile?.nome, account?.nome, athlete?.nome),
     cidade,
@@ -166,8 +207,6 @@ function buildResolvedProfile(
     historicoCampeonatos: history,
     completo: Boolean(cidade && uf.length === 2 && categoria),
   };
-
-  return resolved;
 }
 
 function sourceLabel(
@@ -189,14 +228,11 @@ function sourceLabel(
 }
 
 export async function resolveProfile(uid: string): Promise<ResolvedProfile> {
-  const [profile, account] = await Promise.all([
+  const [profile, account, legacyAthlete] = await Promise.all([
     firebaseProfileRepository.getByUid(uid),
     firebaseAccountRepository.getByUid(uid),
+    getLegacyAthleteByOwnerUid(uid).catch(() => null),
   ]);
-
-  const legacyAthlete = shouldReadLegacyAthlete(profile)
-    ? await getLegacyAthleteByOwnerUid(uid).catch(() => null)
-    : null;
 
   return {
     profile,
@@ -205,4 +241,15 @@ export async function resolveProfile(uid: string): Promise<ResolvedProfile> {
     resolved: buildResolvedProfile(uid, profile, account, legacyAthlete),
     source: sourceLabel(profile, account, legacyAthlete),
   };
+}
+
+export async function resolveLegacyAthleteById(id: string): Promise<PublicProfileV1 | null> {
+  const athlete = await getLegacyAthleteById(id);
+  if (!athlete) return null;
+  const uid = athlete.ownerUid || `legacy:${id}`;
+  if (athlete.ownerUid) {
+    const linked = await resolveProfile(athlete.ownerUid).catch(() => null);
+    if (linked?.resolved) return linked.resolved;
+  }
+  return buildResolvedProfile(uid, null, null, athlete);
 }
