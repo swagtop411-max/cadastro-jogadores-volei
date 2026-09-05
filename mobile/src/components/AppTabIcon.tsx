@@ -26,7 +26,7 @@ export function AppTabIcon({
 
 function HomeIcon({ color, scale }: IconProps) {
   return (
-    <View style={styles.canvas}>
+    <View style={styles.fullCanvas}>
       <View
         style={[
           styles.line,
@@ -83,7 +83,7 @@ function HomeIcon({ color, scale }: IconProps) {
 
 function ExploreIcon({ color, scale }: IconProps) {
   return (
-    <View style={styles.canvas}>
+    <View style={styles.fullCanvas}>
       <View
         style={{
           position: "absolute",
@@ -115,7 +115,7 @@ function ExploreIcon({ color, scale }: IconProps) {
 
 function PublishIcon({ color, scale }: IconProps) {
   return (
-    <View style={styles.canvas}>
+    <View style={styles.fullCanvas}>
       <View
         style={[
           styles.line,
@@ -146,7 +146,7 @@ function PublishIcon({ color, scale }: IconProps) {
 
 function TrophyIcon({ color, scale }: IconProps) {
   return (
-    <View style={styles.canvas}>
+    <View style={styles.fullCanvas}>
       <View
         style={{
           position: "absolute",
@@ -220,7 +220,7 @@ function TrophyIcon({ color, scale }: IconProps) {
 
 function ProfileIcon({ color, scale }: IconProps) {
   return (
-    <View style={styles.canvas}>
+    <View style={styles.fullCanvas}>
       <View
         style={{
           position: "absolute",
@@ -256,8 +256,11 @@ type IconProps = { color: string; scale: number };
 const styles = StyleSheet.create({
   canvas: {
     position: "relative",
-    alignItems: "center",
-    justifyContent: "center",
+  },
+  fullCanvas: {
+    position: "relative",
+    width: "100%",
+    height: "100%",
   },
   line: {
     position: "absolute",
