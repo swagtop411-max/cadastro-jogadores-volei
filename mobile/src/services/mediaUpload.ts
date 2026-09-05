@@ -1,11 +1,9 @@
 import { getApp } from "@react-native-firebase/app";
 import {
   deleteObject,
-  getDownloadURL,
   getStorage,
   putFile,
   ref,
-  uploadBytesResumable,
 } from "@react-native-firebase/storage";
 
 export type UploadKind = "image" | "video";
@@ -35,16 +33,7 @@ const IMAGE_MAX = 10 * 1024 * 1024;
 const VIDEO_MAX = 45 * 1024 * 1024;
 const PROFILE_IMAGE_MAX = 5 * 1024 * 1024;
 
-type UploadStage = "arquivo" | "fallback-bytes" | "url";
-
-type UploadTaskLike = {
-  on: (
-    event: "state_changed",
-    next?: ((snapshot: unknown) => void) | null,
-    error?: ((error: unknown) => void) | null,
-    complete?: (() => void) | null,
-  ) => unknown;
-};
+type UploadStage = "arquivo" | "url";
 
 function normalizeMime(kind: UploadKind, mimeType?: string | null): string {
   const mime = String(mimeType || "").trim().toLowerCase();
@@ -95,22 +84,23 @@ function errorCode(error: unknown): string {
   return typeof code === "string" ? code : "";
 }
 
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function storageInstance() {
   return getStorage(getApp(), STORAGE_BUCKET_URL);
 }
 
-function storageDiagnostic(stage: UploadStage, path: string): string {
-  const configuredBucket = getApp().options.storageBucket || "não informado no APK";
-  return `Etapa: ${stage}. Bucket alvo: ${STORAGE_BUCKET}. Bucket do APK: ${configuredBucket}. Caminho: ${path}.`;
+function publicMediaUrl(path: string): string {
+  return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(STORAGE_BUCKET)}/o/${encodeURIComponent(path)}?alt=media`;
 }
 
-function friendlyStorageError(error: unknown, stage: UploadStage, path: string): Error {
+function storageDiagnostic(stage: UploadStage, path: string, uri?: string): string {
+  const configuredBucket = getApp().options.storageBucket || "não informado no APK";
+  const uriScheme = uri ? String(uri).split(":", 1)[0] || "desconhecido" : "não aplicável";
+  return `Etapa: ${stage}. Bucket alvo: ${STORAGE_BUCKET}. Bucket do APK: ${configuredBucket}. Caminho: ${path}. URI: ${uriScheme}.`;
+}
+
+function friendlyStorageError(error: unknown, stage: UploadStage, path: string, uri?: string): Error {
   const code = errorCode(error);
-  const diagnostic = storageDiagnostic(stage, path);
+  const diagnostic = storageDiagnostic(stage, path, uri);
 
   if (code === "storage/unauthorized") {
     return new Error(`O Firebase Storage recusou o envio. Entre novamente na conta e tente outra vez. ${diagnostic}`);
@@ -119,7 +109,7 @@ function friendlyStorageError(error: unknown, stage: UploadStage, path: string):
     return new Error(`O bucket do Firebase Storage não foi encontrado. ${diagnostic}`);
   }
   if (code === "storage/object-not-found") {
-    return new Error(`O Firebase Storage não encontrou o objeto após a tentativa de envio. ${diagnostic}`);
+    return new Error(`O arquivo local ou o objeto do Firebase Storage não foi encontrado durante o envio. ${diagnostic}`);
   }
   if (code === "storage/retry-limit-exceeded") {
     return new Error(`O Firebase Storage excedeu o limite de tentativas. Verifique sua conexão e tente novamente. ${diagnostic}`);
@@ -127,55 +117,6 @@ function friendlyStorageError(error: unknown, stage: UploadStage, path: string):
 
   const detail = error instanceof Error ? error.message : "erro desconhecido";
   return new Error(`Falha no envio da mídia: ${detail}. ${diagnostic}`);
-}
-
-function waitForUploadTask(task: UploadTaskLike): Promise<void> {
-  return new Promise<void>((resolve, reject) => {
-    task.on(
-      "state_changed",
-      null,
-      (error) => reject(error),
-      () => resolve(),
-    );
-  });
-}
-
-async function getDownloadUrlWithRetry(
-  storageRef: ReturnType<typeof ref>,
-  attempts = 6,
-): Promise<string> {
-  let lastError: unknown = null;
-
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
-    try {
-      const url = await getDownloadURL(storageRef);
-      if (url) return url;
-    } catch (error) {
-      lastError = error;
-      if (errorCode(error) !== "storage/object-not-found" || attempt === attempts - 1) {
-        throw error;
-      }
-    }
-    await wait(250 * (attempt + 1));
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("O Firebase Storage não retornou a URL do arquivo enviado.");
-}
-
-async function uploadImageByBytes(
-  storageRef: ReturnType<typeof ref>,
-  uri: string,
-  mime: string,
-): Promise<void> {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  const task = uploadBytesResumable(storageRef, blob, {
-    contentType: mime,
-    cacheControl: "public,max-age=31536000,immutable",
-  }) as unknown as UploadTaskLike;
-  await waitForUploadTask(task);
 }
 
 async function uploadToPath(
@@ -194,43 +135,22 @@ async function uploadToPath(
     cacheControl: "public,max-age=31536000,immutable",
   };
 
-  let usedBytesFallback = false;
-
   try {
-    const task = putFile(storageRef, uri, metadata) as unknown as UploadTaskLike;
-    await waitForUploadTask(task);
+    // putFile é a API nativa apropriada para URIs/arquivos locais no Android e iOS.
+    // A tarefa é thenable: await só retorna depois que o upload termina ou falha.
+    await putFile(storageRef, uri, metadata);
   } catch (error) {
-    if (input.kind !== "image" || errorCode(error) !== "storage/object-not-found") {
-      throw friendlyStorageError(error, "arquivo", path);
-    }
-
-    try {
-      await uploadImageByBytes(storageRef, uri, mime);
-      usedBytesFallback = true;
-    } catch (fallbackError) {
-      throw friendlyStorageError(fallbackError, "fallback-bytes", path);
-    }
+    throw friendlyStorageError(error, "arquivo", path, uri);
   }
 
   try {
-    const url = await getDownloadUrlWithRetry(storageRef);
+    // Os caminhos usados pelo app têm leitura pública nas Storage Rules.
+    // A URL REST é determinística e evita uma segunda consulta imediata ao objeto
+    // apenas para obter um token de download.
+    const url = publicMediaUrl(path);
     return { url, path, mime, size, kind: input.kind };
   } catch (error) {
-    if (
-      input.kind === "image" &&
-      !usedBytesFallback &&
-      errorCode(error) === "storage/object-not-found"
-    ) {
-      try {
-        await uploadImageByBytes(storageRef, uri, mime);
-        const url = await getDownloadUrlWithRetry(storageRef);
-        return { url, path, mime, size, kind: input.kind };
-      } catch (fallbackError) {
-        throw friendlyStorageError(fallbackError, "fallback-bytes", path);
-      }
-    }
-
-    throw friendlyStorageError(error, "url", path);
+    throw friendlyStorageError(error, "url", path, uri);
   }
 }
 
