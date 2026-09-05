@@ -15,17 +15,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     let mounted = true;
-
     bootstrapFirebase()
       .then(() => {
         if (mounted) setReady(true);
       })
       .catch((cause: unknown) => {
         if (!mounted) return;
-        const message = cause instanceof Error ? cause.message : "Falha ao inicializar o Firebase.";
-        setError(message);
+        setError(cause instanceof Error ? cause.message : "Falha ao inicializar o Firebase.");
       });
-
     return () => {
       mounted = false;
     };
@@ -33,7 +30,6 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!ready) return;
-
     return firebaseAuthRepository.observeSession((nextSession) => {
       setSession(nextSession);
       setSessionResolved(true);
@@ -42,24 +38,13 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!ready || !sessionResolved) return;
-
     const insideAuthGroup = segments[0] === "(auth)";
-    if (!session && !insideAuthGroup) {
-      router.replace("/login");
-    }
+    if (!session && !insideAuthGroup) router.replace("/login");
   }, [ready, segments, session, sessionResolved]);
 
   if (error) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#071827",
-          padding: 24,
-        }}
-      >
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#071827", padding: 24 }}>
         <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "800", textAlign: "center" }}>
           Não foi possível iniciar o aplicativo.
         </Text>
@@ -70,14 +55,7 @@ export default function RootLayout() {
 
   if (!ready || !sessionResolved) {
     return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#071827",
-        }}
-      >
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#071827" }}>
         <ActivityIndicator size="large" />
         <Text style={{ color: "#b8c7d9", marginTop: 12 }}>Conectando ao Cadastro de Atletas…</Text>
       </View>
@@ -95,7 +73,8 @@ export default function RootLayout() {
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="athlete/[uid]" options={{ title: "Atleta" }} />
+      <Stack.Screen name="athlete/[uid]" options={{ title: "Perfil do atleta" }} />
+      <Stack.Screen name="profile/edit" options={{ title: "Editar perfil" }} />
     </Stack>
   );
 }
