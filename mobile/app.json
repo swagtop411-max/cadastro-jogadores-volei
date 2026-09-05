@@ -23,6 +23,14 @@
       "@react-native-firebase/auth",
       "@react-native-firebase/app-check",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o Banco de Atletas acesse suas fotos e vídeos para criar publicações e atualizar seu perfil.",
+          "cameraPermission": "Permitir que o Banco de Atletas use a câmera para criar publicações e atualizar seu perfil.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-build-properties",
         {
           "ios": {
