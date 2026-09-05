@@ -9,16 +9,17 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: "#071827" },
         headerTintColor: "#ffffff",
         headerTitleStyle: { fontWeight: "800" },
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: "#0b2234",
           borderTopColor: "#17384d",
-          height: 66,
+          height: 70,
           paddingTop: 7,
           paddingBottom: 8,
         },
         tabBarActiveTintColor: "#d9a93f",
         tabBarInactiveTintColor: "#8fa0ac",
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "700" },
       }}
     >
       <Tabs.Screen
@@ -46,6 +47,7 @@ export default function TabsLayout() {
         name="championships"
         options={{
           title: "Campeonatos",
+          tabBarLabel: "Torneios",
           tabBarIcon: ({ color, size }) => <AppTabIcon name="championships" color={color} size={size} />,
         }}
       />
