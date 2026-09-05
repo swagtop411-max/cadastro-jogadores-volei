@@ -4,6 +4,7 @@ import {
   getStorage,
   putFile,
   ref,
+  uploadString,
 } from "@react-native-firebase/storage";
 
 export type UploadKind = "image" | "video";
@@ -15,6 +16,7 @@ export type LocalMediaInput = {
   mimeType?: string | null;
   fileSize?: number | null;
   fileName?: string | null;
+  base64?: string | null;
 };
 
 export type UploadedMedia = {
@@ -33,7 +35,7 @@ const IMAGE_MAX = 10 * 1024 * 1024;
 const VIDEO_MAX = 45 * 1024 * 1024;
 const PROFILE_IMAGE_MAX = 5 * 1024 * 1024;
 
-type UploadStage = "arquivo" | "url";
+type UploadStage = "imagem-base64" | "arquivo" | "url";
 
 function normalizeMime(kind: UploadKind, mimeType?: string | null): string {
   const mime = String(mimeType || "").trim().toLowerCase();
@@ -74,6 +76,14 @@ function mediaUri(uri: string): string {
   return value;
 }
 
+function mediaBase64(value?: string | null): string {
+  const normalized = String(value || "").trim();
+  if (!normalized) {
+    throw new Error("A imagem selecionada não forneceu os dados necessários para o envio. Selecione a foto novamente.");
+  }
+  return normalized;
+}
+
 function uniqueName(ext: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 }
@@ -109,7 +119,7 @@ function friendlyStorageError(error: unknown, stage: UploadStage, path: string, 
     return new Error(`O bucket do Firebase Storage não foi encontrado. ${diagnostic}`);
   }
   if (code === "storage/object-not-found") {
-    return new Error(`O arquivo local ou o objeto do Firebase Storage não foi encontrado durante o envio. ${diagnostic}`);
+    return new Error(`O Firebase Storage não encontrou o objeto durante o envio. ${diagnostic}`);
   }
   if (code === "storage/retry-limit-exceeded") {
     return new Error(`O Firebase Storage excedeu o limite de tentativas. Verifique sua conexão e tente novamente. ${diagnostic}`);
@@ -135,18 +145,23 @@ async function uploadToPath(
     cacheControl: "public,max-age=31536000,immutable",
   };
 
-  try {
-    // putFile é a API nativa apropriada para URIs/arquivos locais no Android e iOS.
-    // A tarefa é thenable: await só retorna depois que o upload termina ou falha.
-    await putFile(storageRef, uri, metadata);
-  } catch (error) {
-    throw friendlyStorageError(error, "arquivo", path, uri);
+  if (input.kind === "image") {
+    try {
+      const base64 = mediaBase64(input.base64);
+      await uploadString(storageRef, base64, "base64", metadata);
+    } catch (error) {
+      if (error instanceof Error && !errorCode(error)) throw error;
+      throw friendlyStorageError(error, "imagem-base64", path, uri);
+    }
+  } else {
+    try {
+      await putFile(storageRef, uri, metadata);
+    } catch (error) {
+      throw friendlyStorageError(error, "arquivo", path, uri);
+    }
   }
 
   try {
-    // Os caminhos usados pelo app têm leitura pública nas Storage Rules.
-    // A URL REST é determinística e evita uma segunda consulta imediata ao objeto
-    // apenas para obter um token de download.
     const url = publicMediaUrl(path);
     return { url, path, mime, size, kind: input.kind };
   } catch (error) {
