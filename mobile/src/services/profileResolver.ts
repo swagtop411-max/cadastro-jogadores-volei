@@ -63,12 +63,40 @@ function choose(...values: unknown[]): string {
   return "";
 }
 
+function chooseName(...values: unknown[]): string {
+  const candidates = values.map((value) => text(value)).filter(Boolean);
+  const placeholders = new Set(["usuario", "usuário", "user", "atleta"]);
+  const meaningful = candidates.find(
+    (candidate) => !placeholders.has(candidate.toLocaleLowerCase("pt-BR")),
+  );
+  return meaningful || candidates[0] || "Atleta";
+}
+
 function normalizeCategory(...values: unknown[]): AthleteCategory {
   const value = choose(...values).toLocaleLowerCase("pt-BR");
   if (value.includes("inic")) return "Iniciante";
   if (value.includes("avan")) return "Avançado";
   if (value.includes("inter")) return "Intermediário";
   return "";
+}
+
+function normalizeCity(value: unknown, uf: string): string {
+  const city = text(value).replace(/\s+/g, " ");
+  if (!city) return "";
+
+  const prefixed = city.match(/^([A-Z]{2})\s*[-,]\s*(.+)$/i);
+  if (prefixed) {
+    const prefixUf = prefixed[1]?.toUpperCase();
+    if (!uf || prefixUf === uf) return text(prefixed[2]);
+  }
+
+  const suffixed = city.match(/^(.+?)\s*[-,]\s*([A-Z]{2})$/i);
+  if (suffixed) {
+    const suffixUf = suffixed[2]?.toUpperCase();
+    if (!uf || suffixUf === uf) return text(suffixed[1]);
+  }
+
+  return city;
 }
 
 function shouldReadLegacyAthlete(profile: PublicProfileV1 | null): boolean {
@@ -100,13 +128,16 @@ function buildResolvedProfile(
           ? athlete.historicoCampeonatos
           : [];
 
-  const cidade = choose(profile?.cidade, account?.cidade, athlete?.cidade);
   const uf = choose(profile?.uf, account?.uf, athlete?.uf).toUpperCase().slice(0, 2);
+  const cidade = normalizeCity(
+    choose(profile?.cidade, account?.cidade, athlete?.cidade),
+    uf,
+  );
   const categoria = normalizeCategory(profile?.categoria, account?.categoria, athlete?.categoria);
 
   const resolved: PublicProfileV1 = {
     uid,
-    nome: choose(profile?.nome, account?.nome, athlete?.nome, "Atleta"),
+    nome: chooseName(profile?.nome, account?.nome, athlete?.nome),
     cidade,
     uf,
     modalidade: choose(
