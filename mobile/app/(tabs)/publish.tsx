@@ -28,6 +28,7 @@ type SelectedMedia = {
   mimeType: string | null;
   fileSize: number | null;
   fileName: string | null;
+  base64: string | null;
 };
 
 function sizeLabel(size: number | null): string {
@@ -61,12 +62,17 @@ export default function PublishScreen() {
       setError(`O ${kind === "video" ? "vídeo" : "arquivo"} ultrapassa o limite de ${kind === "video" ? 45 : 10} MB.`);
       return;
     }
+    if (kind === "image" && !asset.base64) {
+      setError("Não foi possível preparar a imagem para envio. Selecione a foto novamente.");
+      return;
+    }
     setMedia({
       uri: asset.uri,
       kind,
       mimeType: asset.mimeType ?? null,
       fileSize: size,
       fileName: asset.fileName ?? null,
+      base64: asset.base64 ?? null,
     });
     setError(null);
     setMessage(null);
@@ -83,6 +89,7 @@ export default function PublishScreen() {
       mediaTypes: ["images", "videos"],
       quality: 0.9,
       allowsMultipleSelection: false,
+      base64: true,
     });
     if (!result.canceled && result.assets[0]) useAsset(result.assets[0]);
   }
@@ -97,6 +104,7 @@ export default function PublishScreen() {
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ["images", "videos"],
       quality: 0.9,
+      base64: true,
     });
     if (!result.canceled && result.assets[0]) useAsset(result.assets[0]);
   }
@@ -120,6 +128,7 @@ export default function PublishScreen() {
           mimeType: media.mimeType,
           fileSize: media.fileSize,
           fileName: media.fileName,
+          base64: media.base64,
         });
       }
       await publishPost({
