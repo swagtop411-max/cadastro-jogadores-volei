@@ -12,9 +12,9 @@ import {
 
 import {
   formatFirebaseDate,
-  loadMobileFeed,
   type MobileFeedItem,
 } from "@/services/mobileContent";
+import { loadCompleteMobileFeed } from "@/services/feedService";
 
 export default function FeedScreen() {
   const [items, setItems] = useState<MobileFeedItem[]>([]);
@@ -26,7 +26,7 @@ export default function FeedScreen() {
     refresh ? setRefreshing(true) : setLoading(true);
     setError(null);
     try {
-      setItems(await loadMobileFeed());
+      setItems(await loadCompleteMobileFeed());
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Não foi possível carregar o feed.");
     } finally {
@@ -52,7 +52,10 @@ export default function FeedScreen() {
         <View style={styles.header}>
           <Text style={styles.eyebrow}>REDE ESPORTIVA</Text>
           <Text style={styles.title}>Feed</Text>
-          <Text style={styles.subtitle}>Publicações recentes do mesmo feed do cadastrodeatletas.com.br.</Text>
+          <Text style={styles.subtitle}>Publicações públicas do cadastrodeatletas.com.br, sem o corte artificial da versão anterior.</Text>
+          {!loading && !error ? (
+            <Text style={styles.counter}>{items.length} publicação{items.length === 1 ? "" : "ões"}</Text>
+          ) : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
         </View>
       }
@@ -116,6 +119,7 @@ const styles = StyleSheet.create({
   eyebrow: { color: "#d9a93f", fontSize: 12, fontWeight: "900", letterSpacing: 1.1 },
   title: { marginTop: 4, color: "#ffffff", fontSize: 34, fontWeight: "900" },
   subtitle: { marginTop: 6, color: "#b8c7d9", lineHeight: 20 },
+  counter: { marginTop: 8, color: "#48cae4", fontSize: 12, fontWeight: "900" },
   error: { marginTop: 10, color: "#ff9b9b", fontWeight: "700" },
   center: { alignItems: "center", gap: 10, paddingVertical: 56 },
   empty: { borderRadius: 20, backgroundColor: "#0d2235", padding: 22 },
