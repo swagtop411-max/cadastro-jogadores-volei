@@ -95,7 +95,13 @@ function errorCode(error: unknown): string {
 }
 
 function storageInstance() {
-  return getStorage(getApp(), STORAGE_BUCKET_URL);
+  return getStorage(getApp());
+}
+
+function storageReference(path: string) {
+  // Força refFromURL internamente. Isso evita o bug de resolução observado em
+  // buckets novos *.firebasestorage.app quando a referência é criada só pelo path.
+  return ref(storageInstance(), `${STORAGE_BUCKET_URL}/${path}`);
 }
 
 function publicMediaUrl(path: string): string {
@@ -105,7 +111,7 @@ function publicMediaUrl(path: string): string {
 function storageDiagnostic(stage: UploadStage, path: string, uri?: string): string {
   const configuredBucket = getApp().options.storageBucket || "não informado no APK";
   const uriScheme = uri ? String(uri).split(":", 1)[0] || "desconhecido" : "não aplicável";
-  return `Etapa: ${stage}. Bucket alvo: ${STORAGE_BUCKET}. Bucket do APK: ${configuredBucket}. Caminho: ${path}. URI: ${uriScheme}.`;
+  return `Etapa: ${stage}. Bucket alvo: ${STORAGE_BUCKET}. Bucket do APK: ${configuredBucket}. Referência: ${STORAGE_BUCKET_URL}/${path}. URI: ${uriScheme}.`;
 }
 
 function friendlyStorageError(error: unknown, stage: UploadStage, path: string, uri?: string): Error {
@@ -138,7 +144,7 @@ async function uploadToPath(
   const size = validateSize(input.kind, input.fileSize, maxOverride);
   const ext = extensionFromMime(mime);
   const path = `usuarios/${input.uid}/${folder}/${uniqueName(ext)}`;
-  const storageRef = ref(storageInstance(), path);
+  const storageRef = storageReference(path);
   const uri = mediaUri(input.uri);
   const metadata = {
     contentType: mime,
@@ -183,7 +189,7 @@ export async function deleteUploadedMedia(path: string): Promise<void> {
   const normalized = String(path || "").trim();
   if (!normalized) return;
   try {
-    await deleteObject(ref(storageInstance(), normalized));
+    await deleteObject(storageReference(normalized));
   } catch (error) {
     if (errorCode(error) !== "storage/object-not-found") throw error;
   }
