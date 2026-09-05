@@ -1,8 +1,10 @@
+import { useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
   Image,
+  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
@@ -22,6 +24,7 @@ function norm(value: unknown) {
 }
 
 export default function ExploreScreen() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<PublicProfileV1[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -100,15 +103,20 @@ export default function ExploreScreen() {
           </View>
         )
       }
-      renderItem={({ item }) => <ProfileCard profile={item} />}
+      renderItem={({ item }) => (
+        <ProfileCard
+          profile={item}
+          onPress={() => router.push({ pathname: "/athlete/[uid]", params: { uid: item.uid } })}
+        />
+      )}
     />
   );
 }
 
-function ProfileCard({ profile }: { profile: PublicProfileV1 }) {
+function ProfileCard({ profile, onPress }: { profile: PublicProfileV1; onPress: () => void }) {
   const meta = [profile.cidade, profile.uf].filter(Boolean).join(" / ");
   return (
-    <View style={styles.card}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
       {profile.fotoUrl ? (
         <Image source={{ uri: profile.fotoUrl }} style={styles.avatar} />
       ) : (
@@ -120,7 +128,8 @@ function ProfileCard({ profile }: { profile: PublicProfileV1 }) {
       <Text numberOfLines={1} style={styles.category}>{profile.categoria || "Categoria não informada"}</Text>
       <Text numberOfLines={1} style={styles.meta}>{meta || "Cidade não informada"}</Text>
       {profile.time ? <Text numberOfLines={1} style={styles.team}>{profile.time}</Text> : null}
-    </View>
+      <Text style={styles.openHint}>VER PERFIL</Text>
+    </Pressable>
   );
 }
 
@@ -140,6 +149,7 @@ const styles = StyleSheet.create({
   emptyTitle: { color: "#ffffff", fontSize: 18, fontWeight: "900", marginBottom: 6 },
   muted: { color: "#9fb0bf" },
   card: { flex: 1, minWidth: 0, alignItems: "center", borderRadius: 20, backgroundColor: "#0d2235", padding: 14 },
+  pressed: { opacity: 0.72 },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#17384d" },
   avatarFallback: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center", backgroundColor: "#17384d" },
   avatarText: { color: "#7ddff0", fontSize: 26, fontWeight: "900" },
@@ -147,4 +157,5 @@ const styles = StyleSheet.create({
   category: { marginTop: 4, color: "#48cae4", fontSize: 12, fontWeight: "800" },
   meta: { marginTop: 4, color: "#a8bac8", fontSize: 11, textAlign: "center" },
   team: { marginTop: 6, color: "#d9a93f", fontSize: 11, fontWeight: "800" },
+  openHint: { marginTop: 10, color: "#7ddff0", fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
 });
