@@ -74,6 +74,33 @@ function uniqueName(ext: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 }
 
+function errorCode(error: unknown): string {
+  if (!error || typeof error !== "object") return "";
+  const code = (error as { code?: unknown }).code;
+  return typeof code === "string" ? code : "";
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function downloadUrlWithRetry(
+  storageRef: ReturnType<typeof ref>,
+  attempts = 5,
+): Promise<string> {
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await getDownloadURL(storageRef);
+    } catch (error) {
+      lastError = error;
+      if (errorCode(error) !== "storage/object-not-found" || attempt === attempts - 1) throw error;
+      await wait(250 * (attempt + 1));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Não foi possível obter a URL da mídia enviada.");
+}
+
 async function uploadToPath(
   input: LocalMediaInput,
   folder: "publicacoes" | "videos" | "perfil",
@@ -86,8 +113,30 @@ async function uploadToPath(
   const storage = getStorage();
   const storageRef = ref(storage, path);
 
-  await putFile(storageRef, localPath(input.uri), { contentType: mime });
-  const url = await getDownloadURL(storageRef);
+  let snapshot;
+  try {
+    snapshot = await putFile(storageRef, localPath(input.uri), {
+      contentType: mime,
+      cacheControl: "public,max-age=31536000,immutable",
+    });
+  } catch (error) {
+    const code = errorCode(error);
+    if (code === "storage/unauthorized") {
+      throw new Error("O Firebase Storage recusou o envio. Verifique sua sessão e as regras de upload.");
+    }
+    throw error;
+  }
+
+  const uploadedRef = snapshot?.ref || storageRef;
+  let url: string;
+  try {
+    url = await downloadUrlWithRetry(uploadedRef);
+  } catch (error) {
+    if (errorCode(error) === "storage/object-not-found") {
+      throw new Error("O arquivo terminou de enviar, mas o Firebase Storage ainda não conseguiu localizar o objeto. Tente publicar novamente.");
+    }
+    throw error;
+  }
 
   return { url, path, mime, size, kind: input.kind };
 }
@@ -105,5 +154,9 @@ export async function uploadProfileImage(
 export async function deleteUploadedMedia(path: string): Promise<void> {
   const normalized = String(path || "").trim();
   if (!normalized) return;
-  await deleteObject(ref(getStorage(), normalized));
+  try {
+    await deleteObject(ref(getStorage(), normalized));
+  } catch (error) {
+    if (errorCode(error) !== "storage/object-not-found") throw error;
+  }
 }
