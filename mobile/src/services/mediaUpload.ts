@@ -1,11 +1,5 @@
 import { getApp } from "@react-native-firebase/app";
-import {
-  deleteObject,
-  getStorage,
-  putFile,
-  ref,
-  uploadString,
-} from "@react-native-firebase/storage";
+import { deleteObject, getStorage, ref } from "@react-native-firebase/storage";
 
 export type UploadKind = "image" | "video";
 
@@ -25,17 +19,19 @@ export type UploadedMedia = {
   mime: string;
   size: number;
   kind: UploadKind;
+  provider: "cloudinary" | "firebase-storage";
 };
 
-const STORAGE_BUCKET = "jogadores-de-volei.firebasestorage.app";
-const STORAGE_BUCKET_URL = `gs://${STORAGE_BUCKET}`;
+const CLOUDINARY_CLOUD_NAME = "hmputmfr";
+const CLOUDINARY_IMAGE_PRESET = "cadastro_atletas_images";
+const CLOUDINARY_VIDEO_PRESET = "cadastro_atletas_videos";
+
+const LEGACY_STORAGE_BUCKET = "jogadores-de-volei.firebasestorage.app";
 const IMAGE_MIMES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const IMAGE_MAX = 10 * 1024 * 1024;
 const VIDEO_MAX = 45 * 1024 * 1024;
 const PROFILE_IMAGE_MAX = 5 * 1024 * 1024;
-
-type UploadStage = "imagem-base64" | "imagem-arquivo" | "arquivo" | "url";
 
 function normalizeMime(kind: UploadKind, mimeType?: string | null): string {
   const mime = String(mimeType || "").trim().toLowerCase();
@@ -76,111 +72,116 @@ function mediaUri(uri: string): string {
   return value;
 }
 
+function imageDataUri(base64: string | null | undefined, mime: string): string {
+  const encoded = String(base64 || "").trim();
+  if (!encoded) {
+    throw new Error("Não foi possível preparar a imagem para envio. Selecione a foto novamente.");
+  }
+  return `data:${mime};base64,${encoded}`;
+}
+
 function uniqueName(ext: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 }
 
-function errorCode(error: unknown): string {
-  if (!error || typeof error !== "object") return "";
-  const code = (error as { code?: unknown }).code;
-  return typeof code === "string" ? code : "";
+function cloudinaryEndpoint(kind: UploadKind): string {
+  return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${kind === "video" ? "video" : "image"}/upload`;
 }
 
-function storageInstance() {
-  return getStorage(getApp());
-}
-
-function storageReference(path: string) {
-  // Passar a URL gs:// completa força o refFromURL do RNFirebase.
-  // Isso é importante para buckets novos *.firebasestorage.app.
-  return ref(storageInstance(), `${STORAGE_BUCKET_URL}/${path}`);
-}
-
-function publicMediaUrl(path: string): string {
-  return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(STORAGE_BUCKET)}/o/${encodeURIComponent(path)}?alt=media`;
-}
-
-function storageDiagnostic(stage: UploadStage, path: string, uri?: string): string {
-  const configuredBucket = getApp().options.storageBucket || "não informado no APK";
-  const uriScheme = uri ? String(uri).split(":", 1)[0] || "desconhecido" : "não aplicável";
-  return `Etapa: ${stage}. Bucket alvo: ${STORAGE_BUCKET}. Bucket do APK: ${configuredBucket}. Referência: ${STORAGE_BUCKET_URL}/${path}. URI: ${uriScheme}.`;
-}
-
-function friendlyStorageError(error: unknown, stage: UploadStage, path: string, uri?: string): Error {
-  const code = errorCode(error);
-  const diagnostic = storageDiagnostic(stage, path, uri);
-
-  if (code === "storage/unauthorized") {
-    return new Error(`O Firebase Storage recusou o envio. Entre novamente na conta e tente outra vez. ${diagnostic}`);
+async function parseCloudinaryResponse(response: Response): Promise<Record<string, unknown>> {
+  const raw = await response.text();
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw) as Record<string, unknown>;
+  } catch {
+    return { raw };
   }
-  if (code === "storage/bucket-not-found") {
-    return new Error(`O bucket do Firebase Storage não foi encontrado. ${diagnostic}`);
-  }
-  if (code === "storage/object-not-found") {
-    return new Error(`O Firebase Storage não encontrou o objeto durante o envio. ${diagnostic}`);
-  }
-  if (code === "storage/retry-limit-exceeded") {
-    return new Error(`O Firebase Storage excedeu o limite de tentativas. Verifique sua conexão e tente novamente. ${diagnostic}`);
-  }
-
-  const detail = error instanceof Error ? error.message : "erro desconhecido";
-  return new Error(`Falha no envio da mídia: ${detail}. ${diagnostic}`);
 }
 
-async function uploadToPath(
+function cloudinaryError(data: Record<string, unknown>, status: number): Error {
+  const nested = data.error && typeof data.error === "object" ? data.error as Record<string, unknown> : null;
+  const message = String(nested?.message || data.message || "").trim();
+  return new Error(
+    message
+      ? `Cloudinary recusou o envio: ${message}`
+      : `Não foi possível enviar a mídia para o Cloudinary (HTTP ${status}).`,
+  );
+}
+
+async function uploadCloudinary(
   input: LocalMediaInput,
-  folder: "publicacoes" | "videos" | "perfil",
   maxOverride?: number,
 ): Promise<UploadedMedia> {
   const mime = normalizeMime(input.kind, input.mimeType);
   const size = validateSize(input.kind, input.fileSize, maxOverride);
   const ext = extensionFromMime(mime);
-  const path = `usuarios/${input.uid}/${folder}/${uniqueName(ext)}`;
-  const storageRef = storageReference(path);
-  const uri = mediaUri(input.uri);
-  const metadata = {
-    contentType: mime,
-    cacheControl: "public,max-age=31536000,immutable",
-  };
+  const preset = input.kind === "video" ? CLOUDINARY_VIDEO_PRESET : CLOUDINARY_IMAGE_PRESET;
+  const form = new FormData();
 
-  if (input.kind === "image" && String(input.base64 || "").trim()) {
-    try {
-      await uploadString(storageRef, String(input.base64).trim(), "base64", metadata);
-    } catch (error) {
-      throw friendlyStorageError(error, "imagem-base64", path, uri);
-    }
+  if (input.kind === "image") {
+    form.append("file", imageDataUri(input.base64, mime));
   } else {
-    try {
-      await putFile(storageRef, uri, metadata);
-    } catch (error) {
-      throw friendlyStorageError(error, input.kind === "image" ? "imagem-arquivo" : "arquivo", path, uri);
-    }
+    const filePart = {
+      uri: mediaUri(input.uri),
+      name: String(input.fileName || uniqueName(ext)),
+      type: mime,
+    } as unknown as Blob;
+    form.append("file", filePart);
   }
 
+  form.append("upload_preset", preset);
+  form.append("tags", "cadastro-de-atletas,mobile");
+
+  let response: Response;
   try {
-    const url = publicMediaUrl(path);
-    return { url, path, mime, size, kind: input.kind };
-  } catch (error) {
-    throw friendlyStorageError(error, "url", path, uri);
+    response = await fetch(cloudinaryEndpoint(input.kind), {
+      method: "POST",
+      body: form,
+    });
+  } catch (cause) {
+    const detail = cause instanceof Error ? cause.message : "falha de rede";
+    throw new Error(`Não foi possível conectar ao Cloudinary: ${detail}`);
   }
+
+  const data = await parseCloudinaryResponse(response);
+  if (!response.ok) throw cloudinaryError(data, response.status);
+
+  const url = String(data.secure_url || "").trim();
+  const path = String(data.public_id || "").trim();
+  if (!url || !path) {
+    throw new Error("O Cloudinary recebeu o arquivo, mas não retornou a URL da mídia.");
+  }
+
+  return {
+    url,
+    path,
+    mime,
+    size: Number(data.bytes || size || 0),
+    kind: input.kind,
+    provider: "cloudinary",
+  };
 }
 
 export async function uploadPublicationMedia(input: LocalMediaInput): Promise<UploadedMedia> {
-  return uploadToPath(input, input.kind === "image" ? "publicacoes" : "videos");
+  return uploadCloudinary(input);
 }
 
 export async function uploadProfileImage(
   input: Omit<LocalMediaInput, "kind">,
 ): Promise<UploadedMedia> {
-  return uploadToPath({ ...input, kind: "image" }, "perfil", PROFILE_IMAGE_MAX);
+  return uploadCloudinary({ ...input, kind: "image" }, PROFILE_IMAGE_MAX);
 }
 
+// Compatibilidade com imagens antigas salvas no Firebase Storage.
+// Novos uploads usam Cloudinary, igual ao site. A exclusão de assets Cloudinary
+// será movida para o backend assinado, pois não deve carregar API secret no app.
 export async function deleteUploadedMedia(path: string): Promise<void> {
   const normalized = String(path || "").trim();
-  if (!normalized) return;
+  if (!normalized || !normalized.startsWith("usuarios/")) return;
   try {
-    await deleteObject(storageReference(normalized));
-  } catch (error) {
-    if (errorCode(error) !== "storage/object-not-found") throw error;
+    const storage = getStorage(getApp());
+    await deleteObject(ref(storage, `gs://${LEGACY_STORAGE_BUCKET}/${normalized}`));
+  } catch {
+    // Limpeza é melhor esforço. Não deve impedir publicação ou salvamento do perfil.
   }
 }
