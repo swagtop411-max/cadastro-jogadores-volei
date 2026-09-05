@@ -1,10 +1,11 @@
+import { getApp } from "@react-native-firebase/app";
 import {
   deleteObject,
   getDownloadURL,
+  getMetadata,
   getStorage,
   putFile,
   ref,
-  uploadBytes,
 } from "@react-native-firebase/storage";
 
 export type UploadKind = "image" | "video";
@@ -26,6 +27,8 @@ export type UploadedMedia = {
   kind: UploadKind;
 };
 
+const STORAGE_BUCKET = "jogadores-de-volei.firebasestorage.app";
+const STORAGE_BUCKET_URL = `gs://${STORAGE_BUCKET}`;
 const IMAGE_MIMES = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 const VIDEO_MIMES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 const IMAGE_MAX = 10 * 1024 * 1024;
@@ -65,10 +68,10 @@ function validateSize(kind: UploadKind, size?: number | null, maxOverride?: numb
   return normalized;
 }
 
-function localPath(uri: string): string {
+function mediaUri(uri: string): string {
   const value = String(uri || "").trim();
   if (!value) throw new Error("Não foi possível localizar o arquivo selecionado.");
-  return value.startsWith("file://") ? decodeURIComponent(value.slice(7)) : value;
+  return value;
 }
 
 function uniqueName(ext: string): string {
@@ -85,44 +88,49 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function downloadUrlWithRetry(
+function storageInstance() {
+  return getStorage(getApp(), STORAGE_BUCKET_URL);
+}
+
+async function metadataWithRetry(
   storageRef: ReturnType<typeof ref>,
   attempts = 5,
-): Promise<string> {
+) {
   let lastError: unknown = null;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
-      return await getDownloadURL(storageRef);
+      return await getMetadata(storageRef);
     } catch (error) {
       lastError = error;
       if (errorCode(error) !== "storage/object-not-found" || attempt === attempts - 1) throw error;
-      await wait(250 * (attempt + 1));
+      await wait(300 * (attempt + 1));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("Não foi possível obter a URL da mídia enviada.");
+  throw lastError instanceof Error ? lastError : new Error("Não foi possível confirmar a mídia enviada.");
 }
 
-async function fallbackImageUpload(
-  input: LocalMediaInput,
+function tokenDownloadUrl(metadata: Awaited<ReturnType<typeof getMetadata>>): string {
+  const token = metadata.downloadTokens?.[0];
+  if (!token) return "";
+  const bucket = metadata.bucket || STORAGE_BUCKET;
+  const encodedPath = encodeURIComponent(metadata.fullPath);
+  return `https://firebasestorage.googleapis.com/v0/b/${encodeURIComponent(bucket)}/o/${encodedPath}?alt=media&token=${encodeURIComponent(token)}`;
+}
+
+async function resolveDownloadUrl(
   storageRef: ReturnType<typeof ref>,
-  mime: string,
+  metadata: Awaited<ReturnType<typeof getMetadata>>,
 ): Promise<string> {
   try {
-    await deleteObject(storageRef);
+    return await getDownloadURL(storageRef);
   } catch (error) {
     if (errorCode(error) !== "storage/object-not-found") throw error;
+    const fallback = tokenDownloadUrl(metadata);
+    if (fallback) return fallback;
+    throw new Error(
+      `A mídia foi enviada, mas a URL não foi encontrada no bucket ${STORAGE_BUCKET}. Caminho: ${metadata.fullPath}`,
+    );
   }
-
-  const response = await fetch(input.uri);
-  const buffer = await response.arrayBuffer();
-  if (!buffer.byteLength) throw new Error("Não foi possível ler a imagem selecionada.");
-  if (buffer.byteLength > IMAGE_MAX) throw new Error("A imagem ultrapassa o limite de 10 MB.");
-
-  await uploadBytes(storageRef, new Uint8Array(buffer), {
-    contentType: mime,
-    cacheControl: "public,max-age=31536000,immutable",
-  });
-  return downloadUrlWithRetry(storageRef, 3);
 }
 
 async function uploadToPath(
@@ -134,12 +142,11 @@ async function uploadToPath(
   const size = validateSize(input.kind, input.fileSize, maxOverride);
   const ext = extensionFromMime(mime);
   const path = `usuarios/${input.uid}/${folder}/${uniqueName(ext)}`;
-  const storage = getStorage();
+  const storage = storageInstance();
   const storageRef = ref(storage, path);
 
-  let snapshot;
   try {
-    snapshot = await putFile(storageRef, localPath(input.uri), {
+    await putFile(storageRef, mediaUri(input.uri), {
       contentType: mime,
       cacheControl: "public,max-age=31536000,immutable",
     });
@@ -148,22 +155,17 @@ async function uploadToPath(
     if (code === "storage/unauthorized") {
       throw new Error("O Firebase Storage recusou o envio. Verifique sua sessão e as regras de upload.");
     }
+    if (code === "storage/bucket-not-found") {
+      throw new Error(`O bucket ${STORAGE_BUCKET} não foi encontrado no Firebase.`);
+    }
     throw error;
   }
 
-  const uploadedRef = snapshot?.ref || storageRef;
-  let url: string;
-  try {
-    url = await downloadUrlWithRetry(uploadedRef);
-  } catch (error) {
-    if (errorCode(error) === "storage/object-not-found" && input.kind === "image") {
-      url = await fallbackImageUpload(input, storageRef, mime);
-    } else {
-      throw error;
-    }
-  }
+  const metadata = await metadataWithRetry(storageRef);
+  const url = await resolveDownloadUrl(storageRef, metadata);
+  const realSize = Number(metadata.size || size || 0);
 
-  return { url, path, mime, size, kind: input.kind };
+  return { url, path, mime, size: realSize, kind: input.kind };
 }
 
 export async function uploadPublicationMedia(input: LocalMediaInput): Promise<UploadedMedia> {
@@ -180,7 +182,7 @@ export async function deleteUploadedMedia(path: string): Promise<void> {
   const normalized = String(path || "").trim();
   if (!normalized) return;
   try {
-    await deleteObject(ref(getStorage(), normalized));
+    await deleteObject(ref(storageInstance(), normalized));
   } catch (error) {
     if (errorCode(error) !== "storage/object-not-found") throw error;
   }
