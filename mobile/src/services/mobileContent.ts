@@ -173,7 +173,7 @@ export async function loadExploreProfiles(): Promise<PublicProfileV1[]> {
   }
 
   return snapshot.docs
-    .map((document) => ({ uid: document.id, ...(document.data() as PublicProfileV1) }))
+    .map((document) => ({ ...(document.data() as PublicProfileV1), uid: document.id }))
     .filter((profile) => profile.nome?.trim())
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
@@ -198,7 +198,7 @@ export async function publishTextPost(input: {
 
   await addDoc(collection(db, "publicacoes"), {
     ownerUid: input.uid,
-    ownerEmail: input.email.trim().toLowerCase(),
+    ownerEmail: input.email.trim(),
     nome: input.nome.trim() || "Atleta",
     texto: body,
     imagem: "",
