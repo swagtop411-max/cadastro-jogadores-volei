@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "Banco de Atletas",
+    "slug": "cadastro-de-atletas",
+    "scheme": "cadastrodeatletas",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "android": {
+      "package": "br.com.cadastrodeatletas.app",
+      "googleServicesFile": "./google-services.json"
+    },
+    "ios": {
+      "bundleIdentifier": "br.com.cadastrodeatletas.app"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-dev-client",
+      "@react-native-firebase/app",
+      "@react-native-firebase/auth",
+      "@react-native-firebase/app-check",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o Banco de Atletas acesse suas fotos e vídeos para criar publicações e atualizar seu perfil.",
+          "cameraPermission": "Permitir que o Banco de Atletas use a câmera para criar publicações e atualizar seu perfil.",
+          "microphonePermission": "Permitir que o Banco de Atletas use o microfone ao gravar vídeos pela câmera."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "e36cd3b7-4cac-455c-9250-99ae8019aace"
+      }
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
