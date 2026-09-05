@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -129,6 +130,13 @@ export default function ProfileScreen() {
           <Pressable onPress={loadProfile} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Atualizar dados do perfil</Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => void Linking.openURL("https://cadastrodeatletas.com.br/meu-perfil.html")}
+            style={styles.editButton}
+          >
+            <Text style={styles.editButtonText}>EDITAR / COMPLETAR PERFIL</Text>
+          </Pressable>
         </>
       ) : null}
 
@@ -165,7 +173,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     backgroundColor: "#071827",
     padding: 20,
-    paddingBottom: 40,
+    paddingBottom: 130,
   },
   eyebrow: {
     marginTop: 12,
@@ -309,6 +317,17 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: "#7ddff0",
+    fontWeight: "900",
+  },
+  editButton: {
+    alignItems: "center",
+    marginTop: 10,
+    borderRadius: 14,
+    backgroundColor: "#17384d",
+    padding: 14,
+  },
+  editButtonText: {
+    color: "#ffffff",
     fontWeight: "900",
   },
   signOutButton: {
