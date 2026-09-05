@@ -35,7 +35,7 @@ const IMAGE_MAX = 10 * 1024 * 1024;
 const VIDEO_MAX = 45 * 1024 * 1024;
 const PROFILE_IMAGE_MAX = 5 * 1024 * 1024;
 
-type UploadStage = "imagem-base64" | "arquivo" | "url";
+type UploadStage = "imagem-base64" | "imagem-arquivo" | "arquivo" | "url";
 
 function normalizeMime(kind: UploadKind, mimeType?: string | null): string {
   const mime = String(mimeType || "").trim().toLowerCase();
@@ -76,14 +76,6 @@ function mediaUri(uri: string): string {
   return value;
 }
 
-function mediaBase64(value?: string | null): string {
-  const normalized = String(value || "").trim();
-  if (!normalized) {
-    throw new Error("A imagem selecionada não forneceu os dados necessários para o envio. Selecione a foto novamente.");
-  }
-  return normalized;
-}
-
 function uniqueName(ext: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 }
@@ -99,8 +91,8 @@ function storageInstance() {
 }
 
 function storageReference(path: string) {
-  // Força refFromURL internamente. Isso evita o bug de resolução observado em
-  // buckets novos *.firebasestorage.app quando a referência é criada só pelo path.
+  // Passar a URL gs:// completa força o refFromURL do RNFirebase.
+  // Isso é importante para buckets novos *.firebasestorage.app.
   return ref(storageInstance(), `${STORAGE_BUCKET_URL}/${path}`);
 }
 
@@ -151,19 +143,17 @@ async function uploadToPath(
     cacheControl: "public,max-age=31536000,immutable",
   };
 
-  if (input.kind === "image") {
+  if (input.kind === "image" && String(input.base64 || "").trim()) {
     try {
-      const base64 = mediaBase64(input.base64);
-      await uploadString(storageRef, base64, "base64", metadata);
+      await uploadString(storageRef, String(input.base64).trim(), "base64", metadata);
     } catch (error) {
-      if (error instanceof Error && !errorCode(error)) throw error;
       throw friendlyStorageError(error, "imagem-base64", path, uri);
     }
   } else {
     try {
       await putFile(storageRef, uri, metadata);
     } catch (error) {
-      throw friendlyStorageError(error, "arquivo", path, uri);
+      throw friendlyStorageError(error, input.kind === "image" ? "imagem-arquivo" : "arquivo", path, uri);
     }
   }
 
