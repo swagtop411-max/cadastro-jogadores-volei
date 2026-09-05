@@ -72,20 +72,21 @@ function mediaUri(uri: string): string {
   return value;
 }
 
-function imageDataUri(base64: string | null | undefined, mime: string): string {
-  const encoded = String(base64 || "").trim();
-  if (!encoded) {
-    throw new Error("Não foi possível preparar a imagem para envio. Selecione a foto novamente.");
-  }
-  return `data:${mime};base64,${encoded}`;
-}
-
 function uniqueName(ext: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${ext}`;
 }
 
 function cloudinaryEndpoint(kind: UploadKind): string {
   return `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${kind === "video" ? "video" : "image"}/upload`;
+}
+
+function appendLocalFile(form: FormData, input: LocalMediaInput, mime: string, ext: string) {
+  const filePart = {
+    uri: mediaUri(input.uri),
+    name: String(input.fileName || uniqueName(ext)),
+    type: mime,
+  } as unknown as Blob;
+  form.append("file", filePart);
 }
 
 async function parseCloudinaryResponse(response: Response): Promise<Record<string, unknown>> {
@@ -117,16 +118,12 @@ async function uploadCloudinary(
   const ext = extensionFromMime(mime);
   const preset = input.kind === "video" ? CLOUDINARY_VIDEO_PRESET : CLOUDINARY_IMAGE_PRESET;
   const form = new FormData();
+  const base64 = String(input.base64 || "").trim();
 
-  if (input.kind === "image") {
-    form.append("file", imageDataUri(input.base64, mime));
+  if (input.kind === "image" && base64) {
+    form.append("file", `data:${mime};base64,${base64}`);
   } else {
-    const filePart = {
-      uri: mediaUri(input.uri),
-      name: String(input.fileName || uniqueName(ext)),
-      type: mime,
-    } as unknown as Blob;
-    form.append("file", filePart);
+    appendLocalFile(form, input, mime, ext);
   }
 
   form.append("upload_preset", preset);
