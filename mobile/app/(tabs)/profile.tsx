@@ -1,6 +1,6 @@
 import { getAuth } from "@react-native-firebase/auth";
-import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -50,10 +50,8 @@ export default function ProfileScreen() {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
       const result = await resolveProfile(user.uid);
       setProfile(result.resolved);
@@ -65,9 +63,11 @@ export default function ProfileScreen() {
     }
   }, [user]);
 
-  useEffect(() => {
-    void loadProfile();
-  }, [loadProfile]);
+  useFocusEffect(
+    useCallback(() => {
+      void loadProfile();
+    }, [loadProfile]),
+  );
 
   async function handleSignOut() {
     setError(null);
@@ -95,7 +95,6 @@ export default function ProfileScreen() {
           <Text style={styles.muted}>Sincronizando dados do perfil…</Text>
         </View>
       ) : null}
-
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {!loading && user ? (
@@ -110,7 +109,6 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             )}
-
             <View style={styles.identityText}>
               <Text style={styles.identityName}>{profile?.nome || user.displayName || "Atleta"}</Text>
               <Text style={styles.identityMeta}>{profile?.categoria || "Categoria não informada"}</Text>
@@ -160,7 +158,6 @@ export default function ProfileScreen() {
           <Pressable onPress={loadProfile} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Atualizar dados do perfil</Text>
           </Pressable>
-
           <Pressable onPress={() => router.push("/profile/edit")} style={styles.editButton}>
             <Text style={styles.editButtonText}>EDITAR / COMPLETAR PERFIL NO APP</Text>
           </Pressable>
@@ -187,9 +184,7 @@ function Field({ label, value, mono = false }: { label: string; value: string; m
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <Text selectable style={[styles.fieldValue, mono ? styles.mono : null]}>
-        {value}
-      </Text>
+      <Text selectable style={[styles.fieldValue, mono ? styles.mono : null]}>{value}</Text>
     </View>
   );
 }
