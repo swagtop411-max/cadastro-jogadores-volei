@@ -2,6 +2,7 @@ import { getAuth } from "@react-native-firebase/auth";
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -13,17 +14,29 @@ import {
 import type { PublicProfileV1 } from "@/contracts/schema-v1";
 import { firebaseErrorMessage } from "@/firebase/errors";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
-import { firebaseProfileRepository } from "@/repositories/firebase/firestoreRepositories";
+import { resolveProfile, type ResolvedProfile } from "@/services/profileResolver";
+
+const SOURCE_LABEL: Record<ResolvedProfile["source"], string> = {
+  perfil: "Perfil público",
+  "perfil+usuario": "Perfil + conta",
+  "perfil+atleta": "Perfil + cadastro esportivo",
+  "perfil+usuario+atleta": "Perfil + conta + cadastro esportivo",
+  usuario: "Conta",
+  atleta: "Cadastro esportivo",
+  nenhuma: "Nenhuma fonte encontrada",
+};
 
 export default function ProfileScreen() {
   const user = getAuth().currentUser;
   const [profile, setProfile] = useState<PublicProfileV1 | null>(null);
+  const [source, setSource] = useState<ResolvedProfile["source"]>("nenhuma");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
+      setSource("nenhuma");
       setLoading(false);
       return;
     }
@@ -32,7 +45,9 @@ export default function ProfileScreen() {
     setError(null);
 
     try {
-      setProfile(await firebaseProfileRepository.getByUid(user.uid));
+      const result = await resolveProfile(user.uid);
+      setProfile(result.resolved);
+      setSource(result.source);
     } catch (cause) {
       setError(firebaseErrorMessage(cause));
     } finally {
@@ -53,38 +68,78 @@ export default function ProfileScreen() {
     }
   }
 
+  const city = [profile?.cidade, profile?.uf].filter(Boolean).join(" / ");
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.eyebrow}>IDENTIDADE WEB ↔ APP</Text>
       <Text style={styles.title}>Meu Perfil</Text>
       <Text style={styles.subtitle}>
-        Estes dados vêm do mesmo Firebase usado pelo cadastrodeatletas.com.br.
+        O app combina os dados públicos, a conta e o cadastro esportivo do mesmo Firebase.
       </Text>
 
       {loading ? (
         <View style={styles.centerBox}>
-          <ActivityIndicator />
-          <Text style={styles.muted}>Carregando perfil do Firestore…</Text>
+          <ActivityIndicator color="#48cae4" />
+          <Text style={styles.muted}>Sincronizando dados do perfil…</Text>
         </View>
       ) : null}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       {!loading && user ? (
-        <View style={styles.card}>
-          <Field label="Nome" value={profile?.nome || user.displayName || "Não informado"} />
-          <Field label="E-mail" value={user.email || "Não informado"} />
-          <Field label="UID Firebase" value={user.uid} mono />
-          <Field label="Perfil esportivo" value={profile?.completo ? "Completo" : "Em preenchimento"} />
-          <Field label="Cidade" value={profile?.cidade || "Ainda não informada"} />
-          <Field label="Categoria" value={profile?.categoria || "Ainda não informada"} />
-        </View>
+        <>
+          <View style={styles.identityCard}>
+            {profile?.fotoUrl ? (
+              <Image source={{ uri: profile.fotoUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarFallbackText}>
+                  {(profile?.nome || user.displayName || "A").slice(0, 1).toUpperCase()}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.identityText}>
+              <Text style={styles.identityName}>
+                {profile?.nome || user.displayName || "Atleta"}
+              </Text>
+              <Text style={styles.identityMeta}>
+                {profile?.categoria || "Categoria não informada"}
+              </Text>
+              <View style={[styles.statusPill, profile?.completo ? styles.statusComplete : null]}>
+                <Text style={styles.statusText}>
+                  {profile?.completo ? "Perfil esportivo completo" : "Perfil em preenchimento"}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.card}>
+            <Field label="E-mail" value={user.email || "Não informado"} />
+            <Field label="Cidade" value={city || "Ainda não informada"} />
+            <Field label="Modalidade" value={profile?.modalidade || "Ainda não informada"} />
+            <Field label="Posição" value={profile?.posicao || "Ainda não informada"} />
+            <Field label="Categoria" value={profile?.categoria || "Ainda não informada"} />
+            <Field label="Time / equipe" value={profile?.time || "Ainda não informado"} />
+            <Field label="Fonte dos dados" value={SOURCE_LABEL[source]} />
+            <Field label="UID Firebase" value={user.uid} mono />
+          </View>
+
+          <Pressable onPress={loadProfile} style={styles.secondaryButton}>
+            <Text style={styles.secondaryButtonText}>Atualizar dados do perfil</Text>
+          </Pressable>
+        </>
       ) : null}
 
       {!loading && !profile && user ? (
-        <Pressable onPress={loadProfile} style={styles.secondaryButton}>
-          <Text style={styles.secondaryButtonText}>Tentar carregar novamente</Text>
-        </Pressable>
+        <View style={styles.notice}>
+          <Text style={styles.noticeTitle}>Perfil esportivo ainda não encontrado</Text>
+          <Text style={styles.noticeText}>
+            A conta está autenticada corretamente. Assim que houver dados vinculados ao mesmo UID,
+            eles aparecerão aqui.
+          </Text>
+        </View>
       ) : null}
 
       <Pressable onPress={handleSignOut} style={styles.signOutButton}>
@@ -138,6 +193,62 @@ const styles = StyleSheet.create({
     backgroundColor: "#0d2235",
     padding: 24,
   },
+  identityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 14,
+    borderRadius: 20,
+    backgroundColor: "#0d2235",
+    padding: 16,
+  },
+  avatar: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#17384d",
+  },
+  avatarFallback: {
+    width: 72,
+    height: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 36,
+    backgroundColor: "#17384d",
+  },
+  avatarFallbackText: {
+    color: "#7ddff0",
+    fontSize: 28,
+    fontWeight: "900",
+  },
+  identityText: {
+    flex: 1,
+  },
+  identityName: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "900",
+  },
+  identityMeta: {
+    marginTop: 3,
+    color: "#b8c7d9",
+  },
+  statusPill: {
+    alignSelf: "flex-start",
+    marginTop: 9,
+    borderRadius: 999,
+    backgroundColor: "#59451d",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  statusComplete: {
+    backgroundColor: "#123d33",
+  },
+  statusText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
+  },
   card: {
     borderRadius: 20,
     backgroundColor: "#0d2235",
@@ -173,9 +284,24 @@ const styles = StyleSheet.create({
     color: "#ffd5dd",
     padding: 11,
   },
+  notice: {
+    marginTop: 14,
+    borderRadius: 16,
+    backgroundColor: "#0d2235",
+    padding: 16,
+  },
+  noticeTitle: {
+    color: "#ffffff",
+    fontWeight: "900",
+  },
+  noticeText: {
+    marginTop: 6,
+    color: "#b8c7d9",
+    lineHeight: 20,
+  },
   secondaryButton: {
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 14,
     borderWidth: 1,
     borderColor: "#48cae4",
     borderRadius: 14,
