@@ -62,6 +62,7 @@ type RawSocialItem = {
   videoUrl?: string;
   criadoEm?: unknown;
   status?: string;
+  visibilidade?: string;
 };
 
 type LegacyAthleteRecord = {
@@ -167,8 +168,11 @@ function millis(value: unknown): number {
 
 async function loadPublicCollection(name: "publicacoes" | "videos") {
   const source = collection(db, name);
+  const documents = new Map<string, Awaited<ReturnType<typeof getDocs>>["docs"][number]>();
+
+  // Consulta compatível com as regras sociais atuais.
   try {
-    return await getDocs(
+    const snapshot = await getDocs(
       query(
         source,
         where("aprovado", "==", true),
@@ -176,11 +180,36 @@ async function loadPublicCollection(name: "publicacoes" | "videos") {
         orderBy("criadoEm", "desc"),
       ),
     );
+    for (const document of snapshot.docs) documents.set(document.id, document);
   } catch {
-    return getDocs(
-      query(source, where("aprovado", "==", true), where("visibilidade", "==", "publico")),
-    );
+    try {
+      const snapshot = await getDocs(
+        query(source, where("aprovado", "==", true), where("visibilidade", "==", "publico")),
+      );
+      for (const document of snapshot.docs) documents.set(document.id, document);
+    } catch {
+      // A tentativa de compatibilidade legada abaixo ainda pode recuperar conteúdo.
+    }
   }
+
+  // Compatibilidade com publicações antigas do site que não possuíam o campo
+  // visibilidade. Esta consulta só acrescenta documentos se as regras do projeto
+  // permitirem a leitura, portanto não contorna privacidade do Firestore.
+  try {
+    const legacySnapshot = await getDocs(
+      query(source, where("aprovado", "==", true), orderBy("criadoEm", "desc")),
+    );
+    for (const document of legacySnapshot.docs) documents.set(document.id, document);
+  } catch {
+    try {
+      const legacySnapshot = await getDocs(query(source, where("aprovado", "==", true)));
+      for (const document of legacySnapshot.docs) documents.set(document.id, document);
+    } catch {
+      // Em regras mais restritivas, permanecemos somente com os itens públicos explícitos.
+    }
+  }
+
+  return [...documents.values()];
 }
 
 function profileFromData(uid: string, data: Record<string, unknown>): PublicProfileV1 {
@@ -331,13 +360,13 @@ export async function loadAthleteDirectory(): Promise<MobileAthleteDirectoryItem
 }
 
 export async function loadMobileFeed(): Promise<MobileFeedItem[]> {
-  const [postsSnapshot, videosSnapshot, directory] = await Promise.all([
+  const [postDocuments, videoDocuments, directory] = await Promise.all([
     loadPublicCollection("publicacoes"),
     loadPublicCollection("videos"),
     loadAthleteDirectory().catch(() => []),
   ]);
 
-  const posts: RawSocialItem[] = postsSnapshot.docs.map((document) => {
+  const posts: RawSocialItem[] = postDocuments.map((document) => {
     const data = document.data() as Record<string, unknown>;
     return {
       id: document.id,
@@ -350,10 +379,11 @@ export async function loadMobileFeed(): Promise<MobileFeedItem[]> {
       imagem: text(data.imagem),
       criadoEm: data.criadoEm,
       status: text(data.status),
+      visibilidade: text(data.visibilidade),
     };
   });
 
-  const videos: RawSocialItem[] = videosSnapshot.docs.map((document) => {
+  const videos: RawSocialItem[] = videoDocuments.map((document) => {
     const data = document.data() as Record<string, unknown>;
     return {
       id: document.id,
@@ -364,6 +394,7 @@ export async function loadMobileFeed(): Promise<MobileFeedItem[]> {
       videoUrl: text(data.videoUrl),
       criadoEm: data.criadoEm,
       status: text(data.status),
+      visibilidade: text(data.visibilidade),
     };
   });
 
@@ -372,10 +403,10 @@ export async function loadMobileFeed(): Promise<MobileFeedItem[]> {
   );
 
   return [...posts, ...videos]
-    .filter((item) => item.ownerUid && item.status !== "removido")
+    .filter((item) => item.status !== "removido" && item.visibilidade !== "privado")
     .sort((a, b) => millis(b.criadoEm) - millis(a.criadoEm))
     .map((item) => {
-      const athlete = byUid.get(item.ownerUid);
+      const athlete = item.ownerUid ? byUid.get(item.ownerUid) : undefined;
       return {
         id: item.id,
         kind: item.kind,
@@ -441,7 +472,7 @@ export async function publishPost(input: {
     ownerEmail: input.email.trim(),
     nome: input.nome.trim() || "Atleta",
     texto: body,
-    imagem: "",
+    imagem: input.media?.url || "",
     imagemUrl: input.media?.url || "",
     imagemPath: input.media?.path || "",
     imagemMime: input.media?.mime || "image/jpeg",
@@ -451,7 +482,7 @@ export async function publishPost(input: {
     midias: [],
     hashtags: [],
     mencoes: [],
-    armazenamento: input.media ? "firebase-storage" : "nenhum",
+    armazenamento: input.media?.provider || "nenhum",
     visibilidade: visibility,
     aprovado: true,
     status: "publicado",
