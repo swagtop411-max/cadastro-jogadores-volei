@@ -6,16 +6,6 @@ export type SocialStatus = "publicado" | "removido";
 
 export type TimestampLike = unknown;
 
-export interface UserAccountV1 {
-  uid: string;
-  nome: string;
-  email: string;
-  papel: UserRole;
-  status: UserStatus;
-  criadoEm: TimestampLike;
-  atualizadoEm: TimestampLike;
-}
-
 export interface ChampionshipHistoryItemV1 {
   campeonato?: string;
   nome?: string;
@@ -26,6 +16,33 @@ export interface ChampionshipHistoryItemV1 {
   data?: string;
   modalidade?: string;
   categoria?: string;
+}
+
+export interface UserAccountV1 {
+  uid: string;
+  nome: string;
+  email: string;
+  papel: UserRole;
+  status: UserStatus;
+  criadoEm: TimestampLike;
+  atualizadoEm: TimestampLike;
+  nascimento?: string;
+  cidade?: string;
+  uf?: string;
+  modalidade?: string;
+  modalidades?: string[];
+  posicao?: string;
+  posicoes?: string[];
+  categoria?: AthleteCategory;
+  time?: string;
+  contato?: string;
+  bio?: string;
+  historicoCampeonatos?: ChampionshipHistoryItemV1[];
+  fotoUrl?: string;
+  fotoPath?: string;
+  capaUrl?: string;
+  capaPath?: string;
+  instagramUrl?: string;
 }
 
 export interface PublicProfileV1 {
