@@ -62,10 +62,29 @@ function text(value: unknown): string {
   return "";
 }
 
-function joinList(value: unknown): string {
-  return Array.isArray(value)
-    ? value.map((item) => text(item)).filter(Boolean).join(", ")
-    : "";
+function normalizedText(value: unknown): string {
+  return text(value)
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function isPlaceholder(value: unknown): boolean {
+  const normalized = normalizedText(value);
+  return new Set([
+    "",
+    "nao informada",
+    "nao informado",
+    "nao preenchida",
+    "nao preenchido",
+    "em preenchimento",
+    "selecione",
+    "indefinida",
+    "indefinido",
+    "n/a",
+    "nenhuma",
+    "nenhum",
+  ]).has(normalized);
 }
 
 function choose(...values: unknown[]): string {
@@ -74,6 +93,40 @@ function choose(...values: unknown[]): string {
     if (candidate) return candidate;
   }
   return "";
+}
+
+function chooseMeaningful(...values: unknown[]): string {
+  for (const value of values) {
+    const candidate = text(value);
+    if (candidate && !isPlaceholder(candidate)) return candidate;
+  }
+  return "";
+}
+
+function valuesFrom(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => valuesFrom(item));
+  }
+  const raw = text(value);
+  if (!raw) return [];
+  return raw
+    .split(/[,;|]/)
+    .map((item) => item.trim())
+    .filter((item) => item && !isPlaceholder(item));
+}
+
+function mergeStringList(...values: unknown[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    for (const item of valuesFrom(value)) {
+      const key = normalizedText(item);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      result.push(item);
+    }
+  }
+  return result;
 }
 
 function chooseName(...values: unknown[]): string {
@@ -86,10 +139,13 @@ function chooseName(...values: unknown[]): string {
 }
 
 function normalizeCategory(...values: unknown[]): AthleteCategory {
-  const value = choose(...values).toLocaleLowerCase("pt-BR");
-  if (value.includes("inic")) return "Iniciante";
-  if (value.includes("avan")) return "Avançado";
-  if (value.includes("inter")) return "Intermediário";
+  for (const raw of values) {
+    const value = normalizedText(raw);
+    if (!value || isPlaceholder(raw)) continue;
+    if (value.includes("inic")) return "Iniciante";
+    if (value.includes("avan")) return "Avançado";
+    if (value.includes("inter")) return "Intermediário";
+  }
   return "";
 }
 
@@ -169,38 +225,47 @@ function buildResolvedProfile(
     account?.historicoCampeonatos,
     athlete?.historicoCampeonatos,
   );
-  const uf = choose(profile?.uf, account?.uf, athlete?.uf).toUpperCase().slice(0, 2);
-  const cidade = normalizeCity(choose(profile?.cidade, account?.cidade, athlete?.cidade), uf);
+  const uf = chooseMeaningful(profile?.uf, account?.uf, athlete?.uf).toUpperCase().slice(0, 2);
+  const cidade = normalizeCity(
+    chooseMeaningful(profile?.cidade, account?.cidade, athlete?.cidade),
+    uf,
+  );
   const categoria = normalizeCategory(profile?.categoria, account?.categoria, athlete?.categoria);
+  const modalidades = mergeStringList(
+    profile?.modalidade,
+    account?.modalidades,
+    account?.modalidade,
+    athlete?.modalidades,
+    athlete?.modalidade,
+  );
+  const posicoes = mergeStringList(
+    profile?.posicao,
+    account?.posicoes,
+    account?.posicao,
+    athlete?.posicoes,
+    athlete?.posicao,
+  );
 
   return {
     uid,
     nome: chooseName(profile?.nome, account?.nome, athlete?.nome),
     cidade,
     uf,
-    modalidade: choose(
-      profile?.modalidade,
-      account?.modalidade,
-      joinList(account?.modalidades),
-      athlete?.modalidade,
-      joinList(athlete?.modalidades),
-    ),
-    posicao: choose(
-      profile?.posicao,
-      account?.posicao,
-      joinList(account?.posicoes),
-      athlete?.posicao,
-      joinList(athlete?.posicoes),
-    ),
+    modalidade: modalidades.join(", "),
+    posicao: posicoes.join(", "),
     categoria,
-    time: choose(profile?.time, account?.time, athlete?.time),
-    bio: choose(profile?.bio, account?.bio, athlete?.bio, athlete?.observacoes),
-    fotoUrl: choose(profile?.fotoUrl, account?.fotoUrl, athlete?.fotoUrl, athlete?.foto),
-    fotoPath: choose(profile?.fotoPath, account?.fotoPath),
-    capaUrl: choose(profile?.capaUrl, account?.capaUrl),
-    capaPath: choose(profile?.capaPath, account?.capaPath),
-    handle: choose(profile?.handle),
-    instagramUrl: choose(profile?.instagramUrl, account?.instagramUrl, athlete?.instagramUrl),
+    time: chooseMeaningful(profile?.time, account?.time, athlete?.time),
+    bio: chooseMeaningful(profile?.bio, account?.bio, athlete?.bio, athlete?.observacoes),
+    fotoUrl: chooseMeaningful(profile?.fotoUrl, account?.fotoUrl, athlete?.fotoUrl, athlete?.foto),
+    fotoPath: chooseMeaningful(profile?.fotoPath, account?.fotoPath),
+    capaUrl: chooseMeaningful(profile?.capaUrl, account?.capaUrl),
+    capaPath: chooseMeaningful(profile?.capaPath, account?.capaPath),
+    handle: chooseMeaningful(profile?.handle),
+    instagramUrl: chooseMeaningful(
+      profile?.instagramUrl,
+      account?.instagramUrl,
+      athlete?.instagramUrl,
+    ),
     historicoCampeonatos: history,
     completo: Boolean(cidade && uf.length === 2 && categoria),
   };
