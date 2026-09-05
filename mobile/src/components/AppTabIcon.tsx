@@ -1,4 +1,4 @@
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, type ColorValue } from "react-native";
 
 type TabIconName = "feed" | "explore" | "publish" | "championships" | "profile";
 
@@ -8,7 +8,7 @@ export function AppTabIcon({
   size = 24,
 }: {
   name: TabIconName;
-  color: string;
+  color: ColorValue;
   size?: number;
 }) {
   const scale = size / 24;
@@ -251,7 +251,7 @@ function ProfileIcon({ color, scale }: IconProps) {
   );
 }
 
-type IconProps = { color: string; scale: number };
+type IconProps = { color: ColorValue; scale: number };
 
 const styles = StyleSheet.create({
   canvas: {
