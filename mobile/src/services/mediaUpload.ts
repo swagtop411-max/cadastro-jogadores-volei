@@ -37,6 +37,15 @@ const PROFILE_IMAGE_MAX = 5 * 1024 * 1024;
 
 type UploadStage = "arquivo" | "fallback-bytes" | "url";
 
+type UploadTaskLike = {
+  on: (
+    event: "state_changed",
+    next?: ((snapshot: unknown) => void) | null,
+    error?: ((error: unknown) => void) | null,
+    complete?: (() => void) | null,
+  ) => unknown;
+};
+
 function normalizeMime(kind: UploadKind, mimeType?: string | null): string {
   const mime = String(mimeType || "").trim().toLowerCase();
   if (kind === "image") {
@@ -120,6 +129,17 @@ function friendlyStorageError(error: unknown, stage: UploadStage, path: string):
   return new Error(`Falha no envio da mídia: ${detail}. ${diagnostic}`);
 }
 
+function waitForUploadTask(task: UploadTaskLike): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    task.on(
+      "state_changed",
+      null,
+      (error) => reject(error),
+      () => resolve(),
+    );
+  });
+}
+
 async function getDownloadUrlWithRetry(
   storageRef: ReturnType<typeof ref>,
   attempts = 6,
@@ -151,10 +171,11 @@ async function uploadImageByBytes(
 ): Promise<void> {
   const response = await fetch(uri);
   const blob = await response.blob();
-  await uploadBytesResumable(storageRef, blob, {
+  const task = uploadBytesResumable(storageRef, blob, {
     contentType: mime,
     cacheControl: "public,max-age=31536000,immutable",
-  });
+  }) as unknown as UploadTaskLike;
+  await waitForUploadTask(task);
 }
 
 async function uploadToPath(
@@ -176,7 +197,8 @@ async function uploadToPath(
   let usedBytesFallback = false;
 
   try {
-    await putFile(storageRef, uri, metadata);
+    const task = putFile(storageRef, uri, metadata) as unknown as UploadTaskLike;
+    await waitForUploadTask(task);
   } catch (error) {
     if (input.kind !== "image" || errorCode(error) !== "storage/object-not-found") {
       throw friendlyStorageError(error, "arquivo", path);
