@@ -4,6 +4,7 @@ import {
   getStorage,
   putFile,
   ref,
+  uploadBytes,
 } from "@react-native-firebase/storage";
 
 export type UploadKind = "image" | "video";
@@ -101,6 +102,29 @@ async function downloadUrlWithRetry(
   throw lastError instanceof Error ? lastError : new Error("Não foi possível obter a URL da mídia enviada.");
 }
 
+async function fallbackImageUpload(
+  input: LocalMediaInput,
+  storageRef: ReturnType<typeof ref>,
+  mime: string,
+): Promise<string> {
+  try {
+    await deleteObject(storageRef);
+  } catch (error) {
+    if (errorCode(error) !== "storage/object-not-found") throw error;
+  }
+
+  const response = await fetch(input.uri);
+  const buffer = await response.arrayBuffer();
+  if (!buffer.byteLength) throw new Error("Não foi possível ler a imagem selecionada.");
+  if (buffer.byteLength > IMAGE_MAX) throw new Error("A imagem ultrapassa o limite de 10 MB.");
+
+  await uploadBytes(storageRef, new Uint8Array(buffer), {
+    contentType: mime,
+    cacheControl: "public,max-age=31536000,immutable",
+  });
+  return downloadUrlWithRetry(storageRef, 3);
+}
+
 async function uploadToPath(
   input: LocalMediaInput,
   folder: "publicacoes" | "videos" | "perfil",
@@ -132,10 +156,11 @@ async function uploadToPath(
   try {
     url = await downloadUrlWithRetry(uploadedRef);
   } catch (error) {
-    if (errorCode(error) === "storage/object-not-found") {
-      throw new Error("O arquivo terminou de enviar, mas o Firebase Storage ainda não conseguiu localizar o objeto. Tente publicar novamente.");
+    if (errorCode(error) === "storage/object-not-found" && input.kind === "image") {
+      url = await fallbackImageUpload(input, storageRef, mime);
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   return { url, path, mime, size, kind: input.kind };
