@@ -1,5 +1,5 @@
 import { Link, router } from "expo-router";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -88,7 +88,7 @@ export default function RegisterScreen() {
   );
 }
 
-function Field(props: React.ComponentProps<typeof TextInput> & { label: string }) {
+function Field(props: ComponentProps<typeof TextInput> & { label: string }) {
   const { label, ...inputProps } = props;
   return (
     <View style={styles.fieldWrap}>
