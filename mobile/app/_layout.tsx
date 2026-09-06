@@ -1,10 +1,11 @@
 import { Stack, router, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
 
 import { bootstrapFirebase } from "@/firebase/bootstrap";
 import type { AuthSession } from "@/repositories/contracts";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
+import { brand } from "@/ui/brand";
 
 export default function RootLayout() {
   const segments = useSegments();
@@ -44,20 +45,27 @@ export default function RootLayout() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#071827", padding: 24 }}>
-        <Text style={{ color: "#ffffff", fontSize: 18, fontWeight: "800", textAlign: "center" }}>
-          Não foi possível iniciar o aplicativo.
-        </Text>
-        <Text style={{ color: "#b8c7d9", marginTop: 8, textAlign: "center" }}>{error}</Text>
+      <View style={styles.loadingPage}>
+        <Image source={require("../assets/branding/app-icon.png")} style={styles.loadingLogo} />
+        <Text style={styles.errorTitle}>Não foi possível iniciar o aplicativo.</Text>
+        <Text style={styles.loadingText}>{error}</Text>
       </View>
     );
   }
 
   if (!ready || !sessionResolved) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#071827" }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ color: "#b8c7d9", marginTop: 12 }}>Conectando ao Cadastro de Atletas…</Text>
+      <View style={styles.loadingPage}>
+        <View style={styles.loadingGlow} />
+        <Image source={require("../assets/branding/app-icon.png")} style={styles.loadingLogo} />
+        <Text style={styles.loadingBrand}>Banco de <Text style={styles.loadingBrandAccent}>Atletas</Text></Text>
+        <Text style={styles.loadingUrl}>cadastrodeatletas.com.br</Text>
+        <View style={styles.loadingRule}>
+          <View style={styles.loadingRuleCyan} />
+          <View style={styles.loadingRuleGold} />
+        </View>
+        <ActivityIndicator color={brand.colors.cyan} style={styles.spinner} />
+        <Text style={styles.loadingText}>Conectando talentos, movendo o esporte…</Text>
       </View>
     );
   }
@@ -65,10 +73,11 @@ export default function RootLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#071827" },
-        headerTintColor: "#ffffff",
-        headerTitleStyle: { fontWeight: "800" },
-        contentStyle: { backgroundColor: "#071827" },
+        headerStyle: { backgroundColor: brand.colors.bgDeep },
+        headerTintColor: brand.colors.text,
+        headerTitleStyle: { fontWeight: "900" },
+        headerShadowVisible: false,
+        contentStyle: { backgroundColor: brand.colors.bg },
       }}
     >
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -78,3 +87,38 @@ export default function RootLayout() {
     </Stack>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingPage: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    backgroundColor: brand.colors.bg,
+    padding: 28,
+  },
+  loadingGlow: {
+    position: "absolute",
+    width: 330,
+    height: 330,
+    borderRadius: 170,
+    backgroundColor: "rgba(24,213,255,0.06)",
+    top: "24%",
+  },
+  loadingLogo: {
+    width: 132,
+    height: 132,
+    borderRadius: 32,
+    borderWidth: 1,
+    borderColor: brand.colors.cyan,
+  },
+  loadingBrand: { marginTop: 18, color: brand.colors.text, fontSize: 28, fontWeight: "900" },
+  loadingBrandAccent: { color: brand.colors.cyan },
+  loadingUrl: { marginTop: 3, color: brand.colors.muted, fontSize: 11, letterSpacing: 1.1 },
+  loadingRule: { flexDirection: "row", width: 190, gap: 5, marginTop: 20 },
+  loadingRuleCyan: { flex: 1, height: 4, borderRadius: 999, backgroundColor: brand.colors.cyan },
+  loadingRuleGold: { width: 46, height: 4, borderRadius: 999, backgroundColor: brand.colors.gold },
+  spinner: { marginTop: 22 },
+  loadingText: { marginTop: 12, color: brand.colors.mutedStrong, textAlign: "center", lineHeight: 20 },
+  errorTitle: { marginTop: 18, color: brand.colors.text, fontSize: 18, fontWeight: "900", textAlign: "center" },
+});
