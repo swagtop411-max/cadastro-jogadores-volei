@@ -6,15 +6,28 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/branding/app-icon.png",
+    "splash": {
+      "image": "./assets/branding/app-splash.jpg",
+      "resizeMode": "cover",
+      "backgroundColor": "#041b2b"
+    },
     "runtimeVersion": {
       "policy": "appVersion"
     },
     "android": {
       "package": "br.com.cadastrodeatletas.app",
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/app-icon.png",
+        "backgroundColor": "#041b2b"
+      }
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app"
+    },
+    "web": {
+      "favicon": "./assets/branding/app-icon.png"
     },
     "plugins": [
       "expo-router",
