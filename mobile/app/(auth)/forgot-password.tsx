@@ -11,8 +11,10 @@ import {
   View,
 } from "react-native";
 
+import { BrandHeader } from "@/components/BrandHeader";
 import { firebaseErrorMessage } from "@/firebase/errors";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
+import { brand } from "@/ui/brand";
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState("");
@@ -25,11 +27,9 @@ export default function ForgotPasswordScreen() {
       setError("Digite o e-mail da sua conta.");
       return;
     }
-
     setLoading(true);
     setError(null);
     setSuccess(null);
-
     try {
       await firebaseAuthRepository.sendPasswordReset(email);
       setSuccess("Enviamos as instruções de recuperação para o seu e-mail.");
@@ -41,135 +41,63 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      style={styles.page}
-    >
-      <View style={styles.card}>
-        <Text style={styles.eyebrow}>RECUPERAÇÃO</Text>
-        <Text style={styles.title}>Recuperar senha</Text>
-        <Text style={styles.subtitle}>
-          O e-mail será enviado pelo mesmo Firebase Authentication usado pelo site.
-        </Text>
-
-        <Text style={styles.label}>E-mail</Text>
-        <TextInput
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          onChangeText={setEmail}
-          placeholder="seuemail@exemplo.com"
-          placeholderTextColor="#718096"
-          style={styles.input}
-          value={email}
+    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.page}>
+      <View style={styles.content}>
+        <BrandHeader
+          eyebrow="RECUPERE O ACESSO"
+          title="Recuperar senha"
+          subtitle="Use o e-mail da sua conta Banco de Atletas."
         />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        {success ? <Text style={styles.success}>{success}</Text> : null}
+        <View style={styles.card}>
+          <View style={styles.cardAccent} />
+          <Text style={styles.formTitle}>Vamos enviar um link</Text>
+          <Text style={styles.formSubtitle}>A recuperação usa o mesmo Firebase Authentication do site.</Text>
 
-        <Pressable
-          disabled={loading}
-          onPress={handleReset}
-          style={({ pressed }) => [
-            styles.primaryButton,
-            pressed && !loading ? styles.pressed : null,
-            loading ? styles.disabled : null,
-          ]}
-        >
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <Text style={styles.primaryButtonText}>Enviar recuperação</Text>
-          )}
-        </Pressable>
+          <Text style={styles.label}>E-mail</Text>
+          <TextInput
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            onChangeText={setEmail}
+            placeholder="seuemail@exemplo.com"
+            placeholderTextColor={brand.colors.muted}
+            style={styles.input}
+            value={email}
+          />
 
-        <Link href="/login" style={styles.link}>
-          Voltar para entrar
-        </Link>
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+          {success ? <Text style={styles.success}>{success}</Text> : null}
+
+          <Pressable
+            disabled={loading}
+            onPress={handleReset}
+            style={({ pressed }) => [styles.primaryButton, pressed && !loading && styles.pressed, loading && styles.disabled]}
+          >
+            {loading ? <ActivityIndicator color={brand.colors.bgDeep} /> : <Text style={styles.primaryButtonText}>ENVIAR RECUPERAÇÃO</Text>}
+          </Pressable>
+
+          <Link href="/login" style={styles.link}>Voltar para entrar</Link>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "#071827",
-    padding: 20,
-  },
-  card: {
-    gap: 10,
-    borderRadius: 22,
-    backgroundColor: "#0d2235",
-    padding: 22,
-  },
-  eyebrow: {
-    color: "#48cae4",
-    fontSize: 12,
-    fontWeight: "900",
-    letterSpacing: 1.2,
-  },
-  title: {
-    color: "#ffffff",
-    fontSize: 30,
-    fontWeight: "900",
-  },
-  subtitle: {
-    marginBottom: 12,
-    color: "#b8c7d9",
-    lineHeight: 21,
-  },
-  label: {
-    color: "#dce8f3",
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  input: {
-    minHeight: 50,
-    borderWidth: 1,
-    borderColor: "#29445c",
-    borderRadius: 14,
-    backgroundColor: "#081a2a",
-    color: "#ffffff",
-    paddingHorizontal: 14,
-    fontSize: 16,
-  },
-  error: {
-    borderRadius: 12,
-    backgroundColor: "#3a1620",
-    color: "#ffd5dd",
-    padding: 11,
-  },
-  success: {
-    borderRadius: 12,
-    backgroundColor: "#12372b",
-    color: "#c9ffe4",
-    padding: 11,
-  },
-  primaryButton: {
-    minHeight: 52,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 8,
-    borderRadius: 14,
-    backgroundColor: "#48cae4",
-  },
-  primaryButtonText: {
-    color: "#042132",
-    fontSize: 16,
-    fontWeight: "900",
-  },
-  pressed: {
-    opacity: 0.82,
-  },
-  disabled: {
-    opacity: 0.6,
-  },
-  link: {
-    alignSelf: "center",
-    color: "#7ddff0",
-    fontWeight: "800",
-    marginTop: 8,
-  },
+  page: { flex: 1, backgroundColor: brand.colors.bg },
+  content: { flex: 1, justifyContent: "center", padding: 18 },
+  card: { position: "relative", overflow: "hidden", borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 20, ...brand.shadow },
+  cardAccent: { position: "absolute", top: 0, left: 0, right: 0, height: 3, backgroundColor: brand.colors.gold },
+  formTitle: { color: brand.colors.text, fontSize: 22, fontWeight: "900" },
+  formSubtitle: { marginTop: 4, marginBottom: 14, color: brand.colors.mutedStrong, fontSize: 12, lineHeight: 18 },
+  label: { marginBottom: 6, color: brand.colors.cyanSoft, fontSize: 11, fontWeight: "900", textTransform: "uppercase", letterSpacing: 0.7 },
+  input: { minHeight: 52, borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.md, backgroundColor: brand.colors.bgDeep, color: brand.colors.text, paddingHorizontal: 14, fontSize: 16 },
+  error: { marginTop: 10, borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, color: "#ffd5dd", padding: 11 },
+  success: { marginTop: 10, borderRadius: brand.radius.sm, backgroundColor: "#123d33", color: "#c9ffe4", padding: 11 },
+  primaryButton: { minHeight: 54, alignItems: "center", justifyContent: "center", marginTop: 14, borderWidth: 1, borderColor: brand.colors.cyanSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.cyan, ...brand.shadow },
+  primaryButtonText: { color: brand.colors.bgDeep, fontSize: 14, fontWeight: "900", letterSpacing: 0.4 },
+  pressed: { opacity: 0.82 },
+  disabled: { opacity: 0.6 },
+  link: { alignSelf: "center", color: brand.colors.gold, fontWeight: "800", marginTop: 14 },
 });
