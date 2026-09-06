@@ -15,17 +15,11 @@ import {
   View,
 } from "react-native";
 
+import { BrandHeader, SectionTitle } from "@/components/BrandHeader";
 import type { AthleteCategory, ChampionshipHistoryItemV1 } from "@/contracts/schema-v1";
-import {
-  loadOwnProfileForEdit,
-  saveOwnProfile,
-  type ProfileEditValues,
-} from "@/services/profileEditor";
-import {
-  deleteUploadedMedia,
-  uploadProfileImage,
-  type UploadedMedia,
-} from "@/services/mediaUpload";
+import { deleteUploadedMedia, uploadProfileImage, type UploadedMedia } from "@/services/mediaUpload";
+import { loadOwnProfileForEdit, saveOwnProfile, type ProfileEditValues } from "@/services/profileEditor";
+import { brand } from "@/ui/brand";
 
 const EMPTY: ProfileEditValues = {
   nome: "",
@@ -138,11 +132,7 @@ export default function EditProfileScreen() {
           fileSize: selectedPhoto.fileSize,
           fileName: selectedPhoto.fileName,
         });
-        nextValues = {
-          ...values,
-          fotoUrl: uploaded.url,
-          fotoPath: uploaded.path,
-        };
+        nextValues = { ...values, fotoUrl: uploaded.url, fotoPath: uploaded.path };
       }
       const saved = await saveOwnProfile({ uid: user.uid, email: user.email, values: nextValues });
       setValues((current) => ({ ...current, ...saved, nascimento: nextValues.nascimento, contato: nextValues.contato }));
@@ -163,8 +153,8 @@ export default function EditProfileScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#48cae4" />
-        <Text style={styles.muted}>Carregando seu perfil correto…</Text>
+        <ActivityIndicator color={brand.colors.cyan} />
+        <Text style={styles.muted}>Carregando seu perfil…</Text>
       </View>
     );
   }
@@ -172,37 +162,38 @@ export default function EditProfileScreen() {
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">
-        <Text style={styles.eyebrow}>SEU PERFIL</Text>
-        <Text style={styles.title}>Editar perfil esportivo</Text>
-        <Text style={styles.subtitle}>
-          As alterações permanecem no app e sincronizam com o mesmo Firebase usado pelo site.
-        </Text>
+        <BrandHeader
+          eyebrow="SEU TALENTO EM DESTAQUE"
+          title="Editar perfil"
+          subtitle="Mantenha sua identidade esportiva atualizada no app e no site."
+        />
 
         <View style={styles.photoCard}>
-          <Image
-            source={{ uri: selectedPhoto?.uri || values.fotoUrl || undefined }}
-            style={styles.avatar}
-          />
+          <View style={styles.photoGlow} />
+          {selectedPhoto?.uri || values.fotoUrl ? (
+            <Image source={{ uri: selectedPhoto?.uri || values.fotoUrl }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatarFallback}><Text style={styles.avatarFallbackText}>{values.nome.slice(0, 1).toUpperCase() || "A"}</Text></View>
+          )}
+          <Text style={styles.photoTitle}>{values.nome || "Seu perfil"}</Text>
+          <Text style={styles.photoSubtitle}>{values.categoria || "Complete sua categoria"}</Text>
           <View style={styles.photoActions}>
-            <Pressable onPress={() => void choosePhoto("camera")} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>📷 CÂMERA</Text>
+            <Pressable onPress={() => void choosePhoto("camera")} style={({ pressed }) => [styles.smallButton, pressed && styles.pressed]}>
+              <Text style={styles.smallButtonIcon}>◉</Text><Text style={styles.smallButtonText}>CÂMERA</Text>
             </Pressable>
-            <Pressable onPress={() => void choosePhoto("gallery")} style={styles.smallButton}>
-              <Text style={styles.smallButtonText}>🖼️ GALERIA</Text>
+            <Pressable onPress={() => void choosePhoto("gallery")} style={({ pressed }) => [styles.smallButton, pressed && styles.pressed]}>
+              <Text style={styles.smallButtonIcon}>▣</Text><Text style={styles.smallButtonText}>GALERIA</Text>
             </Pressable>
           </View>
         </View>
 
+        <SectionTitle eyebrow="IDENTIDADE" title="Dados do atleta" />
         <View style={styles.formCard}>
           <Field label="Nome completo / nome esportivo" value={values.nome} onChangeText={(value) => setField("nome", value)} />
           <Field label="Data de nascimento" value={values.nascimento} onChangeText={(value) => setField("nascimento", value)} placeholder="AAAA-MM-DD" />
           <View style={styles.inlineFields}>
-            <View style={styles.flexField}>
-              <Field label="Cidade" value={values.cidade} onChangeText={(value) => setField("cidade", value)} />
-            </View>
-            <View style={styles.ufField}>
-              <Field label="UF" value={values.uf} onChangeText={(value) => setField("uf", value.toUpperCase().slice(0, 2))} maxLength={2} />
-            </View>
+            <View style={styles.flexField}><Field label="Cidade" value={values.cidade} onChangeText={(value) => setField("cidade", value)} /></View>
+            <View style={styles.ufField}><Field label="UF" value={values.uf} onChangeText={(value) => setField("uf", value.toUpperCase().slice(0, 2))} maxLength={2} /></View>
           </View>
           <Field label="Modalidade(s)" value={values.modalidade} onChangeText={(value) => setField("modalidade", value)} placeholder="Ex.: Vôlei de praia" />
           <Field label="Posição(ões)" value={values.posicao} onChangeText={(value) => setField("posicao", value)} placeholder="Ex.: Universal, Ponteiro" />
@@ -215,9 +206,7 @@ export default function EditProfileScreen() {
                 onPress={() => setField("categoria", category)}
                 style={[styles.categoryButton, values.categoria === category && styles.categoryActive]}
               >
-                <Text style={[styles.categoryText, values.categoria === category && styles.categoryTextActive]}>
-                  {category}
-                </Text>
+                <Text style={[styles.categoryText, values.categoria === category && styles.categoryTextActive]}>{category}</Text>
               </Pressable>
             ))}
           </View>
@@ -230,79 +219,65 @@ export default function EditProfileScreen() {
             value={values.bio}
             onChangeText={(value) => setField("bio", value.slice(0, 500))}
             placeholder="Conte um pouco da sua trajetória esportiva…"
-            placeholderTextColor="#718695"
+            placeholderTextColor={brand.colors.muted}
             multiline
             textAlignVertical="top"
             style={[styles.input, styles.bioInput]}
           />
         </View>
 
-        <View style={styles.historySection}>
-          <View style={styles.historyHeading}>
-            <View style={styles.historyHeadingCopy}>
-              <Text style={styles.sectionEyebrow}>TRAJETÓRIA</Text>
-              <Text style={styles.sectionTitle}>Histórico de campeonatos</Text>
-            </View>
-            <Pressable onPress={addHistory} style={styles.addButton}>
-              <Text style={styles.addButtonText}>＋ ADICIONAR</Text>
-            </Pressable>
-          </View>
+        <SectionTitle eyebrow="TRAJETÓRIA" title="Histórico de campeonatos" action={`${values.historicoCampeonatos.length}/30`} />
+        <Pressable onPress={addHistory} style={styles.addButton}><Text style={styles.addButtonText}>＋ ADICIONAR CAMPEONATO</Text></Pressable>
 
-          {values.historicoCampeonatos.length ? (
-            values.historicoCampeonatos.map((item, index) => (
-              <View key={`history-${index}`} style={styles.historyCard}>
-                <Field
-                  label="Campeonato"
-                  value={String(item.campeonato || item.nome || item.evento || "")}
-                  onChangeText={(value) => updateHistory(index, { campeonato: value })}
-                  placeholder="Nome do campeonato"
-                />
-                <View style={styles.inlineFields}>
-                  <View style={styles.flexField}>
-                    <Field
-                      label="Colocação"
-                      value={String(item.colocacao || item.resultado || "")}
-                      onChangeText={(value) => updateHistory(index, { colocacao: value })}
-                      placeholder="Ex.: 1º lugar"
-                    />
-                  </View>
-                  <View style={styles.yearField}>
-                    <Field
-                      label="Ano"
-                      value={String(item.ano || item.data || "")}
-                      onChangeText={(value) => updateHistory(index, { ano: value })}
-                      keyboardType="numeric"
-                      maxLength={4}
-                    />
-                  </View>
+        {values.historicoCampeonatos.length ? (
+          values.historicoCampeonatos.map((item, index) => (
+            <View key={`history-${index}`} style={styles.historyCard}>
+              <View style={styles.historyIndex}><Text style={styles.historyIndexText}>{index + 1}</Text></View>
+              <Field
+                label="Campeonato"
+                value={String(item.campeonato || item.nome || item.evento || "")}
+                onChangeText={(value) => updateHistory(index, { campeonato: value })}
+                placeholder="Nome do campeonato"
+              />
+              <View style={styles.inlineFields}>
+                <View style={styles.flexField}>
+                  <Field
+                    label="Colocação"
+                    value={String(item.colocacao || item.resultado || "")}
+                    onChangeText={(value) => updateHistory(index, { colocacao: value })}
+                    placeholder="Ex.: 1º lugar"
+                  />
                 </View>
-                <Pressable onPress={() => removeHistory(index)} style={styles.removeHistory}>
-                  <Text style={styles.removeHistoryText}>REMOVER CAMPEONATO</Text>
-                </Pressable>
+                <View style={styles.yearField}>
+                  <Field
+                    label="Ano"
+                    value={String(item.ano || item.data || "")}
+                    onChangeText={(value) => updateHistory(index, { ano: value })}
+                    keyboardType="numeric"
+                    maxLength={4}
+                  />
+                </View>
               </View>
-            ))
-          ) : (
-            <View style={styles.emptyHistory}>
-              <Text style={styles.muted}>Nenhum campeonato registrado. Toque em ADICIONAR.</Text>
+              <Pressable onPress={() => removeHistory(index)} style={styles.removeHistory}><Text style={styles.removeHistoryText}>REMOVER CAMPEONATO</Text></Pressable>
             </View>
-          )}
-        </View>
+          ))
+        ) : (
+          <View style={styles.emptyHistory}><Text style={styles.muted}>Nenhum campeonato registrado. Use o botão acima para iniciar seu histórico.</Text></View>
+        )}
 
         {message ? <Text style={styles.success}>{message}</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable disabled={saving} onPress={() => void save()} style={[styles.saveButton, saving && styles.disabled]}>
+        <Pressable disabled={saving} onPress={() => void save()} style={({ pressed }) => [styles.saveButton, saving && styles.disabled, pressed && styles.pressed]}>
           <Text style={styles.saveButtonText}>{saving ? "SALVANDO…" : "SALVAR PERFIL"}</Text>
+          <Text style={styles.saveArrow}>›</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-function Field({
-  label,
-  ...props
-}: {
+function Field({ label, ...props }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
@@ -314,56 +289,54 @@ function Field({
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        {...props}
-        placeholderTextColor="#718695"
-        style={styles.input}
-      />
+      <TextInput {...props} placeholderTextColor={brand.colors.muted} style={styles.input} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#071827" },
-  page: { padding: 18, paddingBottom: 70 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: "#071827" },
-  muted: { color: "#9fb0bf", lineHeight: 19 },
-  eyebrow: { color: "#d9a93f", fontSize: 11, fontWeight: "900", letterSpacing: 1.1 },
-  title: { marginTop: 4, color: "#ffffff", fontSize: 30, fontWeight: "900" },
-  subtitle: { marginTop: 6, color: "#b8c7d9", lineHeight: 20 },
-  photoCard: { marginTop: 18, alignItems: "center", borderRadius: 22, backgroundColor: "#0d2235", padding: 18 },
-  avatar: { width: 110, height: 110, borderRadius: 55, backgroundColor: "#17384d" },
+  root: { flex: 1, backgroundColor: brand.colors.bg },
+  page: { padding: 16, paddingTop: 14, paddingBottom: 70 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: brand.colors.bg },
+  muted: { color: brand.colors.muted, lineHeight: 19 },
+  photoCard: { position: "relative", overflow: "hidden", alignItems: "center", borderWidth: 1, borderColor: brand.colors.cyan, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 18, ...brand.shadow },
+  photoGlow: { position: "absolute", width: 180, height: 180, borderRadius: 90, right: -80, top: -90, backgroundColor: "rgba(24,213,255,0.10)" },
+  avatar: { width: 112, height: 112, borderRadius: 56, borderWidth: 2, borderColor: brand.colors.cyan, backgroundColor: brand.colors.surfaceSoft },
+  avatarFallback: { width: 112, height: 112, borderRadius: 56, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: brand.colors.cyan, backgroundColor: brand.colors.surfaceSoft },
+  avatarFallbackText: { color: brand.colors.cyanSoft, fontSize: 38, fontWeight: "900" },
+  photoTitle: { marginTop: 10, color: brand.colors.text, fontSize: 20, fontWeight: "900" },
+  photoSubtitle: { marginTop: 3, color: brand.colors.cyanSoft, fontSize: 11, fontWeight: "800" },
   photoActions: { flexDirection: "row", gap: 10, marginTop: 14 },
-  smallButton: { borderRadius: 12, backgroundColor: "#17384d", paddingHorizontal: 13, paddingVertical: 10 },
-  smallButtonText: { color: "#ffffff", fontSize: 11, fontWeight: "900" },
-  formCard: { marginTop: 14, borderRadius: 22, backgroundColor: "#0d2235", padding: 16 },
+  smallButton: { flexDirection: "row", alignItems: "center", gap: 7, borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.sm, backgroundColor: brand.colors.surfaceRaised, paddingHorizontal: 13, paddingVertical: 10 },
+  smallButtonIcon: { color: brand.colors.cyan, fontWeight: "900" },
+  smallButtonText: { color: brand.colors.text, fontSize: 10, fontWeight: "900" },
+  formCard: { borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 15, ...brand.shadow },
   fieldWrap: { marginBottom: 13 },
-  label: { marginBottom: 6, color: "#7ddff0", fontSize: 11, fontWeight: "900", textTransform: "uppercase" },
-  input: { borderWidth: 1, borderColor: "#29445c", borderRadius: 13, backgroundColor: "#071827", color: "#ffffff", paddingHorizontal: 12, paddingVertical: 11, fontSize: 14 },
+  label: { marginBottom: 6, color: brand.colors.cyanSoft, fontSize: 10, fontWeight: "900", textTransform: "uppercase", letterSpacing: 0.6 },
+  input: { borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.sm, backgroundColor: brand.colors.bgDeep, color: brand.colors.text, paddingHorizontal: 12, paddingVertical: 11, fontSize: 14 },
   bioInput: { minHeight: 100 },
   inlineFields: { flexDirection: "row", gap: 10 },
   flexField: { flex: 1 },
   ufField: { width: 78 },
   yearField: { width: 90 },
   categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 13 },
-  categoryButton: { borderWidth: 1, borderColor: "#29445c", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 },
-  categoryActive: { borderColor: "#48cae4", backgroundColor: "#17384d" },
-  categoryText: { color: "#a8bac8", fontSize: 11, fontWeight: "800" },
-  categoryTextActive: { color: "#7ddff0" },
-  historySection: { marginTop: 18 },
-  historyHeading: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 10 },
-  historyHeadingCopy: { flex: 1 },
-  sectionEyebrow: { color: "#d9a93f", fontSize: 10, fontWeight: "900", letterSpacing: 1 },
-  sectionTitle: { marginTop: 3, color: "#ffffff", fontSize: 19, fontWeight: "900" },
-  addButton: { borderRadius: 12, backgroundColor: "#17384d", paddingHorizontal: 11, paddingVertical: 10 },
-  addButtonText: { color: "#7ddff0", fontSize: 10, fontWeight: "900" },
-  historyCard: { marginBottom: 10, borderRadius: 18, backgroundColor: "#0d2235", padding: 14 },
-  removeHistory: { alignItems: "center", borderRadius: 11, backgroundColor: "#3a1620", paddingVertical: 9 },
-  removeHistoryText: { color: "#ffd5dd", fontSize: 10, fontWeight: "900" },
-  emptyHistory: { borderRadius: 17, backgroundColor: "#0d2235", padding: 16 },
-  success: { marginTop: 14, borderRadius: 12, backgroundColor: "#123d33", color: "#9df2c8", padding: 12, fontWeight: "800" },
-  error: { marginTop: 14, borderRadius: 12, backgroundColor: "#3a1620", color: "#ffd5dd", padding: 12, fontWeight: "800" },
-  saveButton: { marginTop: 18, alignItems: "center", borderRadius: 15, backgroundColor: "#48cae4", paddingVertical: 15 },
-  saveButtonText: { color: "#071827", fontWeight: "900", fontSize: 14 },
+  categoryButton: { borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.pill, backgroundColor: brand.colors.bgDeep, paddingHorizontal: 12, paddingVertical: 9 },
+  categoryActive: { borderColor: brand.colors.cyan, backgroundColor: "#0a4160" },
+  categoryText: { color: brand.colors.mutedStrong, fontSize: 11, fontWeight: "800" },
+  categoryTextActive: { color: brand.colors.cyanSoft },
+  addButton: { alignItems: "center", marginBottom: 10, borderWidth: 1, borderColor: brand.colors.gold, borderRadius: brand.radius.md, backgroundColor: "#3c2c0d", paddingVertical: 11 },
+  addButtonText: { color: brand.colors.gold, fontSize: 10, fontWeight: "900", letterSpacing: 0.6 },
+  historyCard: { position: "relative", marginBottom: 10, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.lg, backgroundColor: brand.colors.surface, padding: 14 },
+  historyIndex: { position: "absolute", right: 12, top: 12, width: 26, height: 26, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "#3c2c0d" },
+  historyIndexText: { color: brand.colors.gold, fontSize: 10, fontWeight: "900" },
+  removeHistory: { alignItems: "center", borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, paddingVertical: 9 },
+  removeHistoryText: { color: "#ffd5dd", fontSize: 9, fontWeight: "900" },
+  emptyHistory: { borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surface, padding: 16 },
+  success: { marginTop: 14, borderRadius: brand.radius.sm, backgroundColor: "#123d33", color: "#9df2c8", padding: 12, fontWeight: "800" },
+  error: { marginTop: 14, borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, color: "#ffd5dd", padding: 12, fontWeight: "800" },
+  saveButton: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18, borderWidth: 1, borderColor: brand.colors.cyanSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.cyan, paddingVertical: 15, paddingHorizontal: 16, ...brand.shadow },
+  saveButtonText: { color: brand.colors.bgDeep, fontWeight: "900", fontSize: 14 },
+  saveArrow: { color: brand.colors.bgDeep, fontSize: 24, fontWeight: "900" },
   disabled: { opacity: 0.45 },
+  pressed: { opacity: 0.8 },
 });
