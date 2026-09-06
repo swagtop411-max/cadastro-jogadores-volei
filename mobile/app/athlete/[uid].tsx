@@ -11,8 +11,10 @@ import {
   View,
 } from "react-native";
 
+import { SectionTitle } from "@/components/BrandHeader";
 import type { ChampionshipHistoryItemV1, PublicProfileV1 } from "@/contracts/schema-v1";
 import { resolveLegacyAthleteById, resolveProfile } from "@/services/profileResolver";
+import { brand } from "@/ui/brand";
 
 function historyTitle(item: ChampionshipHistoryItemV1): string {
   return String(item.campeonato || item.nome || item.evento || "Campeonato").trim();
@@ -88,7 +90,7 @@ export default function AthleteScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#48cae4" />
+        <ActivityIndicator color={brand.colors.cyan} />
         <Text style={styles.muted}>Carregando atleta…</Text>
       </View>
     );
@@ -107,8 +109,21 @@ export default function AthleteScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      {profile.capaUrl ? <Image source={{ uri: profile.capaUrl }} style={styles.cover} /> : null}
-      <View style={[styles.hero, profile.capaUrl ? styles.heroWithCover : null]}>
+      <View style={styles.coverWrap}>
+        {profile.capaUrl ? (
+          <Image source={{ uri: profile.capaUrl }} style={styles.cover} />
+        ) : (
+          <View style={styles.coverFallback}>
+            <View style={styles.coverGlow} />
+            <Text style={styles.coverBrand}>BANCO DE ATLETAS</Text>
+            <Text style={styles.coverTagline}>CONECTA TALENTOS • MOVE O ESPORTE</Text>
+          </View>
+        )}
+        <View style={styles.coverLineCyan} />
+        <View style={styles.coverLineGold} />
+      </View>
+
+      <View style={styles.hero}>
         {profile.fotoUrl ? (
           <Image source={{ uri: profile.fotoUrl }} style={styles.avatar} />
         ) : (
@@ -119,26 +134,28 @@ export default function AthleteScreen() {
         <Text style={styles.name}>{profile.nome}</Text>
         <Text style={styles.category}>{profile.categoria || "Categoria não informada"}</Text>
         {city ? <Text style={styles.city}>{city}</Text> : null}
+        <View style={styles.heroChipRow}>
+          {profile.modalidade ? <View style={styles.heroChip}><Text style={styles.heroChipText}>{profile.modalidade}</Text></View> : null}
+          {profile.time ? <View style={styles.heroChipGold}><Text style={styles.heroChipGoldText}>{profile.time}</Text></View> : null}
+        </View>
       </View>
 
+      <View style={styles.statsRow}>
+        <Stat value={String(history.length)} label="CAMPEONATOS" />
+        <Stat value={String(totalPoints)} label="PONTOS" gold />
+        <Stat value={profile.completo ? "100%" : "—"} label="PERFIL" />
+      </View>
+
+      <SectionTitle eyebrow="DADOS ESPORTIVOS" title="Informações do atleta" />
       <View style={styles.card}>
         <Info label="Modalidade" value={profile.modalidade || "Não informada"} />
         <Info label="Posição" value={profile.posicao || "Não informada"} />
+        <Info label="Categoria" value={profile.categoria || "Não informada"} />
         <Info label="Time / equipe" value={profile.time || "Não informado"} />
         {profile.bio ? <Info label="Sobre" value={profile.bio} /> : null}
       </View>
 
-      <View style={styles.historyHeader}>
-        <View>
-          <Text style={styles.sectionEyebrow}>TRAJETÓRIA</Text>
-          <Text style={styles.sectionTitle}>Histórico de campeonatos</Text>
-        </View>
-        <View style={styles.pointsPill}>
-          <Text style={styles.pointsValue}>{totalPoints}</Text>
-          <Text style={styles.pointsLabel}>PTS</Text>
-        </View>
-      </View>
-
+      <SectionTitle eyebrow="TRAJETÓRIA" title="Histórico de campeonatos" action={`${totalPoints} PTS`} />
       {history.length ? (
         <View style={styles.historyList}>
           {history.map((item, index) => (
@@ -149,14 +166,10 @@ export default function AthleteScreen() {
               <View style={styles.historyCopy}>
                 <Text style={styles.historyName}>{historyTitle(item)}</Text>
                 <Text style={styles.historyMeta}>
-                  {[historyPlacement(item), historyYear(item), item.modalidade, item.categoria]
-                    .filter(Boolean)
-                    .join(" • ")}
+                  {[historyPlacement(item), historyYear(item), item.modalidade, item.categoria].filter(Boolean).join(" • ")}
                 </Text>
               </View>
-              <Text style={styles.historyPoints}>
-                {placementPoints(item.colocacao || item.resultado)} pts
-              </Text>
+              <Text style={styles.historyPoints}>{placementPoints(item.colocacao || item.resultado)} pts</Text>
             </View>
           ))}
         </View>
@@ -168,11 +181,21 @@ export default function AthleteScreen() {
       )}
 
       {profile.instagramUrl ? (
-        <Pressable onPress={() => void Linking.openURL(profile.instagramUrl)} style={styles.button}>
+        <Pressable onPress={() => void Linking.openURL(profile.instagramUrl)} style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
           <Text style={styles.buttonText}>ABRIR INSTAGRAM</Text>
+          <Text style={styles.buttonArrow}>›</Text>
         </Pressable>
       ) : null}
     </ScrollView>
+  );
+}
+
+function Stat({ value, label, gold = false }: { value: string; label: string; gold?: boolean }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={[styles.statValue, gold && styles.statValueGold]}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -186,81 +209,51 @@ function Info({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  page: { flexGrow: 1, backgroundColor: "#071827", padding: 20, paddingBottom: 60 },
-  center: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    backgroundColor: "#071827",
-    padding: 24,
-  },
-  muted: { color: "#9fb0bf", textAlign: "center", lineHeight: 19 },
-  errorTitle: { color: "#ffffff", fontSize: 20, fontWeight: "900" },
-  cover: { width: "100%", height: 160, borderRadius: 24, backgroundColor: "#17384d" },
-  hero: { alignItems: "center", borderRadius: 24, backgroundColor: "#0d2235", padding: 22 },
-  heroWithCover: { marginTop: -34, marginHorizontal: 12 },
-  avatar: { width: 112, height: 112, borderRadius: 56, backgroundColor: "#17384d" },
-  avatarFallback: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#17384d",
-  },
-  avatarText: { color: "#7ddff0", fontSize: 42, fontWeight: "900" },
-  name: { marginTop: 14, color: "#ffffff", fontSize: 28, fontWeight: "900", textAlign: "center" },
-  category: { marginTop: 5, color: "#48cae4", fontSize: 15, fontWeight: "800" },
-  city: { marginTop: 5, color: "#b8c7d9" },
-  card: { marginTop: 14, borderRadius: 22, backgroundColor: "#0d2235", paddingHorizontal: 18 },
-  info: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#29445c", paddingVertical: 15 },
-  infoLabel: { color: "#7ddff0", fontSize: 11, fontWeight: "900", textTransform: "uppercase" },
-  infoValue: { marginTop: 5, color: "#ffffff", fontSize: 16, lineHeight: 22 },
-  historyHeader: {
-    marginTop: 24,
-    marginBottom: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  sectionEyebrow: { color: "#d9a93f", fontSize: 10, fontWeight: "900", letterSpacing: 1 },
-  sectionTitle: { marginTop: 3, color: "#ffffff", fontSize: 20, fontWeight: "900" },
-  pointsPill: {
-    minWidth: 62,
-    alignItems: "center",
-    borderRadius: 16,
-    backgroundColor: "#17384d",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  pointsValue: { color: "#d9a93f", fontSize: 18, fontWeight: "900" },
-  pointsLabel: { color: "#9fb0bf", fontSize: 9, fontWeight: "900" },
+  page: { flexGrow: 1, backgroundColor: brand.colors.bg, padding: 16, paddingBottom: 60 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: brand.colors.bg, padding: 24 },
+  muted: { color: brand.colors.muted, textAlign: "center", lineHeight: 19 },
+  errorTitle: { color: brand.colors.text, fontSize: 20, fontWeight: "900" },
+  coverWrap: { position: "relative", overflow: "hidden", borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface },
+  cover: { width: "100%", height: 180, backgroundColor: brand.colors.surfaceSoft },
+  coverFallback: { height: 180, justifyContent: "flex-end", overflow: "hidden", backgroundColor: brand.colors.surfaceSoft, padding: 18 },
+  coverGlow: { position: "absolute", width: 220, height: 220, borderRadius: 110, top: -100, right: -80, backgroundColor: "rgba(24,213,255,0.11)" },
+  coverBrand: { color: brand.colors.text, fontSize: 18, fontWeight: "900" },
+  coverTagline: { marginTop: 4, color: brand.colors.gold, fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
+  coverLineCyan: { position: "absolute", left: 0, bottom: 0, height: 3, width: "76%", backgroundColor: brand.colors.cyan },
+  coverLineGold: { position: "absolute", right: 0, bottom: 0, height: 3, width: "24%", backgroundColor: brand.colors.gold },
+  hero: { alignItems: "center", marginTop: -38, marginHorizontal: 12, borderWidth: 1, borderColor: brand.colors.cyan, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 20, ...brand.shadow },
+  avatar: { width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: brand.colors.cyan, backgroundColor: brand.colors.surfaceSoft },
+  avatarFallback: { width: 112, height: 112, borderRadius: 56, alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: brand.colors.cyan, backgroundColor: brand.colors.surfaceSoft },
+  avatarText: { color: brand.colors.cyanSoft, fontSize: 42, fontWeight: "900" },
+  name: { marginTop: 14, color: brand.colors.text, fontSize: 28, lineHeight: 32, fontWeight: "900", textAlign: "center" },
+  category: { marginTop: 5, color: brand.colors.cyan, fontSize: 14, fontWeight: "900" },
+  city: { marginTop: 5, color: brand.colors.mutedStrong },
+  heroChipRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 7, marginTop: 10 },
+  heroChip: { borderRadius: brand.radius.pill, backgroundColor: brand.colors.surfaceRaised, paddingHorizontal: 10, paddingVertical: 6 },
+  heroChipText: { color: brand.colors.cyanSoft, fontSize: 9, fontWeight: "900" },
+  heroChipGold: { borderRadius: brand.radius.pill, backgroundColor: "#3c2c0d", paddingHorizontal: 10, paddingVertical: 6 },
+  heroChipGoldText: { color: brand.colors.gold, fontSize: 9, fontWeight: "900" },
+  statsRow: { flexDirection: "row", gap: 9, marginTop: 10 },
+  statCard: { flex: 1, alignItems: "center", borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surface, paddingVertical: 11 },
+  statValue: { color: brand.colors.cyan, fontSize: 18, fontWeight: "900" },
+  statValueGold: { color: brand.colors.gold },
+  statLabel: { marginTop: 2, color: brand.colors.muted, fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
+  card: { borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.lg, backgroundColor: brand.colors.surface, paddingHorizontal: 16 },
+  info: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: brand.colors.borderSoft, paddingVertical: 14 },
+  infoLabel: { color: brand.colors.cyan, fontSize: 10, fontWeight: "900", textTransform: "uppercase", letterSpacing: 0.7 },
+  infoValue: { marginTop: 5, color: brand.colors.text, fontSize: 15, lineHeight: 21 },
   historyList: { gap: 9 },
-  historyItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 11,
-    borderRadius: 17,
-    backgroundColor: "#0d2235",
-    padding: 13,
-  },
-  medalBadge: {
-    width: 45,
-    height: 45,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#17384d",
-  },
-  medalText: { color: "#d9a93f", fontSize: 11, fontWeight: "900" },
+  historyItem: { flexDirection: "row", alignItems: "center", gap: 11, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surface, padding: 12 },
+  medalBadge: { width: 45, height: 45, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#3c2c0d" },
+  medalText: { color: brand.colors.gold, fontSize: 10, fontWeight: "900" },
   historyCopy: { flex: 1 },
-  historyName: { color: "#ffffff", fontSize: 14, fontWeight: "900" },
-  historyMeta: { marginTop: 3, color: "#9fb0bf", fontSize: 11 },
-  historyPoints: { color: "#7ddff0", fontSize: 11, fontWeight: "900" },
-  emptyHistory: { borderRadius: 18, backgroundColor: "#0d2235", padding: 18 },
-  emptyHistoryTitle: { color: "#ffffff", fontWeight: "900", marginBottom: 5 },
-  button: { marginTop: 18, alignItems: "center", borderRadius: 15, backgroundColor: "#48cae4", paddingVertical: 14 },
-  buttonText: { color: "#071827", fontWeight: "900" },
+  historyName: { color: brand.colors.text, fontSize: 14, fontWeight: "900" },
+  historyMeta: { marginTop: 3, color: brand.colors.muted, fontSize: 11 },
+  historyPoints: { color: brand.colors.cyanSoft, fontSize: 10, fontWeight: "900" },
+  emptyHistory: { borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surface, padding: 18 },
+  emptyHistoryTitle: { color: brand.colors.text, fontWeight: "900", marginBottom: 5 },
+  button: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18, borderWidth: 1, borderColor: brand.colors.cyanSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.cyan, paddingVertical: 14, paddingHorizontal: 16, ...brand.shadow },
+  buttonText: { color: brand.colors.bgDeep, fontWeight: "900" },
+  buttonArrow: { color: brand.colors.bgDeep, fontSize: 24, fontWeight: "900" },
+  pressed: { opacity: 0.8 },
 });
