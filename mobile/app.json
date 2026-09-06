@@ -5,7 +5,7 @@
     "scheme": "cadastrodeatletas",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "icon": "./assets/branding/app-icon.png",
     "runtimeVersion": {
       "policy": "appVersion"
@@ -15,7 +15,7 @@
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/app-icon.png",
-        "backgroundColor": "#041b2b"
+        "backgroundColor": "#031525"
       }
     },
     "ios": {
@@ -33,10 +33,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#041b2b",
-          "image": "./assets/branding/app-splash.jpg",
-          "imageWidth": 360,
-          "resizeMode": "cover"
+          "backgroundColor": "#031525",
+          "image": "./assets/branding/app-icon.png",
+          "imageWidth": 176,
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#031525",
+            "image": "./assets/branding/app-icon.png"
+          }
         }
       ],
       [
