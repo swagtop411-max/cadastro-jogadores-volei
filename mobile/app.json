@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/branding/app-icon.png",
-    "splash": {
-      "image": "./assets/branding/app-splash.jpg",
-      "resizeMode": "cover",
-      "backgroundColor": "#041b2b"
-    },
     "runtimeVersion": {
       "policy": "appVersion"
     },
@@ -35,6 +30,15 @@
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/app-check",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#041b2b",
+          "image": "./assets/branding/app-splash.jpg",
+          "imageWidth": 360,
+          "resizeMode": "cover"
+        }
+      ],
       [
         "expo-image-picker",
         {
