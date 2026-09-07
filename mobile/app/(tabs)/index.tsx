@@ -232,7 +232,7 @@ function FeedCard({
 
       {item.kind === "image" && item.mediaUrl ? (
         <Pressable
-          accessibilityRole="imagebutton"
+          accessibilityRole="button"
           accessibilityLabel={`Abrir foto publicada por ${item.authorName} em tela cheia`}
           onPress={onOpenImage}
           style={({ pressed }) => [styles.mediaButton, pressed && styles.mediaPressed]}
