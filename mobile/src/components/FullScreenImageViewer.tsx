@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  Image,
   Modal,
   PanResponder,
   Pressable,
@@ -83,7 +84,7 @@ export function FullScreenImageViewer({
     if (!visible) return;
     setLoading(true);
     resetTransform(false);
-    if (uri) void Animated.Image.prefetch?.(uri);
+    if (uri) void Image.prefetch(uri).catch(() => undefined);
     // Animated values are stable refs; reset only when a new viewer session begins.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri, visible]);
