@@ -7,12 +7,32 @@ import {
   where,
 } from "@react-native-firebase/firestore";
 
-import {
-  loadExploreProfiles,
-  type MobileFeedItem,
-} from "./mobileContent";
+import { loadExploreProfiles } from "./mobileContent";
 
 const db = getFirestore();
+
+export type MobileFeedMedia = {
+  url: string;
+  path: string;
+  mime: string;
+  size: number;
+  kind: "image" | "video";
+  order: number;
+};
+
+export type MobileFeedItemV2 = {
+  id: string;
+  kind: "image" | "video";
+  ownerUid: string;
+  authorName: string;
+  authorPhoto: string;
+  text: string;
+  mediaUrl: string;
+  media: MobileFeedMedia[];
+  hashtags: string[];
+  mentions: string[];
+  createdAt: unknown;
+};
 
 type RawSocialItem = {
   id: string;
@@ -24,12 +44,19 @@ type RawSocialItem = {
   imagemUrl: string;
   imagem: string;
   videoUrl: string;
+  midias: unknown;
+  hashtags: unknown;
+  mencoes: unknown;
   criadoEm: unknown;
   status: string;
 };
 
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function strings(value: unknown): string[] {
+  return Array.isArray(value) ? value.map(text).filter(Boolean) : [];
 }
 
 function millis(value: unknown): number {
@@ -46,32 +73,42 @@ function millis(value: unknown): number {
 function meaningfulName(...values: unknown[]): string {
   const placeholders = new Set(["usuario", "usuário", "user", "atleta"]);
   const candidates = values.map(text).filter(Boolean);
-  return (
-    candidates.find((value) => !placeholders.has(value.toLocaleLowerCase("pt-BR"))) ||
-    candidates[0] ||
-    "Atleta"
-  );
+  return candidates.find((value) => !placeholders.has(value.toLocaleLowerCase("pt-BR"))) || candidates[0] || "Atleta";
+}
+
+function carouselMedia(value: unknown): MobileFeedMedia[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((raw, index) => {
+    if (!raw || typeof raw !== "object") return null;
+    const item = raw as Record<string, unknown>;
+    const kindValue = text(item.tipo || item.kind || item.mediaType);
+    const mime = text(item.mime || item.mediaMime);
+    const kind: "image" | "video" = kindValue === "video" || mime.startsWith("video/") ? "video" : "image";
+    const url = text(item.url || item.mediaUrl || item.imagemUrl || item.videoUrl);
+    if (!url) return null;
+    return {
+      url,
+      path: text(item.path || item.mediaPath),
+      mime,
+      size: Number(item.size || item.mediaSize || 0),
+      kind,
+      order: Number(item.ordem ?? item.order ?? index),
+    };
+  }).filter((item): item is MobileFeedMedia => Boolean(item)).sort((a, b) => a.order - b.order);
 }
 
 async function loadPublicCollection(name: "publicacoes" | "videos") {
   const source = collection(db, name);
   try {
     return await getDocs(
-      query(
-        source,
-        where("aprovado", "==", true),
-        where("visibilidade", "==", "publico"),
-        orderBy("criadoEm", "desc"),
-      ),
+      query(source, where("aprovado", "==", true), where("visibilidade", "==", "publico"), orderBy("criadoEm", "desc")),
     );
   } catch {
-    return getDocs(
-      query(source, where("aprovado", "==", true), where("visibilidade", "==", "publico")),
-    );
+    return getDocs(query(source, where("aprovado", "==", true), where("visibilidade", "==", "publico")));
   }
 }
 
-export async function loadCompleteMobileFeed(): Promise<MobileFeedItem[]> {
+export async function loadCompleteMobileFeed(): Promise<MobileFeedItemV2[]> {
   const [postsSnapshot, videosSnapshot, directory] = await Promise.all([
     loadPublicCollection("publicacoes"),
     loadPublicCollection("videos"),
@@ -90,6 +127,9 @@ export async function loadCompleteMobileFeed(): Promise<MobileFeedItem[]> {
       imagemUrl: text(data.imagemUrl),
       imagem: text(data.imagem),
       videoUrl: "",
+      midias: data.midias,
+      hashtags: data.hashtags,
+      mencoes: data.mencoes,
       criadoEm: data.criadoEm,
       status: text(data.status),
     };
@@ -107,26 +147,30 @@ export async function loadCompleteMobileFeed(): Promise<MobileFeedItem[]> {
       imagemUrl: "",
       imagem: "",
       videoUrl: text(data.videoUrl),
+      midias: [],
+      hashtags: data.hashtags,
+      mencoes: data.mencoes,
       criadoEm: data.criadoEm,
       status: text(data.status),
     };
   });
 
-  const byUid = new Map(
-    directory.filter((item) => item.ownerUid).map((item) => [item.ownerUid, item] as const),
-  );
+  const byUid = new Map(directory.filter((item) => item.ownerUid).map((item) => [item.ownerUid, item] as const));
 
   return [...posts, ...videos]
     .filter((item) => {
       if (item.status === "removido") return false;
-      const mediaUrl = item.kind === "video"
-        ? item.videoUrl
-        : item.imagemUrl || item.imagem;
-      return Boolean(item.texto || item.legenda || mediaUrl);
+      const first = item.kind === "video" ? item.videoUrl : item.imagemUrl || item.imagem;
+      return Boolean(item.texto || item.legenda || first || carouselMedia(item.midias).length);
     })
     .sort((a, b) => millis(b.criadoEm) - millis(a.criadoEm))
     .map((item) => {
       const athlete = item.ownerUid ? byUid.get(item.ownerUid) : undefined;
+      let media = carouselMedia(item.midias);
+      if (!media.length) {
+        const url = item.kind === "video" ? item.videoUrl : item.imagemUrl || item.imagem;
+        if (url) media = [{ url, path: "", mime: item.kind === "video" ? "video/mp4" : "image/jpeg", size: 0, kind: item.kind, order: 0 }];
+      }
       return {
         id: item.id,
         kind: item.kind,
@@ -134,10 +178,10 @@ export async function loadCompleteMobileFeed(): Promise<MobileFeedItem[]> {
         authorName: meaningfulName(athlete?.nome, item.nome),
         authorPhoto: athlete?.fotoUrl || "",
         text: item.texto || item.legenda,
-        mediaUrl:
-          item.kind === "video"
-            ? item.videoUrl
-            : item.imagemUrl || item.imagem,
+        mediaUrl: media[0]?.url || "",
+        media,
+        hashtags: strings(item.hashtags),
+        mentions: strings(item.mencoes),
         createdAt: item.criadoEm,
       };
     });
