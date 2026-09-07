@@ -28,19 +28,29 @@ restorePngFromBase64(
   "./assets/branding/splash-logo.png",
 );
 
+const localGoogleServicesUrl = new URL("./google-services.json", import.meta.url);
+const localGoogleServiceInfoUrl = new URL("./GoogleService-Info.plist", import.meta.url);
+
+const androidGoogleServicesFile =
+  process.env.GOOGLE_SERVICES_JSON ??
+  (fs.existsSync(localGoogleServicesUrl) ? "./google-services.json" : undefined);
+
+const iosGoogleServicesFile =
+  process.env.GOOGLE_SERVICE_INFO_PLIST ??
+  (fs.existsSync(localGoogleServiceInfoUrl) ? "./GoogleService-Info.plist" : undefined);
+
 export default ({ config }) => ({
   ...config,
   android: {
     ...config.android,
-    googleServicesFile:
-      process.env.GOOGLE_SERVICES_JSON ??
-      config.android?.googleServicesFile ??
-      "./google-services.json",
+    ...(androidGoogleServicesFile
+      ? { googleServicesFile: androidGoogleServicesFile }
+      : {}),
   },
   ios: {
     ...config.ios,
-    googleServicesFile:
-      process.env.GOOGLE_SERVICE_INFO_PLIST ??
-      config.ios?.googleServicesFile,
+    ...(iosGoogleServicesFile
+      ? { googleServicesFile: iosGoogleServicesFile }
+      : {}),
   },
 });
