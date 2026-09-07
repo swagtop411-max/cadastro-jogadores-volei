@@ -1,3 +1,5 @@
+import("./media-viewer.js?v=20260907-1").catch(error=>console.warn("Media Viewer V15:",error));
+
 function neutralizePrivateFollowButton() {
   const button = document.querySelector('#followButton[data-v6-private="1"]');
   if (!button || button.dataset.v6LegacyNeutralized === "1") return;
