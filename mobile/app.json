@@ -13,7 +13,6 @@
     "android": {
       "package": "br.com.cadastrodeatletas.app",
       "versionCode": 2,
-      "googleServicesFile": "./google-services.json",
       "icon": "./assets/branding/app-icon.png",
       "adaptiveIcon": {
         "foregroundImage": "./assets/branding/app-icon-foreground.png",
