@@ -13,11 +13,7 @@
     "android": {
       "package": "br.com.cadastrodeatletas.app",
       "versionCode": 2,
-      "icon": "./assets/branding/app-icon.png",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/branding/app-icon-foreground.png",
-        "backgroundColor": "#031525"
-      }
+      "icon": "./assets/branding/app-icon.png"
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app",
@@ -37,7 +33,7 @@
         {
           "backgroundColor": "#031525",
           "image": "./assets/branding/app-icon.png",
-          "imageWidth": 140,
+          "imageWidth": 132,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#031525",
