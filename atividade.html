@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Central de atividades do Banco de Dados de Atletas: curtidas, comentários, seguidores, menções, mensagens e oportunidades esportivas.">
+<meta name="theme-color" content="#071827">
+<title>Atividades | Banco de Dados de Atletas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="site-theme.css?v=20260901-9">
+<link rel="stylesheet" href="activity-center-v27.css?v=20260907-27">
+</head>
+<body>
+<header class="header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>REDE ESPORTIVA</span></div></a></header>
+<main class="activity-page">
+<section class="activity-hero">
+<div><span class="activity-kicker">SUA REDE • EM TEMPO REAL</span><h1>CENTRAL DE <em>ATIVIDADES</em></h1><p>Acompanhe quem interagiu com você, novas conexões, mensagens e oportunidades esportivas em um só lugar.</p></div>
+<div class="activity-hero-actions"><a href="index.html#feed">← VOLTAR AO FEED</a><button id="markAllRead" type="button" disabled>✓ MARCAR TODAS COMO LIDAS</button></div>
+</section>
+<section id="activityGuest" class="activity-guest" hidden><span>🔔</span><h2>Entre para ver suas atividades</h2><p>As notificações são privadas e aparecem somente para o dono da conta.</p><div><a href="conta.html?return=atividade.html">ENTRAR</a><a class="secondary" href="conta.html?tab=register&return=atividade.html">CRIAR CONTA</a></div></section>
+<div id="activityPrivate" hidden>
+<section class="activity-stats" aria-label="Resumo das atividades">
+<article><b id="statUnread">0</b><span>NÃO LIDAS</span></article><article><b id="statInteractions">0</b><span>INTERAÇÕES</span></article><article><b id="statNetwork">0</b><span>NOVAS CONEXÕES</span></article><article><b id="statMessages">0</b><span>MENSAGENS</span></article>
+</section>
+<section class="activity-toolbar">
+<div class="activity-tabs" role="tablist" aria-label="Filtrar atividades"><button class="active" data-activity-filter="all" aria-pressed="true">TUDO</button><button data-activity-filter="unread" aria-pressed="false">NÃO LIDAS</button><button data-activity-filter="interactions" aria-pressed="false">INTERAÇÕES</button><button data-activity-filter="network" aria-pressed="false">REDE</button><button data-activity-filter="messages" aria-pressed="false">MENSAGENS</button></div>
+<label class="activity-search"><span>⌕</span><input id="activitySearch" type="search" maxlength="80" placeholder="Buscar nas atividades..."></label>
+</section>
+<section class="activity-layout">
+<div class="activity-stream-card"><div class="activity-section-head"><div><span>HISTÓRICO</span><h2>SUAS ATIVIDADES</h2></div><strong id="activityCount">Carregando...</strong></div><div id="activityList" class="activity-list"><div class="activity-loading">Carregando atividades...</div></div><button id="activityLoadOlder" class="activity-more" type="button" hidden>CARREGAR ATIVIDADES MAIS ANTIGAS</button></div>
+<aside class="opportunity-card"><div class="activity-section-head"><div><span>OPORTUNIDADES</span><h2>PRÓXIMOS CAMPEONATOS</h2></div></div><div id="activityChampionships" class="opportunity-list"><div class="activity-loading">Buscando eventos...</div></div><a class="opportunity-all" href="proximos-campeonatos.html">VER TODOS OS CAMPEONATOS →</a></aside>
+</section>
+</div>
+</main>
+<script type="module" src="site-v5.js?v=20260907-27"></script>
+<script type="module" src="activity-center-v27.js?v=20260907-27"></script>
+</body>
+</html>

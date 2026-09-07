@@ -3,6 +3,7 @@ import("./feed-experience-v16.js?v=20260907-24").catch(error=>console.warn("Feed
 import("./post-carousel-v17.js?v=20260907-1").catch(error=>console.warn("Post Carousel V17:",error));
 import("./multi-media-publisher-v17.js?v=20260907-1").catch(error=>console.warn("Multi Media Publisher V17:",error));
 import("./profile-media-v25.js?v=20260907-25").catch(error=>console.warn("Profile Media V25:",error));
+import("./activity-deeplink-v27.js?v=20260907-27").catch(()=>{});
 
 function neutralizePrivateFollowButton() {
   const button = document.querySelector('#followButton[data-v6-private="1"]');

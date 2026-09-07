@@ -1,0 +1,10 @@
+const params=new URLSearchParams(location.search);
+const targetPost=String(params.get("post")||"").trim();
+const openMessages=params.get("abrir")==="mensagens";
+if(!targetPost&&!openMessages)throw new Error("Activity Deep Link V27 inativo");
+
+function cleanParam(name){const url=new URL(location.href);url.searchParams.delete(name);url.searchParams.delete("activity");history.replaceState(null,"",`${url.pathname}${url.search}${url.hash}`)}
+function highlightPost(){if(!targetPost)return true;const card=document.querySelector(`[data-post-id="${CSS.escape(targetPost)}"]`);if(!card)return false;card.scrollIntoView({behavior:"smooth",block:"center"});card.classList.add("activity-v27-target");if(!document.getElementById("activityV27TargetStyle")){const style=document.createElement("style");style.id="activityV27TargetStyle";style.textContent=".activity-v27-target{outline:3px solid #16bfe9!important;outline-offset:3px;box-shadow:0 0 0 7px rgba(22,191,233,.12),0 18px 48px rgba(7,24,39,.18)!important;transition:outline-color .4s,box-shadow .4s}.activity-v27-target.activity-v27-target-done{outline-color:transparent!important;box-shadow:inherit!important}";document.head.appendChild(style)}setTimeout(()=>card.classList.add("activity-v27-target-done"),3200);cleanParam("post");return true}
+function openInbox(){if(!openMessages)return true;const button=document.getElementById("snInboxButton");if(!button)return false;button.click();cleanParam("abrir");return true}
+function retry(fn,max=20){let tries=0;const tick=()=>{tries++;if(fn()||tries>=max)return;setTimeout(tick,250)};tick()}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{if(targetPost)retry(highlightPost,28);if(openMessages)retry(openInbox,28)},{once:true});else{if(targetPost)retry(highlightPost,28);if(openMessages)retry(openInbox,28)}
