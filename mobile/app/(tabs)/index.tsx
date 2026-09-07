@@ -14,11 +14,17 @@ import {
 } from "react-native";
 
 import { BrandHeader } from "@/components/BrandHeader";
+import { FullScreenImageViewer } from "@/components/FullScreenImageViewer";
 import { formatFirebaseDate, type MobileFeedItem } from "@/services/mobileContent";
 import { loadCompleteMobileFeed } from "@/services/feedService";
 import { brand } from "@/ui/brand";
 
 type FeedFilter = "all" | "image" | "video";
+type ImagePreview = {
+  uri: string;
+  authorName: string;
+  caption: string;
+} | null;
 
 function norm(value: unknown) {
   return String(value ?? "")
@@ -36,6 +42,7 @@ export default function FeedScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<ImagePreview>(null);
 
   const load = useCallback(async (refresh = false) => {
     refresh ? setRefreshing(true) : setLoading(true);
@@ -69,86 +76,104 @@ export default function FeedScreen() {
   const videoCount = items.length - imageCount;
 
   return (
-    <FlatList
-      data={visibleItems}
-      keyExtractor={(item) => `${item.kind}-${item.id}`}
-      style={styles.list}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => void load(true)}
-          tintColor={brand.colors.cyan}
-        />
-      }
-      ListHeaderComponent={
-        <View>
-          <BrandHeader
-            eyebrow="CONECTE-SE COM A COMUNIDADE"
-            title="Feed"
-            subtitle="Treinos, conquistas, campeonatos e momentos publicados por atletas da rede."
+    <>
+      <FlatList
+        data={visibleItems}
+        keyExtractor={(item) => `${item.kind}-${item.id}`}
+        style={styles.list}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void load(true)}
+            tintColor={brand.colors.cyan}
           />
-
-          <View style={styles.networkStats}>
-            <MiniStat value={String(items.length)} label="PUBLICAÇÕES" />
-            <MiniStat value={String(imageCount)} label="FOTOS" />
-            <MiniStat value={String(videoCount)} label="VÍDEOS" gold />
-          </View>
-
-          <View style={styles.searchWrap}>
-            <Text style={styles.searchIcon}>⌕</Text>
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Buscar publicação ou atleta…"
-              placeholderTextColor={brand.colors.muted}
-              autoCapitalize="none"
-              style={styles.search}
+        }
+        ListHeaderComponent={
+          <View>
+            <BrandHeader
+              eyebrow="CONECTE-SE COM A COMUNIDADE"
+              title="Feed"
+              subtitle="Treinos, conquistas, campeonatos e momentos publicados por atletas da rede."
             />
-            {search ? (
-              <Pressable onPress={() => setSearch("")} hitSlop={10}>
-                <Text style={styles.clearSearch}>×</Text>
-              </Pressable>
-            ) : null}
-          </View>
 
-          <View style={styles.filterRow}>
-            <FilterChip label="Todos" active={filter === "all"} onPress={() => setFilter("all")} />
-            <FilterChip label="Fotos" active={filter === "image"} onPress={() => setFilter("image")} />
-            <FilterChip label="Vídeos" active={filter === "video"} onPress={() => setFilter("video")} />
+            <View style={styles.networkStats}>
+              <MiniStat value={String(items.length)} label="PUBLICAÇÕES" />
+              <MiniStat value={String(imageCount)} label="FOTOS" />
+              <MiniStat value={String(videoCount)} label="VÍDEOS" gold />
+            </View>
+
+            <View style={styles.searchWrap}>
+              <Text style={styles.searchIcon}>⌕</Text>
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Buscar publicação ou atleta…"
+                placeholderTextColor={brand.colors.muted}
+                autoCapitalize="none"
+                style={styles.search}
+              />
+              {search ? (
+                <Pressable onPress={() => setSearch("")} hitSlop={10}>
+                  <Text style={styles.clearSearch}>×</Text>
+                </Pressable>
+              ) : null}
+            </View>
+
+            <View style={styles.filterRow}>
+              <FilterChip label="Todos" active={filter === "all"} onPress={() => setFilter("all")} />
+              <FilterChip label="Fotos" active={filter === "image"} onPress={() => setFilter("image")} />
+              <FilterChip label="Vídeos" active={filter === "video"} onPress={() => setFilter("video")} />
+            </View>
+            <View style={styles.feedMetaRow}>
+              <Text style={styles.feedMeta}>{visibleItems.length} resultado{visibleItems.length === 1 ? "" : "s"}</Text>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>REDE ATIVA</Text>
+            </View>
+            {error ? <Text style={styles.error}>{error}</Text> : null}
           </View>
-          <View style={styles.feedMetaRow}>
-            <Text style={styles.feedMeta}>{visibleItems.length} resultado{visibleItems.length === 1 ? "" : "s"}</Text>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>REDE ATIVA</Text>
-          </View>
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-        </View>
-      }
-      ListEmptyComponent={
-        loading ? (
-          <View style={styles.center}>
-            <ActivityIndicator color={brand.colors.cyan} />
-            <Text style={styles.muted}>Carregando publicações…</Text>
-          </View>
-        ) : (
-          <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>Nada por aqui neste filtro</Text>
-            <Text style={styles.muted}>Altere os filtros ou a busca e tente novamente.</Text>
-          </View>
-        )
-      }
-      renderItem={({ item }) => (
-        <FeedCard
-          item={item}
-          onOpenAthlete={() => {
-            if (!item.ownerUid) return;
-            router.push({ pathname: "/athlete/[uid]", params: { uid: item.ownerUid } });
-          }}
-        />
-      )}
-    />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.center}>
+              <ActivityIndicator color={brand.colors.cyan} />
+              <Text style={styles.muted}>Carregando publicações…</Text>
+            </View>
+          ) : (
+            <View style={styles.empty}>
+              <Text style={styles.emptyTitle}>Nada por aqui neste filtro</Text>
+              <Text style={styles.muted}>Altere os filtros ou a busca e tente novamente.</Text>
+            </View>
+          )
+        }
+        renderItem={({ item }) => (
+          <FeedCard
+            item={item}
+            onOpenAthlete={() => {
+              if (!item.ownerUid) return;
+              router.push({ pathname: "/athlete/[uid]", params: { uid: item.ownerUid } });
+            }}
+            onOpenImage={() => {
+              if (!item.mediaUrl) return;
+              setImagePreview({
+                uri: item.mediaUrl,
+                authorName: item.authorName,
+                caption: item.text,
+              });
+            }}
+          />
+        )}
+      />
+
+      <FullScreenImageViewer
+        visible={Boolean(imagePreview)}
+        uri={imagePreview?.uri || ""}
+        authorName={imagePreview?.authorName}
+        caption={imagePreview?.caption}
+        onClose={() => setImagePreview(null)}
+      />
+    </>
   );
 }
 
@@ -169,7 +194,15 @@ function FilterChip({ label, active, onPress }: { label: string; active: boolean
   );
 }
 
-function FeedCard({ item, onOpenAthlete }: { item: MobileFeedItem; onOpenAthlete: () => void }) {
+function FeedCard({
+  item,
+  onOpenAthlete,
+  onOpenImage,
+}: {
+  item: MobileFeedItem;
+  onOpenAthlete: () => void;
+  onOpenImage: () => void;
+}) {
   const sharePost = useCallback(async () => {
     const parts = [item.text, item.mediaUrl, `Publicado por ${item.authorName} no Banco de Atletas`].filter(Boolean);
     await Share.share({ message: parts.join("\n\n") });
@@ -198,7 +231,18 @@ function FeedCard({ item, onOpenAthlete }: { item: MobileFeedItem; onOpenAthlete
       {item.text ? <Text style={styles.postText}>{item.text}</Text> : null}
 
       {item.kind === "image" && item.mediaUrl ? (
-        <Image source={{ uri: item.mediaUrl }} style={styles.media} resizeMode="cover" />
+        <Pressable
+          accessibilityRole="imagebutton"
+          accessibilityLabel={`Abrir foto publicada por ${item.authorName} em tela cheia`}
+          onPress={onOpenImage}
+          style={({ pressed }) => [styles.mediaButton, pressed && styles.mediaPressed]}
+        >
+          <Image source={{ uri: item.mediaUrl }} style={styles.media} resizeMode="cover" />
+          <View pointerEvents="none" style={styles.mediaHint}>
+            <Text style={styles.mediaHintIcon}>⛶</Text>
+            <Text style={styles.mediaHintText}>TOQUE PARA AMPLIAR</Text>
+          </View>
+        </Pressable>
       ) : null}
 
       {item.kind === "video" ? (
@@ -269,7 +313,25 @@ const styles = StyleSheet.create({
   kindPill: { borderRadius: brand.radius.pill, borderWidth: 1, borderColor: brand.colors.border, backgroundColor: brand.colors.bgDeep, paddingHorizontal: 9, paddingVertical: 6 },
   kind: { color: brand.colors.cyan, fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
   postText: { color: brand.colors.text, fontSize: 15, lineHeight: 22, paddingHorizontal: 15, paddingBottom: 15 },
+  mediaButton: { position: "relative", width: "100%", overflow: "hidden", backgroundColor: brand.colors.bgDeep },
   media: { width: "100%", aspectRatio: 4 / 3, backgroundColor: brand.colors.bgDeep },
+  mediaPressed: { opacity: 0.9 },
+  mediaHint: {
+    position: "absolute",
+    right: 10,
+    bottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: brand.radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    backgroundColor: "rgba(0, 16, 28, 0.78)",
+    borderWidth: 1,
+    borderColor: "rgba(91, 218, 255, 0.42)",
+  },
+  mediaHintIcon: { color: brand.colors.cyan, fontSize: 14, fontWeight: "900" },
+  mediaHintText: { color: "#ffffff", fontSize: 8, fontWeight: "900", letterSpacing: 0.6 },
   videoPlaceholder: { minHeight: 190, alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: brand.colors.bgDeep, padding: 24 },
   playButton: { width: 58, height: 58, borderRadius: 29, alignItems: "center", justifyContent: "center", backgroundColor: brand.colors.cyan },
   videoIcon: { marginLeft: 3, color: brand.colors.bgDeep, fontSize: 24, fontWeight: "900" },
