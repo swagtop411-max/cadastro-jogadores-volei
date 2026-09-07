@@ -1,6 +1,8 @@
 name: Validate and deploy static content to Pages
 
 on:
+  pull_request:
+    branches: ["main"]
   push:
     branches: ["main"]
   workflow_dispatch:
@@ -11,7 +13,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: "pages-${{ github.event_name }}-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
@@ -107,6 +109,7 @@ jobs:
             "node -e \"console.log('Firebase rules compiled successfully')\""
 
   deploy:
+    if: github.event_name != 'pull_request'
     needs: validate
     environment:
       name: github-pages
