@@ -1,4 +1,5 @@
 import("./media-viewer.js?v=20260907-1").catch(error=>console.warn("Media Viewer V15:",error));
+import("./feed-experience-v16.js?v=20260907-1").catch(error=>console.warn("Feed Experience V16:",error));
 
 function neutralizePrivateFollowButton() {
   const button = document.querySelector('#followButton[data-v6-private="1"]');
