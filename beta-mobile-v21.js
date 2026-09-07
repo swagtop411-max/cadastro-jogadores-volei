@@ -3,7 +3,7 @@ import {getAuth,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.
 
 const PAGE=(location.pathname.split('/').pop()||'index.html');
 const ACTIVE=localStorage.getItem('bd_public_beta_v19')==='1'||new URLSearchParams(location.search).get('beta')==='1';
-if(!ACTIVE)throw new Error('Beta Mobile V22 inativo');
+if(!ACTIVE)throw new Error('Beta Mobile V28 inativo');
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app);
@@ -13,7 +13,7 @@ document.documentElement.classList.add('beta-mobile-app');
 document.documentElement.dataset.betaPage=PAGE.replace('.html','');
 
 function cssLink(id,href){if(document.getElementById(id))return;const l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
-function ensureCss(){cssLink('betaMobileV21Css','/beta-mobile-v21.css?v=20260907-22');cssLink('betaMobilePagesV21Css','/beta-mobile-pages-v21.css?v=20260907-22')}
+function ensureCss(){cssLink('betaMobileV21Css','/beta-mobile-v21.css?v=20260907-28');cssLink('betaMobilePagesV21Css','/beta-mobile-pages-v21.css?v=20260907-28');cssLink('betaMobileActivityV28Css','/beta-mobile-activity-v28.css?v=20260907-28')}
 ensureCss();
 
 const icons={
@@ -31,7 +31,7 @@ function mountNav(){if(document.getElementById('betaMobileNav'))return;const nav
 
 function buildTop(){if(PAGE!=='index.html'||document.getElementById('betaMobileTop'))return;const home=document.querySelector('.home-social');if(!home)return;const top=document.createElement('section');top.id='betaMobileTop';top.className='beta-mobile-top';top.innerHTML=`<div class="beta-mobile-hero"><h1>Feed</h1><p>Treinos, conquistas, campeonatos e momentos publicados por atletas da rede.</p><button class="beta-mobile-settings" type="button" aria-label="Opções do Beta">${icons.gear}</button></div><div class="beta-mobile-stats"><div class="beta-mobile-stat"><b data-beta-stat="all">0</b><span>PUBLICAÇÕES</span></div><div class="beta-mobile-stat"><b data-beta-stat="photo">0</b><span>FOTOS</span></div><div class="beta-mobile-stat video"><b data-beta-stat="video">0</b><span>VÍDEOS</span></div></div><label class="beta-mobile-search">${icons.search}<input id="betaMobileSearch" type="search" maxlength="80" autocomplete="off" placeholder="Buscar publicação ou atleta..."></label><div class="beta-mobile-result-line"><span data-beta-results>0 resultados</span><span class="dot"></span><strong>REDE ATIVA</strong></div>`;home.before(top);top.querySelector('.beta-mobile-settings').onclick=()=>window.BDBetaV20?.toggle?.();top.querySelector('#betaMobileSearch').addEventListener('input',applySearch)}
 
-function mountGuestCta(){if(PAGE==='conta.html'||currentUser){document.getElementById('betaGuestCta')?.remove();return}let cta=document.getElementById('betaGuestCta');if(cta)return;cta=document.createElement('section');cta.id='betaGuestCta';cta.className='beta-guest-cta';const returnTo=encodeURIComponent('/meu-perfil.html?novo=1&beta=1');cta.innerHTML=`<div><span>NOVO POR AQUI?</span><strong>Crie seu perfil de atleta</strong><p>Cadastre-se para publicar, seguir atletas, conversar e aparecer na rede esportiva.</p></div><div class="beta-guest-actions"><a href="/conta.html?tab=login&beta=1">ENTRAR</a><a class="primary" href="/conta.html?tab=register&beta=1&return=${returnTo}">CRIAR CONTA</a></div>`;const top=document.getElementById('betaMobileTop');if(top)top.after(cta);else{const main=document.querySelector('main');if(main)main.prepend(cta);else document.body.prepend(cta)}}
+function mountGuestCta(){if(PAGE==='conta.html'||PAGE==='atividade.html'||currentUser){document.getElementById('betaGuestCta')?.remove();return}let cta=document.getElementById('betaGuestCta');if(cta)return;cta=document.createElement('section');cta.id='betaGuestCta';cta.className='beta-guest-cta';const returnTo=encodeURIComponent('/meu-perfil.html?novo=1&beta=1');cta.innerHTML=`<div><span>NOVO POR AQUI?</span><strong>Crie seu perfil de atleta</strong><p>Cadastre-se para publicar, seguir atletas, conversar e aparecer na rede esportiva.</p></div><div class="beta-guest-actions"><a href="/conta.html?tab=login&beta=1">ENTRAR</a><a class="primary" href="/conta.html?tab=register&beta=1&return=${returnTo}">CRIAR CONTA</a></div>`;const top=document.getElementById('betaMobileTop');if(top)top.after(cta);else{const main=document.querySelector('main');if(main)main.prepend(cta);else document.body.prepend(cta)}}
 function syncAccountState(user){currentUser=user||null;const profileNav=document.querySelector('[data-beta-profile-nav]');if(profileNav){profileNav.href=user?'/meu-perfil.html?beta=1':'/conta.html?tab=login&beta=1';profileNav.querySelector('span:last-child').textContent=user?'Perfil':'Conta'}mountGuestCta()}
 
 function cards(){return[...document.querySelectorAll('#homeFeed .social-post[data-post-id]')]}
