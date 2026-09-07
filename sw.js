@@ -1,5 +1,5 @@
-const CACHE_NAME="bd-atletas-v23-20260907-1";
-const CORE=["/","/index.html","/site-theme.css","/site-v8.css","/site-v5.js","/site-v8.js","/media-utils.js","/public-beta-v19.js","/beta-mobile-v21.js","/beta-mobile-v21.css","/beta-mobile-pages-v21.css","/beta-account-v23.js","/beta-account-v23.css","/manifest.webmanifest","/teste-social.html","/atletas.html","/explorar.html","/explorar.js","/comunidade.html","/proximos-campeonatos.html","/meu-perfil.html","/conta.html"];
+const CACHE_NAME="bd-atletas-v24-20260907-1";
+const CORE=["/","/index.html","/site-theme.css","/site-v8.css","/site-v5.js","/site-v8.js","/home-social.js","/feed-experience-v16.js","/media-utils.js","/media-viewer.js","/public-beta-v19.js","/beta-mobile-v21.js","/beta-mobile-v21.css","/beta-mobile-pages-v21.css","/beta-account-v23.js","/beta-account-v23.css","/manifest.webmanifest","/teste-social.html","/atletas.html","/explorar.html","/explorar.js","/comunidade.html","/proximos-campeonatos.html","/meu-perfil.html","/conta.html"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE).catch(()=>{})).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME&&key.startsWith("bd-atletas-")).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 function remember(request,response){if(response&&response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy))}return response}
