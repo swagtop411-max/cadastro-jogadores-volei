@@ -78,6 +78,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cat > /tmp/google-services-ci.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "demo-cadastro-atletas",
+              "storage_bucket": "demo-cadastro-atletas.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "br.com.cadastrodeatletas.app"
+                  }
+                },
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyDUMMY_CI_ONLY_NOT_A_REAL_KEY"
+                  }
+                ]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+          export GOOGLE_SERVICES_JSON=/tmp/google-services-ci.json
           npx expo prebuild --no-install --platform android
 
       - name: Validate JSON files
