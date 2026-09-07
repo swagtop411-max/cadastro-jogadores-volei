@@ -1,5 +1,5 @@
-const CACHE_NAME="bd-atletas-v12-20260904-2";
-const CORE=["/","/index.html","/site-theme.css","/site-v8.css","/site-v5.js","/site-v8.js","/media-utils.js","/atletas.html","/comunidade.html","/proximos-campeonatos.html","/conta.html"];
+const CACHE_NAME="bd-atletas-v19-20260907-1";
+const CORE=["/","/index.html","/site-theme.css","/site-v8.css","/site-v5.js","/site-v8.js","/media-utils.js","/public-beta-v19.js","/manifest.webmanifest","/teste-social.html","/atletas.html","/comunidade.html","/proximos-campeonatos.html","/conta.html"];
 self.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE).catch(()=>{})).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME&&key.startsWith("bd-atletas-")).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});
 function remember(request,response){if(response&&response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy))}return response}
