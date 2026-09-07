@@ -5,9 +5,9 @@ if(betaRequested)localStorage.setItem(BETA_KEY,"1");
 const betaActive=localStorage.getItem(BETA_KEY)==="1";
 let installPrompt=null;
 
-function ensureManifest(){if(document.querySelector('link[rel="manifest"]'))return;const link=document.createElement("link");link.rel="manifest";link.href="/manifest.webmanifest?v=20260907-21";document.head.appendChild(link)}
+function ensureManifest(){if(document.querySelector('link[rel="manifest"]'))return;const link=document.createElement("link");link.rel="manifest";link.href="/manifest.webmanifest?v=20260907-22";document.head.appendChild(link)}
 function ensureMobileMeta(){for(const[name,content]of[["theme-color","#031424"],["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["apple-mobile-web-app-title","Banco de Atletas"]]){if(document.querySelector(`meta[name="${name}"]`))continue;const meta=document.createElement("meta");meta.name=name;meta.content=content;document.head.appendChild(meta)}}
-async function registerServiceWorker(){if(!("serviceWorker"in navigator)||!window.isSecureContext)return;try{await navigator.serviceWorker.register("/sw.js?v=20260907-21",{scope:"/"})}catch(error){console.warn("PWA Beta:",error)}}
+async function registerServiceWorker(){if(!("serviceWorker"in navigator)||!window.isSecureContext)return;try{await navigator.serviceWorker.register("/sw.js?v=20260907-22",{scope:"/"})}catch(error){console.warn("PWA Beta:",error)}}
 function isStandalone(){return window.matchMedia?.("(display-mode: standalone)")?.matches||navigator.standalone===true}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
 function toast(message){let el=document.getElementById("betaMirrorToast");if(!el){el=document.createElement("div");el.id="betaMirrorToast";el.className="beta-mirror-toast";document.body.appendChild(el)}el.textContent=message;el.classList.add("show");clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),2600)}
@@ -23,4 +23,4 @@ window.addEventListener("appinstalled",()=>{installPrompt=null;toast("App instal
 ensureManifest();ensureMobileMeta();registerServiceWorker();
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
 window.BDBetaV20={install:installApp,feedback,toggle:togglePanel,isActive:()=>betaActive,isStandalone};
-if(betaActive)import("./beta-mobile-v21.js?v=20260907-21").catch(error=>console.warn("Beta Mobile V21:",error));
+if(betaActive)import("./beta-mobile-v21.js?v=20260907-22").catch(error=>console.warn("Beta Mobile V22:",error));
