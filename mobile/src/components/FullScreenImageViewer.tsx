@@ -24,6 +24,11 @@ type FullScreenImageViewerProps = {
   onClose: () => void;
 };
 
+type TouchPoint = {
+  pageX: number;
+  pageY: number;
+};
+
 const MIN_SCALE = 1;
 const MAX_SCALE = 5;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -32,7 +37,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function distance(touches: readonly { pageX: number; pageY: number }[]) {
+function distance(touches: readonly TouchPoint[]) {
   if (touches.length < 2) return 0;
   const first = touches[0];
   const second = touches[1];
@@ -85,8 +90,6 @@ export function FullScreenImageViewer({
     setLoading(true);
     resetTransform(false);
     if (uri) void Image.prefetch(uri).catch(() => undefined);
-    // Animated values are stable refs; reset only when a new viewer session begins.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri, visible]);
 
   const panResponder = useMemo(
@@ -96,7 +99,7 @@ export function FullScreenImageViewer({
         onMoveShouldSetPanResponder: (event) =>
           event.nativeEvent.touches.length >= 2 || currentScale.current > 1.01,
         onPanResponderGrant: (event) => {
-          const touches = event.nativeEvent.touches;
+          const touches = event.nativeEvent.touches as readonly TouchPoint[];
           if (touches.length >= 2) {
             pinchStartDistance.current = distance(touches);
             pinchStartScale.current = currentScale.current;
@@ -106,7 +109,7 @@ export function FullScreenImageViewer({
           }
         },
         onPanResponderMove: (event, gesture) => {
-          const touches = event.nativeEvent.touches;
+          const touches = event.nativeEvent.touches as readonly TouchPoint[];
           if (touches.length >= 2) {
             const nextDistance = distance(touches);
             if (!pinchStartDistance.current || !nextDistance) return;
@@ -189,11 +192,10 @@ export function FullScreenImageViewer({
         </SafeAreaView>
 
         <View style={styles.stage} {...panResponder.panHandlers}>
-          <Pressable onPress={handleTap} style={styles.imageTouchArea}>
+          <Pressable accessibilityRole="button" onPress={handleTap} style={styles.imageTouchArea}>
             <Animated.Image
               source={{ uri }}
               resizeMode="contain"
-              fadeDuration={120}
               onLoadStart={() => setLoading(true)}
               onLoadEnd={() => setLoading(false)}
               style={[
