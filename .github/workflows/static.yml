@@ -73,6 +73,13 @@ jobs:
         working-directory: mobile
         run: npm run typecheck
 
+      - name: Reproduce Android Expo prebuild
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx expo prebuild --no-install --platform android
+
       - name: Validate JSON files
         shell: bash
         run: |
