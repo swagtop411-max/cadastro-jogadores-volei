@@ -1,0 +1,43 @@
+name: Debug mobile typecheck
+
+on:
+  push:
+    branches:
+      - mobile-v1-foundation
+
+permissions:
+  contents: read
+
+jobs:
+  debug-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Capture typecheck output
+        working-directory: mobile
+        shell: bash
+        run: |
+          set +e
+          npm run typecheck > typecheck-output.txt 2>&1
+          echo $? > typecheck-exit-code.txt
+          exit 0
+
+      - name: Upload diagnostic
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-typecheck-debug
+          path: |
+            mobile/typecheck-output.txt
+            mobile/typecheck-exit-code.txt
+          retention-days: 1
