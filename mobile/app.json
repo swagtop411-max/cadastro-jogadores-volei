@@ -13,7 +13,12 @@
     "android": {
       "package": "br.com.cadastrodeatletas.app",
       "versionCode": 2,
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "icon": "./assets/branding/app-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/app-icon-foreground.png",
+        "backgroundColor": "#031525"
+      }
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app",
@@ -32,12 +37,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#031525",
-          "image": "./assets/branding/app-icon.png",
-          "imageWidth": 136,
+          "image": "./assets/branding/splash-logo.png",
+          "imageWidth": 160,
           "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#031525",
-            "image": "./assets/branding/app-icon.png"
+            "image": "./assets/branding/splash-logo.png"
           }
         }
       ],
