@@ -5,7 +5,8 @@ if(!ACTIVE)throw new Error('Beta Mobile V21 inativo');
 document.documentElement.classList.add('beta-mobile-app');
 document.documentElement.dataset.betaPage=PAGE.replace('.html','');
 
-function ensureCss(){if(document.getElementById('betaMobileV21Css'))return;const l=document.createElement('link');l.id='betaMobileV21Css';l.rel='stylesheet';l.href='/beta-mobile-v21.css?v=20260907-21';document.head.appendChild(l)}
+function cssLink(id,href){if(document.getElementById(id))return;const l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
+function ensureCss(){cssLink('betaMobileV21Css','/beta-mobile-v21.css?v=20260907-21');cssLink('betaMobilePagesV21Css','/beta-mobile-pages-v21.css?v=20260907-21')}
 ensureCss();
 
 const icons={
