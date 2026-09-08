@@ -1,0 +1,92 @@
+name: Deploy Mobile Backend Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_production:
+        description: "Digite DEPLOY para confirmar produção"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-backend-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: inputs.confirm_production == 'DEPLOY'
+    runs-on: ubuntu-latest
+    environment: mobile-production
+    steps:
+      - name: Checkout app foundation
+        uses: actions/checkout@v7
+        with:
+          ref: mobile-v1-foundation
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Validate required secrets
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$FIREBASE_SERVICE_ACCOUNT_JSON" || { echo 'FIREBASE_SERVICE_ACCOUNT_JSON não configurado.'; exit 1; }
+          test -n "$CLOUDINARY_API_KEY" || { echo 'CLOUDINARY_API_KEY não configurado.'; exit 1; }
+          test -n "$CLOUDINARY_API_SECRET" || { echo 'CLOUDINARY_API_SECRET não configurado.'; exit 1; }
+
+      - name: Configure Google credentials
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$CREDENTIALS"
+          chmod 600 "$CREDENTIALS"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$CREDENTIALS" >> "$GITHUB_ENV"
+
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+
+      - name: Validate Functions and Firebase rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd functions && npm run check)
+          npx --yes firebase-tools@15.1.0 emulators:exec \
+            --project demo-cadastro-atletas \
+            --only firestore,storage \
+            "node -e \"console.log('Rules OK')\""
+
+      - name: Configure Cloudinary secrets in Firebase Secret Manager
+        env:
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$CLOUDINARY_API_KEY" > "$RUNNER_TEMP/cloudinary-api-key.txt"
+          printf '%s' "$CLOUDINARY_API_SECRET" > "$RUNNER_TEMP/cloudinary-api-secret.txt"
+          npx --yes firebase-tools@15.1.0 functions:secrets:set CLOUDINARY_API_KEY \
+            --project jogadores-de-volei --data-file "$RUNNER_TEMP/cloudinary-api-key.txt" --force
+          npx --yes firebase-tools@15.1.0 functions:secrets:set CLOUDINARY_API_SECRET \
+            --project jogadores-de-volei --data-file "$RUNNER_TEMP/cloudinary-api-secret.txt" --force
+
+      - name: Deploy rules and Functions
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.1.0 deploy \
+            --project jogadores-de-volei \
+            --only firestore:rules,storage,functions \
+            --non-interactive
