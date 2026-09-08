@@ -9,22 +9,35 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { loadExploreProfiles, type MobileAthleteDirectoryItem } from "@/services/mobileContent";
 import { resolveProfile } from "@/services/profileResolver";
 import { inviteAthleteToTeam } from "@/services/teamInviteService";
 import { loadTeams, type MobileTeam } from "@/services/teamService";
 import { brand } from "@/ui/brand";
 
+function norm(value: unknown) {
+  return String(value || "")
+    .trim()
+    .toLocaleLowerCase("pt-BR")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export default function InviteAthleteToTeamScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ uid?: string }>();
-  const targetUid = String(params.uid || "");
+  const initialTargetUid = String(params.uid || "");
   const currentUid = getAuth().currentUser?.uid || "";
+  const [targetUid, setTargetUid] = useState(initialTargetUid);
   const [teams, setTeams] = useState<MobileTeam[]>([]);
-  const [athleteName, setAthleteName] = useState("Atleta");
+  const [athletes, setAthletes] = useState<MobileAthleteDirectoryItem[]>([]);
+  const [search, setSearch] = useState("");
+  const [athleteName, setAthleteName] = useState(initialTargetUid ? "Atleta" : "Selecione um atleta");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
   const [sent, setSent] = useState<Set<string>>(new Set());
@@ -32,27 +45,55 @@ export default function InviteAthleteToTeamScreen() {
 
   useEffect(() => {
     let mounted = true;
-    if (!targetUid || !currentUid || targetUid === currentUid) {
+    if (!currentUid) {
       setLoading(false);
-      setError("Selecione outro atleta para convidar.");
+      setError("Entre na sua conta para convidar atletas.");
       return;
     }
     Promise.all([
       loadTeams(),
-      resolveProfile(targetUid),
-    ]).then(([allTeams, profile]) => {
+      loadExploreProfiles(),
+      initialTargetUid ? resolveProfile(initialTargetUid).catch(() => null) : Promise.resolve(null),
+    ]).then(([allTeams, allAthletes, profile]) => {
       if (!mounted) return;
       setTeams(allTeams.filter((team) => team.ownerUid === currentUid));
-      setAthleteName(profile.resolved?.nome || "Atleta");
+      setAthletes(allAthletes.filter((athlete) => athlete.ownerUid && athlete.ownerUid !== currentUid));
+      if (initialTargetUid) setAthleteName(profile?.resolved?.nome || "Atleta");
     }).catch((cause) => {
       if (mounted) setError(cause instanceof Error ? cause.message : "Não foi possível preparar o convite.");
     }).finally(() => mounted && setLoading(false));
     return () => { mounted = false; };
-  }, [currentUid, targetUid]);
+  }, [currentUid, initialTargetUid]);
 
-  const hasTeams = useMemo(() => teams.length > 0, [teams]);
+  const hasTeams = teams.length > 0;
+  const filteredAthletes = useMemo(() => {
+    const term = norm(search);
+    const source = athletes.filter((athlete) => athlete.ownerUid !== currentUid);
+    if (!term) return source.slice(0, 30);
+    return source.filter((athlete) => norm([
+      athlete.nome,
+      athlete.cidade,
+      athlete.uf,
+      athlete.modalidade,
+      athlete.posicao,
+      athlete.categoria,
+      athlete.time,
+    ].filter(Boolean).join(" ")).includes(term)).slice(0, 50);
+  }, [athletes, currentUid, search]);
+
+  function chooseAthlete(athlete: MobileAthleteDirectoryItem) {
+    if (!athlete.ownerUid) return;
+    setTargetUid(athlete.ownerUid);
+    setAthleteName(athlete.nome || "Atleta");
+    setSearch("");
+    setSent(new Set());
+  }
 
   async function send(team: MobileTeam) {
+    if (!targetUid) {
+      Alert.alert("Convite", "Escolha um atleta primeiro.");
+      return;
+    }
     if (sending || sent.has(team.id)) return;
     setSending(team.id);
     try {
@@ -77,19 +118,59 @@ export default function InviteAthleteToTeamScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.list}>
-        {loading ? <View style={styles.center}><ActivityIndicator color={brand.colors.cyan} /><Text style={styles.muted}>Buscando suas equipes…</Text></View> : null}
+      <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
+        {loading ? <View style={styles.center}><ActivityIndicator color={brand.colors.cyan} /><Text style={styles.muted}>Buscando atletas e equipes…</Text></View> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
+
+        {!loading && !targetUid ? (
+          <View style={styles.selectorCard}>
+            <Text style={styles.selectorLabel}>1. ESCOLHA O ATLETA</Text>
+            <View style={styles.searchWrap}>
+              <Text style={styles.searchIcon}>⌕</Text>
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Buscar por nome, cidade, categoria ou equipe…"
+                placeholderTextColor={brand.colors.muted}
+                autoCapitalize="none"
+                style={styles.searchInput}
+              />
+            </View>
+            <View style={styles.athleteList}>
+              {filteredAthletes.map((athlete) => (
+                <Pressable key={athlete.directoryKey} onPress={() => chooseAthlete(athlete)} style={styles.athleteRow}>
+                  {athlete.fotoUrl ? <Image source={{ uri: athlete.fotoUrl }} style={styles.athleteAvatar} /> : <View style={styles.athleteAvatarFallback}><Text style={styles.athleteAvatarText}>{athlete.nome.slice(0, 1).toUpperCase()}</Text></View>}
+                  <View style={styles.athleteCopy}>
+                    <Text style={styles.athleteName}>{athlete.nome}</Text>
+                    <Text style={styles.athleteMeta}>{[athlete.cidade, athlete.uf, athlete.categoria].filter(Boolean).join(" • ")}</Text>
+                    <Text style={styles.athleteSport}>{[athlete.modalidade, athlete.time].filter(Boolean).join(" • ") || "Perfil esportivo"}</Text>
+                  </View>
+                  <Text style={styles.athleteArrow}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {!loading && targetUid ? (
+          <View style={styles.selectedAthlete}>
+            <View style={styles.selectedBadge}><Text style={styles.selectedBadgeText}>✓</Text></View>
+            <View style={styles.selectedCopy}><Text style={styles.selectedLabel}>ATLETA SELECIONADO</Text><Text style={styles.selectedName}>{athleteName}</Text></View>
+            {!initialTargetUid ? <Pressable onPress={() => { setTargetUid(""); setAthleteName("Selecione um atleta"); setSent(new Set()); }} style={styles.changeButton}><Text style={styles.changeButtonText}>TROCAR</Text></Pressable> : null}
+          </View>
+        ) : null}
+
         {!loading && !error && !hasTeams ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>👥</Text>
             <Text style={styles.emptyTitle}>Você ainda não administra uma equipe aprovada</Text>
-            <Text style={styles.muted}>Cadastre uma equipe e, depois da aprovação, volte ao perfil do atleta para enviar o convite.</Text>
+            <Text style={styles.muted}>Cadastre uma equipe e, depois da aprovação, volte aqui para montar o elenco.</Text>
             <Pressable onPress={() => router.push("/team/create")} style={styles.createButton}><Text style={styles.createButtonText}>CADASTRAR EQUIPE</Text></Pressable>
           </View>
         ) : null}
 
-        {teams.map((team) => {
+        {targetUid && hasTeams ? <Text style={styles.stepLabel}>2. ESCOLHA A EQUIPE</Text> : null}
+        {targetUid ? teams.map((team) => {
           const busy = sending === team.id;
           const done = sent.has(team.id);
           return (
@@ -105,11 +186,9 @@ export default function InviteAthleteToTeamScreen() {
               </Pressable>
             </View>
           );
-        })}
+        }) : null}
 
-        {hasTeams ? (
-          <Pressable onPress={() => router.push("/team/invites")} style={styles.manageButton}><Text style={styles.manageButtonText}>GERENCIAR CONVITES ENVIADOS ›</Text></Pressable>
-        ) : null}
+        {hasTeams ? <Pressable onPress={() => router.push("/team/invites")} style={styles.manageButton}><Text style={styles.manageButtonText}>GERENCIAR CONVITES ›</Text></Pressable> : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -125,6 +204,30 @@ const styles = StyleSheet.create({
   title: { color: brand.colors.text, fontSize: 24, fontWeight: "900" },
   subtitle: { marginTop: 2, color: brand.colors.gold, fontSize: 11, fontWeight: "800" },
   list: { gap: 10, padding: 14, paddingTop: 4, paddingBottom: 36 },
+  selectorCard: { borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 12 },
+  selectorLabel: { color: brand.colors.cyan, fontSize: 9, fontWeight: "900", letterSpacing: 0.8, marginBottom: 9 },
+  searchWrap: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.md, backgroundColor: brand.colors.bgDeep, paddingHorizontal: 11 },
+  searchIcon: { color: brand.colors.cyan, fontSize: 20, marginRight: 7 },
+  searchInput: { flex: 1, color: brand.colors.text, paddingVertical: 11, fontSize: 13 },
+  athleteList: { gap: 6, marginTop: 10 },
+  athleteRow: { flexDirection: "row", alignItems: "center", gap: 9, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surfaceSoft, padding: 9 },
+  athleteAvatar: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: brand.colors.cyan },
+  athleteAvatarFallback: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: brand.colors.cyan, backgroundColor: brand.colors.bgDeep },
+  athleteAvatarText: { color: brand.colors.cyanSoft, fontWeight: "900" },
+  athleteCopy: { flex: 1 },
+  athleteName: { color: brand.colors.text, fontSize: 12, fontWeight: "900" },
+  athleteMeta: { marginTop: 2, color: brand.colors.muted, fontSize: 8 },
+  athleteSport: { marginTop: 3, color: brand.colors.gold, fontSize: 8, fontWeight: "800" },
+  athleteArrow: { color: brand.colors.cyan, fontSize: 22 },
+  selectedAthlete: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: brand.colors.cyan, borderRadius: brand.radius.lg, backgroundColor: "#092b40", padding: 12 },
+  selectedBadge: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", backgroundColor: brand.colors.cyan },
+  selectedBadgeText: { color: brand.colors.bgDeep, fontWeight: "900" },
+  selectedCopy: { flex: 1 },
+  selectedLabel: { color: brand.colors.cyan, fontSize: 7, fontWeight: "900", letterSpacing: 0.7 },
+  selectedName: { marginTop: 2, color: brand.colors.text, fontSize: 14, fontWeight: "900" },
+  changeButton: { borderRadius: brand.radius.pill, borderWidth: 1, borderColor: brand.colors.gold, paddingHorizontal: 9, paddingVertical: 7 },
+  changeButtonText: { color: brand.colors.gold, fontSize: 8, fontWeight: "900" },
+  stepLabel: { marginTop: 4, color: brand.colors.gold, fontSize: 9, fontWeight: "900", letterSpacing: 0.8 },
   card: { flexDirection: "row", alignItems: "center", gap: 10, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 12 },
   logo: { width: 58, height: 58, borderRadius: 17, borderWidth: 1, borderColor: brand.colors.cyan, backgroundColor: brand.colors.bgDeep },
   logoFallback: { width: 58, height: 58, borderRadius: 17, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: brand.colors.cyan, backgroundColor: brand.colors.bgDeep },
