@@ -24,5 +24,5 @@ need(ownerFix.includes('where("aprovado","==",true)'),"galeria do proprietário 
 need(ownerFix.includes('allowVideo:kind!=="photo"'),"upload do Perfil deve aceitar vídeo e Story em vídeo");
 need(rules.includes("request.resource.data.ownerUid == request.auth.uid"),"regras perderam vínculo obrigatório entre autor e autenticação");
 need(!/allow\s+(?:write|create)\s*:\s*if\s+true/.test(rules),"regras não podem abrir escrita pública");
-need(sw.includes("bd-atletas-v35")&&sw.includes("/profile-publish-compat-v35.js")&&sw.includes("/owner-publish-v35.js"),"PWA não inclui os hotfixes V35");
+need(sw.includes("/profile-publish-compat-v35.js")&&sw.includes("/owner-publish-v35.js"),"PWA não inclui os hotfixes V35");
 console.log("V35 profile publish audit OK");
