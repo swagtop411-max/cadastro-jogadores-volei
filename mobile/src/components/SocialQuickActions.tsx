@@ -34,6 +34,7 @@ export function SocialQuickActions() {
         <Shortcut icon="🏆" label="RANKING" onPress={() => router.push("/ranking")} gold />
         <Shortcut icon="👥" label="EQUIPES" onPress={() => router.push("/teams")} />
         <Shortcut icon="◇" label="SALVOS" onPress={() => router.push("/saved")} gold />
+        <Shortcut icon="⚙" label="CONTA" onPress={() => router.push("/legal")} />
       </ScrollView>
     </View>
   );
