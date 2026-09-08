@@ -1,6 +1,7 @@
 import { doc, getDoc, getFirestore, serverTimestamp, setDoc } from "@react-native-firebase/firestore";
 
 const db = getFirestore();
+const acceptedCache = new Map<string, boolean>();
 
 export const TERMS_VERSION = "2026-09-08";
 export const PRIVACY_VERSION = "2026-09-08";
@@ -10,10 +11,16 @@ export const ACCOUNT_DELETION_URL = "https://cadastrodeatletas.com.br/excluir-co
 
 export async function hasAcceptedCurrentPolicies(uid: string) {
   if (!uid) return false;
+  if (acceptedCache.get(uid) === true) return true;
   const snapshot = await getDoc(doc(db, "consentimentos", uid));
-  if (!snapshot.exists()) return false;
+  if (!snapshot.exists()) {
+    acceptedCache.set(uid, false);
+    return false;
+  }
   const data = snapshot.data();
-  return data?.termsVersion === TERMS_VERSION && data?.privacyVersion === PRIVACY_VERSION;
+  const accepted = data?.termsVersion === TERMS_VERSION && data?.privacyVersion === PRIVACY_VERSION;
+  acceptedCache.set(uid, accepted);
+  return accepted;
 }
 
 export async function recordPolicyConsent(uid: string) {
@@ -26,4 +33,10 @@ export async function recordPolicyConsent(uid: string) {
     acceptedAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }, { merge: true });
+  acceptedCache.set(uid, true);
+}
+
+export function clearPolicyConsentCache(uid?: string) {
+  if (uid) acceptedCache.delete(uid);
+  else acceptedCache.clear();
 }
