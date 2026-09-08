@@ -4,6 +4,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-na
 import { BrandHeader } from "@/components/BrandHeader";
 import {
   ACCOUNT_DELETION_URL,
+  CHILD_SAFETY_URL,
   PRIVACY_URL,
   TERMS_URL,
 } from "@/services/policyConsentService";
@@ -16,19 +17,20 @@ export default function LegalCenterScreen() {
       <BrandHeader
         eyebrow="CONTA, PRIVACIDADE E SEGURANÇA"
         title="Central da conta"
-        subtitle="Termos, privacidade, regras da comunidade e controles da sua conta em um só lugar."
+        subtitle="Termos, privacidade, segurança da comunidade e controles da sua conta em um só lugar."
       />
 
       <View style={styles.card}>
         <Text style={styles.title}>DOCUMENTOS</Text>
         <Action title="TERMOS DE USO" subtitle="Regras da comunidade e conteúdo publicado" onPress={() => void Linking.openURL(TERMS_URL)} />
         <Action title="POLÍTICA DE PRIVACIDADE" subtitle="Como dados pessoais e esportivos são tratados" onPress={() => void Linking.openURL(PRIVACY_URL)} />
-        <Action title="EXCLUSÃO PELA WEB" subtitle="Recurso externo exigido para controle de dados" onPress={() => void Linking.openURL(ACCOUNT_DELETION_URL)} />
+        <Action title="SEGURANÇA INFANTIL" subtitle="Padrões públicos contra abuso e exploração sexual infantil" onPress={() => void Linking.openURL(CHILD_SAFETY_URL)} />
+        <Action title="EXCLUSÃO PELA WEB" subtitle="Recurso externo para solicitar exclusão de conta e dados" onPress={() => void Linking.openURL(ACCOUNT_DELETION_URL)} />
       </View>
 
       <View style={styles.card}>
         <Text style={styles.title}>COMUNIDADE</Text>
-        <Text style={styles.body}>Você pode denunciar publicações, perfis, comentários e equipes inadequadas diretamente no app. Também é possível bloquear usuários. Conteúdo ilegal, abusivo, discriminatório, sexual impróprio, fraudulento, invasivo ou que viole direitos de terceiros pode ser removido e a conta pode sofrer restrições.</Text>
+        <Text style={styles.body}>Você pode denunciar publicações, perfis, comentários e equipes inadequadas diretamente no app. Também é possível bloquear usuários. Conteúdo ilegal, abusivo, discriminatório, sexual impróprio, fraudulento, invasivo, que explore menores ou que viole direitos de terceiros pode ser removido e a conta pode sofrer restrições.</Text>
       </View>
 
       <Pressable onPress={() => router.push("/account/delete")} style={({ pressed }) => [styles.dangerButton, pressed && styles.pressed]}>
