@@ -116,3 +116,5 @@ if (avatar && uid) {
   setTimeout(updateAvatarState, 400);
   setTimeout(updateAvatarState, 1200);
 }
+
+import("./profile-highlights-v37.js?v=20260908-37").catch(error => console.warn("Destaques V37:", error));
