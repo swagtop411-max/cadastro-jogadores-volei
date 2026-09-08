@@ -5,6 +5,7 @@ import { LaunchScreen } from "@/components/LaunchScreen";
 import { bootstrapFirebase } from "@/firebase/bootstrap";
 import type { AuthSession } from "@/repositories/contracts";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
+import { registerPushNotifications, subscribePushResponse } from "@/services/pushService";
 import { brand } from "@/ui/brand";
 
 export default function RootLayout() {
@@ -23,16 +24,9 @@ export default function RootLayout() {
   useEffect(() => {
     let mounted = true;
     bootstrapFirebase()
-      .then(() => {
-        if (mounted) setReady(true);
-      })
-      .catch((cause: unknown) => {
-        if (!mounted) return;
-        setError(cause instanceof Error ? cause.message : "Falha ao inicializar o Firebase.");
-      });
-    return () => {
-      mounted = false;
-    };
+      .then(() => { if (mounted) setReady(true); })
+      .catch((cause: unknown) => { if (mounted) setError(cause instanceof Error ? cause.message : "Falha ao inicializar o Firebase."); });
+    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
@@ -49,14 +43,17 @@ export default function RootLayout() {
     if (!session && !insideAuthGroup) router.replace("/login");
   }, [ready, segments, session, sessionResolved]);
 
-  if (error) {
-    return <LaunchScreen message={error} error />;
-  }
+  useEffect(() => {
+    if (!ready || !session?.uid) return;
+    void registerPushNotifications(session.uid).catch(() => undefined);
+  }, [ready, session?.uid]);
 
-  if (!ready || !sessionResolved || !minimumLaunchElapsed) {
-    return <LaunchScreen />;
-  }
+  useEffect(() => subscribePushResponse((route) => router.push(route as never)), []);
 
+  if (error) return <LaunchScreen message={error} error />;
+  if (!ready || !sessionResolved || !minimumLaunchElapsed) return <LaunchScreen />;
+
+  const noHeader = { headerShown: false } as const;
   return (
     <Stack
       screenOptions={{
@@ -67,10 +64,23 @@ export default function RootLayout() {
         contentStyle: { backgroundColor: brand.colors.bg },
       }}
     >
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={noHeader} />
+      <Stack.Screen name="(auth)" options={noHeader} />
       <Stack.Screen name="athlete/[uid]" options={{ title: "Perfil do atleta" }} />
       <Stack.Screen name="profile/edit" options={{ title: "Editar perfil" }} />
+      <Stack.Screen name="post/[id]" options={noHeader} />
+      <Stack.Screen name="stories/create" options={noHeader} />
+      <Stack.Screen name="stories/[ownerUid]" options={noHeader} />
+      <Stack.Screen name="activity" options={noHeader} />
+      <Stack.Screen name="messages/index" options={noHeader} />
+      <Stack.Screen name="messages/[uid]" options={noHeader} />
+      <Stack.Screen name="connections/[uid]" options={noHeader} />
+      <Stack.Screen name="saved" options={noHeader} />
+      <Stack.Screen name="reels" options={noHeader} />
+      <Stack.Screen name="ranking" options={noHeader} />
+      <Stack.Screen name="teams" options={noHeader} />
+      <Stack.Screen name="team/[id]" options={noHeader} />
+      <Stack.Screen name="team/create" options={noHeader} />
     </Stack>
   );
 }
