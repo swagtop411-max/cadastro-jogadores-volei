@@ -8,7 +8,7 @@ const publicAdmin=read("admin.html");
 const gateway=read("z8k3v6n1.html");
 need(shortcut.includes('onAuthStateChanged(auth,user=>'),'não acompanha a sessão autenticada');
 need(shortcut.includes('normalize(user.email)!==OWNER_EMAIL'),'não restringe o atalho ao proprietário');
-need(shortcut.includes('collection(db,"access_logs")'),'não confirma permissão real no Firestore');
+need(shortcut.includes('await user.getIdToken()'),'não valida a sessão Firebase antes de abrir o painel');
 need(shortcut.includes('authorizedSession=true'),'não exige sessão administrativa validada');
 need(shortcut.includes('sessionStorage.setItem(GATE,"ok")'),'não abre o gateway privado corretamente');
 need(shortcut.includes('document.getElementById(MENU_BUTTON_ID)?.remove()'),'não remove o botão após perder autorização');
