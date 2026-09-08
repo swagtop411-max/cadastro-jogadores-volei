@@ -17,7 +17,7 @@ import { resolveProfile } from "./profileResolver";
 
 const db = getFirestore();
 
-export type NotificationType = "like" | "comment" | "follow" | "message" | "mention";
+export type NotificationType = "like" | "comment" | "follow" | "message" | "mention" | "team_invite";
 
 export type MobileNotification = {
   id: string;
@@ -122,5 +122,6 @@ export function notificationLabel(type: NotificationType) {
   if (type === "comment") return "comentou na sua publicação";
   if (type === "follow") return "começou a seguir você";
   if (type === "message") return "enviou uma mensagem";
+  if (type === "team_invite") return "enviou uma atividade de equipe";
   return "mencionou você";
 }
