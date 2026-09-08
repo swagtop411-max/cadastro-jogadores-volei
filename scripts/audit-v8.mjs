@@ -15,6 +15,7 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
  'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js',
+ 'admin.html','admin.js','controle-privado-91b73f.html','vault-7c3e91a6f4.html','owner-core-5e8a7c2d.js',
  'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v11.js','admin-data-migration-v11.js','admin-commerce-v11.js','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
@@ -34,8 +35,19 @@ requireText('comunidade.js','uploadCloudinary','Comunidade usa Cloudinary');
 requireText('perfil-social.js','getUserMedia','câmera real no perfil');
 requireText('perfil-social.js','mountMessageButton','botão de mensagem no perfil');
 requireText('public.js','res.cloudinary.com','Cloudinary permitido nas listagens');
-requireText('site-v8.js','setAdminUI(false)','ADM oculto por padrão');
-requireText('site-v8.js','ADMIN_EMAIL','validação administrativa');
+
+// V31: console administrativo privado, sem entrada pública.
+requireText('site-v8.js','removeAdminEntrypoints','entradas administrativas removidas do DOM público');
+forbidText('site-v5.js','data-v7-admin','atalho ADM no menu público');
+forbidText('site-v5.js','PAINEL ADM','texto de painel ADM no menu público');
+requireText('admin.html','Página indisponível','rota administrativa pública antiga desativada');
+requireText('admin.html','noindex,nofollow,noarchive','rota antiga fora de indexação');
+requireText('controle-privado-91b73f.html','noindex,nofollow,noarchive,nosnippet','gateway privado fora de indexação');
+requireText('controle-privado-91b73f.html',"collection(db,'access_logs')",'gateway valida autorização pelas regras do Firestore');
+requireText('controle-privado-91b73f.html',"sessionStorage.setItem('owner_console_v31','ok')",'gateway libera somente a sessão validada');
+requireText('admin.js','owner_console_v31','núcleo ADM exige passagem pelo gateway');
+requireText('admin.js','owner-core-5e8a7c2d.js','wrapper carrega núcleo administrativo preservado');
+requireText('owner-core-5e8a7c2d.js','onAuthStateChanged','núcleo ADM mantém validação autenticada');
 requireText('site-v8.js','buildHomeRail','banners verticais de apoiadores');
 requireText('site-v8.js','ensureUtilityHost','host oculto de Direct/notificações');
 requireText('site-v8.css','.v8-home-grid','layout V8 da Home');
@@ -166,8 +178,8 @@ console.log('\nAUDITORIA V8/V10 APROVADA ✓');
 // V11 core hardening.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage no editor de perfil');
 requireText('meu-perfil.js','solicitacoes_planos','alteração de plano vira solicitação administrativa');
-requireText('admin.js','cadastro-atleta-v11','aprovação base do atleta sem dados privados públicos');
-requireText('admin.js','cadastro-equipe-v11','aprovação base da equipe sem dados privados públicos');
+requireText('owner-core-5e8a7c2d.js','cadastro-atleta-v11','aprovação base do atleta sem dados privados públicos');
+requireText('owner-core-5e8a7c2d.js','cadastro-equipe-v11','aprovação base da equipe sem dados privados públicos');
 requireText('analytics.js','confiavel:false','analytics próprio marcado como telemetria');
 
 // V11 stage 2: privacidade, performance e PWA.
