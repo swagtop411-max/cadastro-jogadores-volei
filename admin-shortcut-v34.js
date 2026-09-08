@@ -1,13 +1,14 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{collection,getDocs,getFirestore,limit,query}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const OWNER_EMAIL="swagtop411@gmail.com";
 const GATE="oc_6f9c2a71_session";
 const PANEL_PATH="z8k3v6n1.html";
 const MENU_BUTTON_ID="v34AdminPanelShortcut";
+const PROFILE_BUTTON_ID="v34AdminProfileShortcut";
+const STYLE_ID="v34AdminShortcutStyles";
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
-const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app);
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app);
 let authorizedSession=false;
 let permissionCheck=0;
 
@@ -15,13 +16,20 @@ function normalize(value){return String(value||"").trim().toLowerCase()}
 async function isAuthorized(user){
  if(!user||normalize(user.email)!==OWNER_EMAIL)return false;
  try{
-  await globalThis.__BD_APP_CHECK_PROMISE__?.catch?.(()=>null);
-  await getDocs(query(collection(db,"access_logs"),limit(1)));
+  await user.getIdToken();
   return true;
  }catch(error){
   console.warn("Atalho ADM indisponível:",error?.code||error);
   return false;
  }
+}
+function installStyles(){
+ if(document.getElementById(STYLE_ID))return;
+ const style=document.createElement("style");style.id=STYLE_ID;style.textContent=`
+ .v34-admin-profile-shortcut{width:100%;min-height:52px;margin:0 0 16px;border:1px solid #f4c84d;border-radius:15px;background:linear-gradient(135deg,#f4c84d,#e1ad2d);color:#102333;font:900 11px/1 Montserrat,Arial,sans-serif;letter-spacing:.7px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 10px 28px rgba(244,200,77,.18);cursor:pointer}
+ .v34-admin-profile-shortcut:active{transform:scale(.99)}
+ .v34-admin-shortcut{color:#f4c84d!important;border-color:rgba(244,200,77,.35)!important}
+ `;document.head.appendChild(style)
 }
 function topButton(){return document.getElementById("adminPanelCta")}
 function removeShortcut(){
@@ -29,6 +37,7 @@ function removeShortcut(){
  sessionStorage.removeItem(GATE);
  const top=topButton();if(top){top.hidden=true;top.removeAttribute("data-v34-ready")}
  document.getElementById(MENU_BUTTON_ID)?.remove();
+ document.getElementById(PROFILE_BUTTON_ID)?.remove();
 }
 function openPanel(){
  const user=auth.currentUser;
@@ -67,7 +76,22 @@ function mountMenuButton(){
  const account=nav.querySelector('a[href="conta.html"]');
  if(account)nav.insertBefore(button,account);else nav.appendChild(button);
 }
-function mountShortcut(){if(!authorizedSession)return;wireTopButton();mountMenuButton()}
+function mountProfileButton(){
+ const page=location.pathname.split("/").pop()||"index.html";
+ if(page!=="meu-perfil.html"||document.getElementById(PROFILE_BUTTON_ID))return;
+ const shell=document.querySelector(".profile-shell");
+ const nav=document.querySelector(".profile-nav");
+ if(!shell)return;
+ const button=document.createElement("button");
+ button.id=PROFILE_BUTTON_ID;
+ button.type="button";
+ button.className="v34-admin-profile-shortcut";
+ button.innerHTML="🎛️ ABRIR PAINEL ADM";
+ button.setAttribute("aria-label","Abrir painel administrativo privado");
+ button.addEventListener("click",event=>{event.preventDefault();void validateAndOpen(button)});
+ if(nav?.parentNode)nav.insertAdjacentElement("afterend",button);else shell.prepend(button);
+}
+function mountShortcut(){if(!authorizedSession)return;installStyles();wireTopButton();mountMenuButton();mountProfileButton()}
 
 onAuthStateChanged(auth,user=>{
  const check=++permissionCheck;
