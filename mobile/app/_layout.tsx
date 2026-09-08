@@ -5,6 +5,7 @@ import { LaunchScreen } from "@/components/LaunchScreen";
 import { bootstrapFirebase } from "@/firebase/bootstrap";
 import type { AuthSession } from "@/repositories/contracts";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
+import { recordAppSession } from "@/services/accessTelemetry";
 import { registerPushNotifications, subscribePushResponse } from "@/services/pushService";
 import { brand } from "@/ui/brand";
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!ready || !session?.uid) return;
+    void recordAppSession(session.uid).catch(() => undefined);
     void registerPushNotifications(session.uid).catch(() => undefined);
   }, [ready, session?.uid]);
 
