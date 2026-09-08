@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Banco de Dados de Atletas",
-  "short_name": "Banco de Atletas",
-  "description": "Rede esportiva para atletas, equipes, campeonatos e oportunidades do vôlei.",
+  "name": "Cadastro de Atletas",
+  "short_name": "Atletas",
+  "description": "Rede esportiva 18+ para atletas, equipes, campeonatos e oportunidades do vôlei.",
   "lang": "pt-BR",
   "start_url": "/?app=1",
   "scope": "/",
