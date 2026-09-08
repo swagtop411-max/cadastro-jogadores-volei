@@ -1,4 +1,4 @@
-const OWNER_GATE_KEY="owner_console_v31";
+const OWNER_GATE_KEY="oc_6f9c2a71_session";
 if(sessionStorage.getItem(OWNER_GATE_KEY)!=="ok"){
   location.replace("/");
   throw new Error("Private console gateway required");

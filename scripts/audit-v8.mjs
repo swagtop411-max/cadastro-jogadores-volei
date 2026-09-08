@@ -15,7 +15,7 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
 [
  'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
  'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js',
- 'admin.html','admin.js','controle-privado-91b73f.html','vault-7c3e91a6f4.html','owner-core-5e8a7c2d.js',
+ 'admin.html','admin.js','controle-privado-91b73f.html','p4x7m9q2.html','z8k3v6n1.html','m-5e2c7a9d.webmanifest','vault-7c3e91a6f4.html','owner-core-5e8a7c2d.js',
  'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v11.js','admin-data-migration-v11.js','admin-commerce-v11.js','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
@@ -42,12 +42,22 @@ forbidText('site-v5.js','data-v7-admin','atalho ADM no menu público');
 forbidText('site-v5.js','PAINEL ADM','texto de painel ADM no menu público');
 requireText('admin.html','Página indisponível','rota administrativa pública antiga desativada');
 requireText('admin.html','noindex,nofollow,noarchive','rota antiga fora de indexação');
-requireText('controle-privado-91b73f.html','noindex,nofollow,noarchive,nosnippet','gateway privado fora de indexação');
-requireText('controle-privado-91b73f.html',"collection(db,'access_logs')",'gateway valida autorização pelas regras do Firestore');
-requireText('controle-privado-91b73f.html',"sessionStorage.setItem('owner_console_v31','ok')",'gateway libera somente a sessão validada');
-requireText('admin.js','owner_console_v31','núcleo ADM exige passagem pelo gateway');
+requireText('controle-privado-91b73f.html','Página indisponível','gateway privado anterior desativado');
+requireText('controle-privado-91b73f.html','noindex,nofollow,noarchive,nosnippet','gateway antigo fora de indexação');
+requireText('p4x7m9q2.html','noindex,nofollow,noarchive,nosnippet','novo gateway privado fora de indexação');
+requireText('p4x7m9q2.html',"OWNER_EMAIL='swagtop411@gmail.com'",'gateway exige a conta proprietária');
+requireText('p4x7m9q2.html',"collection(db,'access_logs')",'gateway valida autorização pelas regras do Firestore');
+requireText('p4x7m9q2.html',"sessionStorage.setItem(GATE,'ok')",'gateway libera somente a sessão validada');
+requireText('p4x7m9q2.html',"GATE='oc_6f9c2a71_session'",'gateway usa sessão privada rotacionada');
+requireText('z8k3v6n1.html',"sessionStorage.getItem(G)!=='ok'",'shell privado bloqueia acesso sem gateway');
+requireText('z8k3v6n1.html','vault-7c3e91a6f4.html','shell privado carrega o console preservado');
+requireText('admin.js','oc_6f9c2a71_session','núcleo ADM exige a nova sessão privada');
 requireText('admin.js','owner-core-5e8a7c2d.js','wrapper carrega núcleo administrativo preservado');
 requireText('owner-core-5e8a7c2d.js','onAuthStateChanged','núcleo ADM mantém validação autenticada');
+requireText('owner-core-5e8a7c2d.js','email==="swagtop411@gmail.com"','núcleo ADM restringe a conta proprietária');
+requireText('m-5e2c7a9d.webmanifest','p4x7m9q2.html','manifest privado inicia pelo gateway');
+forbidText('p4x7m9q2.html','serviceWorker.register','gateway privado não substitui service worker público');
+forbidText('z8k3v6n1.html','serviceWorker.register','shell privado não substitui service worker público');
 requireText('site-v8.js','buildHomeRail','banners verticais de apoiadores');
 requireText('site-v8.js','ensureUtilityHost','host oculto de Direct/notificações');
 requireText('site-v8.css','.v8-home-grid','layout V8 da Home');
@@ -161,7 +171,7 @@ for(const file of jsFiles){
  }
 }
 
-for(const file of ['firebase.json','appsscript.json','manifest.webmanifest']){
+for(const file of ['firebase.json','appsscript.json','manifest.webmanifest','m-5e2c7a9d.webmanifest']){
  if(!exists(file))continue;
  try{JSON.parse(read(file));ok(`${file}: JSON válido`)}catch(error){fail(`${file}: JSON inválido (${error.message})`)}
 }

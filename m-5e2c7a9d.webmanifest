@@ -1,0 +1,18 @@
+{
+  "name": "Controle Privado",
+  "short_name": "Controle",
+  "description": "Acesso privado do proprietário ao Banco de Atletas.",
+  "start_url": "/p4x7m9q2.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#031424",
+  "theme_color": "#031424",
+  "icons": [
+    {
+      "src": "/assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

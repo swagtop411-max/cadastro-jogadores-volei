@@ -17,7 +17,7 @@ function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`)
  'firestore.rules','storage.rules','cloudinary-upload.js','firebase-app-check-v11.js','auth-audit-v11.js',
  'admin-data-migration-v11.js','admin-commerce-v11.js','meu-perfil.js','cadastro-direto.js','cadastro-equipe.js',
  'campeonatos-public.js','campeonatos-admin.js','comunidade.js','home-social.js','social-network.js','social-v6.js',
- 'admin.js','owner-core-5e8a7c2d.js','controle-privado-91b73f.html','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js',
+ 'admin.js','owner-core-5e8a7c2d.js','controle-privado-91b73f.html','p4x7m9q2.html','z8k3v6n1.html','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js',
  'profile-autosync-v13.js','admin-profile-browser-v13.js'
 ].forEach(requireFile);
 
@@ -41,7 +41,7 @@ requireText('firebase-app-check-v11.js','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmz
 forbidText('firebase-app-check-v11.js','ReCaptchaV3Provider','provedor V3 antigo');
 requireText('site-v5.js','firebase-app-check-v11.js?v=20260904-2','shell aguarda App Check');
 requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
-requireText('controle-privado-91b73f.html','firebase-app-check-v11.js?v=20260904-2','gateway privado inicializa App Check antes do acesso ADM');
+requireText('p4x7m9q2.html','firebase-app-check-v11.js?v=20260904-2','novo gateway privado inicializa App Check antes do acesso ADM');
 
 // Mídia e editor.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage legado no editor');
@@ -89,10 +89,16 @@ requireText('owner-core-5e8a7c2d.js','const result=await Promise.allSettled','mo
 requireText('atletas.html','public.js?v=20260904-3','cache bust público V13 atualizado');
 for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260904-2',`App Check antes de ${mod}`);
 
-// V31: o ADM não nasce no shell público; passa por gateway autenticado e pelas regras do Firestore.
-requireText('admin.js','owner_console_v31','wrapper administrativo exige gateway');
+// V31: o ADM não nasce no shell público; passa pelo gateway rotacionado, conta proprietária e regras do Firestore.
+requireText('admin.js','oc_6f9c2a71_session','wrapper administrativo exige o novo gateway');
 requireText('admin.js','owner-core-5e8a7c2d.js','wrapper administrativo aponta para o núcleo preservado');
-requireText('controle-privado-91b73f.html',"collection(db,'access_logs')",'gateway usa leitura permitida apenas ao ADM');
+requireText('controle-privado-91b73f.html','Página indisponível','gateway antigo permanece desativado');
+requireText('p4x7m9q2.html',"OWNER_EMAIL='swagtop411@gmail.com'",'novo gateway restringe a conta proprietária');
+requireText('p4x7m9q2.html',"collection(db,'access_logs')",'novo gateway usa leitura permitida apenas ao ADM');
+requireText('p4x7m9q2.html',"sessionStorage.setItem(GATE,'ok')",'novo gateway cria sessão somente após autorização');
+requireText('z8k3v6n1.html',"sessionStorage.getItem(G)!=='ok'",'shell privado rejeita acesso direto');
+forbidText('p4x7m9q2.html','serviceWorker.register','gateway privado não interfere no PWA público');
+forbidText('z8k3v6n1.html','serviceWorker.register','shell privado não interfere no PWA público');
 requireText('firestore.rules','allow read, delete: if isAdmin();','leitura de access_logs restrita ao ADM');
 
 // V13: conta sempre ganha identidade social mínima, sem inventar dados esportivos.
