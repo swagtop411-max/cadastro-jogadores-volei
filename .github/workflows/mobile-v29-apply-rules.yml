@@ -1,0 +1,38 @@
+name: Apply Mobile V29 Firestore Rules
+
+on:
+  push:
+    branches: ["feature/mobile-total-v29"]
+    paths:
+      - "scripts/append-mobile-v29-rules.mjs"
+      - ".github/workflows/mobile-v29-apply-rules.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v7
+        with:
+          ref: feature/mobile-total-v29
+          fetch-depth: 0
+
+      - name: Apply idempotent rules patch
+        run: node scripts/append-mobile-v29-rules.mjs
+
+      - name: Commit patched firestore.rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- firestore.rules; then
+            echo "No rules changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add firestore.rules
+          git commit -m "feat(rules): liberar push e convites de equipe no app V29"
+          git push origin HEAD:feature/mobile-total-v29
