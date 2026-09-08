@@ -3,7 +3,7 @@
     "name": "Banco de Atletas",
     "slug": "cadastro-de-atletas",
     "scheme": "cadastrodeatletas",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/branding/app-icon.png",
@@ -12,12 +12,12 @@
     },
     "android": {
       "package": "br.com.cadastrodeatletas.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "icon": "./assets/branding/app-icon.png"
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app",
-      "buildNumber": "2"
+      "buildNumber": "3"
     },
     "web": {
       "favicon": "./assets/branding/app-icon.png"
@@ -25,6 +25,7 @@
     "plugins": [
       "expo-router",
       "expo-dev-client",
+      "expo-notifications",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/app-check",
@@ -44,8 +45,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Permitir que o Banco de Atletas acesse suas fotos e vídeos para criar publicações e atualizar seu perfil.",
-          "cameraPermission": "Permitir que o Banco de Atletas use a câmera para criar publicações e atualizar seu perfil.",
+          "photosPermission": "Permitir que o Banco de Atletas acesse suas fotos e vídeos para criar publicações, Stories, mensagens e atualizar seu perfil.",
+          "cameraPermission": "Permitir que o Banco de Atletas use a câmera para criar publicações, Stories e atualizar seu perfil.",
           "microphonePermission": "Permitir que o Banco de Atletas use o microfone ao gravar vídeos pela câmera."
         }
       ],
