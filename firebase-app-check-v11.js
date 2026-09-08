@@ -27,6 +27,7 @@ if(!globalThis.__BD_APP_CHECK_PROMISE__){
  })();
 }
 
-import("./admin-shortcut-v34.js?v=20260908-34").catch(error=>console.warn("Atalho ADM V34:",error));
+import("./admin-shortcut-v34.js?v=20260908-38").catch(error=>console.warn("Atalho ADM V34:",error));
+import("./ugc-safety-v41.js?v=20260908-41").catch(error=>console.warn("Segurança da comunidade V41:",error));
 
 export default globalThis.__BD_APP_CHECK_PROMISE__;
