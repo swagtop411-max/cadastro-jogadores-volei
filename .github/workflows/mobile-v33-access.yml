@@ -1,0 +1,35 @@
+name: Mobile V33 access telemetry
+
+on:
+  pull_request:
+    branches: ["mobile-v1-foundation"]
+  push:
+    branches: ["mobile-v1-foundation"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-mobile-access:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+      - name: Typecheck mobile
+        working-directory: mobile
+        run: npm run typecheck
+      - name: Verify telemetry contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'plataforma: "app"' mobile/src/services/accessTelemetry.ts
+          grep -q '"/__saida__"' mobile/src/services/accessTelemetry.ts
+          grep -q 'recordAppLogin' mobile/src/repositories/firebase/authRepository.ts
+          grep -q 'recordAppSignup' mobile/src/repositories/firebase/authRepository.ts
+          grep -q 'recordAppLogout' mobile/src/repositories/firebase/authRepository.ts
+          grep -q 'recordAppSession' mobile/app/_layout.tsx
