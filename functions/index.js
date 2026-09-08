@@ -42,7 +42,11 @@ function cloudinaryPublicIdFromUrl(rawUrl) {
 }
 
 function addMediaAsset(bucket, resourceType, path, url) {
-  const publicId = text(path) || cloudinaryPublicIdFromUrl(url);
+  const urlValue = text(url);
+  const pathValue = text(path);
+  const publicId = urlValue.includes("res.cloudinary.com")
+    ? (cloudinaryPublicIdFromUrl(urlValue) || pathValue)
+    : (pathValue && !pathValue.startsWith("usuarios/") ? pathValue : "");
   if (!publicId) return;
   const normalizedType = resourceType === "video" ? "video" : "image";
   bucket.set(`${normalizedType}:${publicId}`, { resourceType: normalizedType, publicId });
@@ -107,9 +111,71 @@ function rememberRef(refs, ref) {
   if (ref?.path) refs.set(ref.path, ref);
 }
 
+async function collectRefsByQuery(refs, media, collectionName, field, value) {
+  const docs = await queryDocuments(collectionName, field, value);
+  for (const snapshot of docs) {
+    rememberRef(refs, snapshot.ref);
+    collectMediaFromData(media, snapshot.data());
+  }
+  return docs;
+}
+
+async function collectOwnedContentDependencies(refs, ownedPosts, ownedStories, ownedTeams) {
+  for (const postId of ownedPosts) {
+    rememberRef(refs, db.collection("curtidas_publicacoes").doc(postId));
+    const comments = await queryDocuments("comentarios_publicacoes", "publicacaoId", postId);
+    for (const snapshot of comments) rememberRef(refs, snapshot.ref);
+    const saved = await queryCollectionGroup("publicacoes", "postId", postId).catch(() => []);
+    for (const snapshot of saved) rememberRef(refs, snapshot.ref);
+    const notifications = await queryCollectionGroup("itens", "sourceId", postId).catch(() => []);
+    for (const snapshot of notifications) rememberRef(refs, snapshot.ref);
+  }
+
+  for (const storyId of ownedStories) {
+    rememberRef(refs, db.collection("story_views").doc(storyId));
+  }
+
+  for (const teamId of ownedTeams) {
+    const invites = await queryDocuments("equipe_convites", "equipeId", teamId);
+    for (const snapshot of invites) rememberRef(refs, snapshot.ref);
+  }
+}
+
+async function collectConversationCleanup(uid, refs, media) {
+  const updates = [];
+  const conversations = await queryArrayDocuments("conversas", "participants", uid);
+  const tombstone = `deleted_${crypto.randomUUID().replaceAll("-", "")}`;
+
+  for (const conversation of conversations) {
+    const sent = await conversation.ref.collection("mensagens").where("senderUid", "==", uid).get();
+    for (const message of sent.docs) {
+      rememberRef(refs, message.ref);
+      collectMediaFromData(media, message.data());
+    }
+
+    const data = conversation.data() || {};
+    const participants = Array.isArray(data.participants)
+      ? data.participants.map((value) => value === uid ? tombstone : value)
+      : [];
+    const lastReadBy = Array.isArray(data.lastReadBy)
+      ? data.lastReadBy.filter((value) => value !== uid)
+      : [];
+    const patch = { participants, lastReadBy };
+    if (data.lastSenderUid === uid) {
+      patch.lastSenderUid = "";
+      patch.lastMessage = "Mensagem removida após exclusão da conta";
+    }
+    updates.push({ ref: conversation.ref, patch });
+  }
+  return updates;
+}
+
 async function collectAccountDeletionPlan(uid) {
   const refs = new Map();
   const media = new Map();
+  const ownedPosts = new Set();
+  const ownedStories = new Set();
+  const ownedTeams = new Set();
 
   const directPaths = [
     ["usuarios", uid],
@@ -133,12 +199,17 @@ async function collectAccountDeletionPlan(uid) {
     if (snapshot.exists) collectMediaFromData(media, snapshot.data());
   }
 
+  const posts = await collectRefsByQuery(refs, media, "publicacoes", "ownerUid", uid);
+  for (const snapshot of posts) ownedPosts.add(snapshot.id);
+  const videos = await collectRefsByQuery(refs, media, "videos", "ownerUid", uid);
+  for (const snapshot of videos) ownedPosts.add(snapshot.id);
+  const stories = await collectRefsByQuery(refs, media, "stories", "ownerUid", uid);
+  for (const snapshot of stories) ownedStories.add(snapshot.id);
+  const teams = await collectRefsByQuery(refs, media, "equipes", "ownerUid", uid);
+  for (const snapshot of teams) ownedTeams.add(snapshot.id);
+
   const ownedQueries = [
-    ["publicacoes", "ownerUid"],
-    ["videos", "ownerUid"],
-    ["stories", "ownerUid"],
     ["comentarios_publicacoes", "ownerUid"],
-    ["equipes", "ownerUid"],
     ["equipes_pendentes", "ownerUid"],
     ["denuncias", "reportadoPorUid"],
     ["handles", "uid"],
@@ -146,18 +217,15 @@ async function collectAccountDeletionPlan(uid) {
     ["atletas", "ownerUid"],
     ["equipe_convites", "atletaUid"],
     ["equipe_convites", "convidadoPorUid"],
+    ["access_logs", "uid"],
+    ["reivindicacoes_perfis", "solicitanteUid"],
   ];
-
   for (const [collectionName, field] of ownedQueries) {
-    const docs = await queryDocuments(collectionName, field, uid);
-    for (const snapshot of docs) {
-      rememberRef(refs, snapshot.ref);
-      collectMediaFromData(media, snapshot.data());
-    }
+    await collectRefsByQuery(refs, media, collectionName, field, uid);
   }
 
-  const conversations = await queryArrayDocuments("conversas", "participants", uid);
-  for (const snapshot of conversations) rememberRef(refs, snapshot.ref);
+  await collectOwnedContentDependencies(refs, ownedPosts, ownedStories, ownedTeams);
+  const conversationUpdates = await collectConversationCleanup(uid, refs, media);
 
   for (const field of ["uid", "viewerUid"]) {
     const docs = await queryCollectionGroup("usuarios", field, uid);
@@ -170,7 +238,11 @@ async function collectAccountDeletionPlan(uid) {
   const authoredNotifications = await queryCollectionGroup("itens", "actorUid", uid);
   for (const snapshot of authoredNotifications) rememberRef(refs, snapshot.ref);
 
-  return { refs: [...refs.values()], media: [...media.values()] };
+  return {
+    refs: [...refs.values()].sort((a, b) => b.path.split("/").length - a.path.split("/").length),
+    media: [...media.values()],
+    conversationUpdates,
+  };
 }
 
 async function deleteLegacyStorage(uid) {
@@ -178,6 +250,14 @@ async function deleteLegacyStorage(uid) {
   const prefixes = [`usuarios/${uid}/`, `perfis/${uid}/`, `publicacoes/${uid}/`, `stories/${uid}/`];
   for (const prefix of prefixes) {
     await bucket.deleteFiles({ prefix, force: true });
+  }
+}
+
+async function applyConversationAnonymization(updates) {
+  for (let index = 0; index < updates.length; index += 400) {
+    const batch = db.batch();
+    for (const item of updates.slice(index, index + 400)) batch.update(item.ref, item.patch);
+    await batch.commit();
   }
 }
 
@@ -221,9 +301,15 @@ exports.deleteAccount = onCall(
     for (const ref of plan.refs) {
       await db.recursiveDelete(ref);
     }
+    await applyConversationAnonymization(plan.conversationUpdates);
 
     await auth.deleteUser(uid);
-    logger.info("Conta excluída com sucesso", { uid, documents: plan.refs.length, media: plan.media.length });
+    logger.info("Conta excluída com sucesso", {
+      uid,
+      documents: plan.refs.length,
+      media: plan.media.length,
+      conversationsAnonymized: plan.conversationUpdates.length,
+    });
     return { deleted: true };
   },
 );
