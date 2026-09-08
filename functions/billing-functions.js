@@ -25,12 +25,62 @@ function tokenHash(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-async function fetchSubscription(purchaseToken) {
+async function publisherClient() {
   const auth = new GoogleAuth({ scopes: [PLAY_SCOPE] });
-  const client = await auth.getClient();
-  const url = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(PACKAGE_NAME)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}`;
-  const response = await client.request({ url, method: "GET" });
+  return auth.getClient();
+}
+
+function subscriptionUrl(purchaseToken, action = "") {
+  const suffix = action ? `:${action}` : "";
+  return `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${encodeURIComponent(PACKAGE_NAME)}/purchases/subscriptionsv2/tokens/${encodeURIComponent(purchaseToken)}${suffix}`;
+}
+
+async function fetchSubscription(purchaseToken) {
+  const client = await publisherClient();
+  const response = await client.request({ url: subscriptionUrl(purchaseToken), method: "GET" });
   return response.data || {};
+}
+
+async function stopRenewal(purchaseToken) {
+  const token = text(purchaseToken);
+  if (!token) return false;
+
+  let purchase;
+  try {
+    purchase = await fetchSubscription(token);
+  } catch (error) {
+    const status = Number(error?.response?.status || 0);
+    if ([404, 410].includes(status)) return false;
+    throw error;
+  }
+
+  const state = text(purchase.subscriptionState);
+  if ([
+    "SUBSCRIPTION_STATE_CANCELED",
+    "SUBSCRIPTION_STATE_EXPIRED",
+    "SUBSCRIPTION_STATE_PENDING_PURCHASE_CANCELED",
+  ].includes(state)) return false;
+
+  const client = await publisherClient();
+  try {
+    await client.request({
+      url: subscriptionUrl(token, "cancel"),
+      method: "POST",
+      data: {
+        cancellationContext: {
+          cancellationType: "USER_REQUESTED_STOP_RENEWALS",
+        },
+      },
+    });
+    return true;
+  } catch (error) {
+    const status = Number(error?.response?.status || 0);
+    if ([400, 404, 410].includes(status)) {
+      console.warn("Subscription renewal already stopped or unavailable", { status });
+      return false;
+    }
+    throw error;
+  }
 }
 
 function lineItemsForProduct(purchase, expectedProduct) {
@@ -115,6 +165,22 @@ async function persistEntitlement({ uid, teamRequestId, planId, purchaseToken, p
   return { active, expiresAt, state, productId: expectedProduct };
 }
 
+async function billingPrivateForUid(uid) {
+  const snapshot = await db.collection("billing_private").where("uid", "==", uid).get();
+  return snapshot.docs;
+}
+
+async function cancelBillingForUid(uid) {
+  const privateDocs = await billingPrivateForUid(uid);
+  let canceled = 0;
+  for (const entry of privateDocs) {
+    const purchaseToken = text(entry.data()?.purchaseToken);
+    if (!purchaseToken) continue;
+    if (await stopRenewal(purchaseToken)) canceled += 1;
+  }
+  return canceled;
+}
+
 async function deleteBillingForUid(uid) {
   const [privateSnapshot, entitlementSnapshot] = await Promise.all([
     db.collection("billing_private").where("uid", "==", uid).get(),
@@ -127,6 +193,12 @@ async function deleteBillingForUid(uid) {
     await batch.commit();
   }
   return refs.length;
+}
+
+async function cancelAndDeleteBillingForUid(uid) {
+  const canceled = await cancelBillingForUid(uid);
+  const deleted = await deleteBillingForUid(uid);
+  return { canceled, deleted };
 }
 
 exports.verifyTeamSubscription = onCall(
@@ -191,7 +263,9 @@ exports.refreshTeamSubscriptions = onSchedule(
   },
   async () => {
     const snapshot = await db.collection("billing_private").limit(500).get();
+    const missingUsers = new Set();
     let updated = 0;
+    let canceled = 0;
     let removed = 0;
     let failed = 0;
     for (const entry of snapshot.docs) {
@@ -204,7 +278,12 @@ exports.refreshTeamSubscriptions = onSchedule(
       try {
         const account = await db.collection("usuarios").doc(uid).get();
         if (!account.exists) {
-          removed += await deleteBillingForUid(uid);
+          if (!missingUsers.has(uid)) {
+            missingUsers.add(uid);
+            const cleanup = await cancelAndDeleteBillingForUid(uid);
+            canceled += cleanup.canceled;
+            removed += cleanup.deleted;
+          }
           continue;
         }
         const purchase = await fetchSubscription(purchaseToken);
@@ -215,13 +294,19 @@ exports.refreshTeamSubscriptions = onSchedule(
         console.error("Subscription reconciliation failed", { teamRequestId, error: String(error) });
       }
     }
-    console.log("Subscription reconciliation complete", { checked: snapshot.size, updated, removed, failed });
+    console.log("Subscription reconciliation complete", { checked: snapshot.size, updated, canceled, removed, failed });
   },
 );
 
-exports.cleanupBillingAfterAccountDeletion = onDocumentDeleted("usuarios/{uid}", async (event) => {
-  const uid = text(event.params.uid);
-  if (!uid) return;
-  const deleted = await deleteBillingForUid(uid);
-  console.log("Billing cleanup after account deletion complete", { uid, deleted });
-});
+exports.cleanupBillingAfterAccountDeletion = onDocumentDeleted(
+  {
+    document: "usuarios/{uid}",
+    retry: true,
+  },
+  async (event) => {
+    const uid = text(event.params.uid);
+    if (!uid) return;
+    const result = await cancelAndDeleteBillingForUid(uid);
+    console.log("Billing cleanup after account deletion complete", { uid, ...result });
+  },
+);
