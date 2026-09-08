@@ -1,0 +1,86 @@
+name: Build Mobile Store Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      submit_to_play:
+        description: "Enviar o AAB mais recente para a Google Play após o build"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-store-release
+  cancel-in-progress: false
+
+jobs:
+  android-production:
+    runs-on: ubuntu-latest
+    environment: mobile-production
+    steps:
+      - name: Checkout app foundation
+        uses: actions/checkout@v7
+        with:
+          ref: mobile-v1-foundation
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Validate production secrets
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_TOKEN" || { echo 'EXPO_TOKEN não configurado.'; exit 1; }
+          test -n "$GOOGLE_SERVICES_JSON_B64" || { echo 'GOOGLE_SERVICES_JSON_B64 não configurado.'; exit 1; }
+
+      - name: Restore Android Firebase config
+        env:
+          GOOGLE_SERVICES_JSON_B64: ${{ secrets.GOOGLE_SERVICES_JSON_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "$GOOGLE_SERVICES_JSON_B64" | base64 --decode > mobile/google-services.json
+          chmod 600 mobile/google-services.json
+          python - <<'PY'
+          import json
+          with open('mobile/google-services.json', encoding='utf-8') as f:
+              data = json.load(f)
+          packages = [
+              c.get('client_info', {}).get('android_client_info', {}).get('package_name')
+              for c in data.get('client', [])
+          ]
+          assert 'br.com.cadastrodeatletas.app' in packages, 'google-services.json não pertence ao package do app.'
+          print('Firebase Android config validado.')
+          PY
+
+      - name: Install dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Validate app before release
+        working-directory: mobile
+        run: |
+          npm run typecheck
+          npm run test:domain
+          npx expo-doctor
+
+      - name: Build signed Android AAB with EAS
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx --yes eas-cli@latest build --platform android --profile production --non-interactive --wait
+
+      - name: Submit latest build to Google Play
+        if: inputs.submit_to_play == true
+        working-directory: mobile
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx --yes eas-cli@latest submit --platform android --profile production --latest --non-interactive
