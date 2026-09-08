@@ -175,6 +175,14 @@ export default function ProfileScreen() {
           <Pressable onPress={loadProfile} style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>ATUALIZAR DADOS</Text>
           </Pressable>
+
+          <Pressable onPress={() => router.push("/legal")} style={({ pressed }) => [styles.accountButton, pressed && styles.pressed]}>
+            <View>
+              <Text style={styles.accountButtonTitle}>CONTA E PRIVACIDADE</Text>
+              <Text style={styles.accountButtonText}>Termos, segurança e exclusão da conta</Text>
+            </View>
+            <Text style={styles.accountArrow}>›</Text>
+          </Pressable>
         </>
       ) : null}
 
@@ -260,6 +268,10 @@ const styles = StyleSheet.create({
   mono: { marginTop: 7, color: brand.colors.muted, fontFamily: Platform.select({ ios: "Menlo", android: "monospace" }), fontSize: 10 },
   secondaryButton: { alignItems: "center", marginTop: 10, borderWidth: 1, borderColor: brand.colors.cyan, borderRadius: brand.radius.md, padding: 13 },
   secondaryButtonText: { color: brand.colors.cyanSoft, fontWeight: "900", fontSize: 11 },
+  accountButton: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.surface, paddingHorizontal: 14, paddingVertical: 12 },
+  accountButtonTitle: { color: brand.colors.text, fontSize: 11, fontWeight: "900" },
+  accountButtonText: { marginTop: 3, color: brand.colors.muted, fontSize: 9 },
+  accountArrow: { color: brand.colors.cyan, fontSize: 24, fontWeight: "900" },
   signOutButton: { alignItems: "center", marginTop: 18, borderWidth: 1, borderColor: brand.colors.danger, borderRadius: brand.radius.md, backgroundColor: "transparent", padding: 14 },
   signOutButtonText: { color: brand.colors.danger, fontWeight: "900", fontSize: 11 },
   pressed: { opacity: 0.8 },

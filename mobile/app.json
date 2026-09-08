@@ -3,7 +3,7 @@
     "name": "Banco de Atletas",
     "slug": "cadastro-de-atletas",
     "scheme": "cadastrodeatletas",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "icon": "./assets/branding/app-icon.png",
@@ -12,12 +12,16 @@
     },
     "android": {
       "package": "br.com.cadastrodeatletas.app",
-      "versionCode": 3,
-      "icon": "./assets/branding/app-icon.png"
+      "versionCode": 4,
+      "icon": "./assets/branding/app-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/app-icon.png",
+        "backgroundColor": "#031525"
+      }
     },
     "ios": {
       "bundleIdentifier": "br.com.cadastrodeatletas.app",
-      "buildNumber": "3"
+      "buildNumber": "4"
     },
     "web": {
       "favicon": "./assets/branding/app-icon.png"
@@ -26,6 +30,7 @@
       "expo-router",
       "expo-dev-client",
       "expo-notifications",
+      "expo-iap",
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "@react-native-firebase/app-check",
@@ -53,6 +58,12 @@
       [
         "expo-build-properties",
         {
+          "android": {
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36,
+            "buildToolsVersion": "36.0.0",
+            "kotlinVersion": "2.1.20"
+          },
           "ios": {
             "useFrameworks": "static"
           }
@@ -60,6 +71,12 @@
       ]
     ],
     "extra": {
+      "legal": {
+        "privacyUrl": "https://cadastrodeatletas.com.br/politica-privacidade.html",
+        "termsUrl": "https://cadastrodeatletas.com.br/termos-de-uso.html",
+        "childSafetyUrl": "https://cadastrodeatletas.com.br/seguranca-infantil.html",
+        "accountDeletionUrl": "https://cadastrodeatletas.com.br/excluir-conta.html"
+      },
       "eas": {
         "projectId": "e36cd3b7-4cac-455c-9250-99ae8019aace"
       }

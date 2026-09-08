@@ -6,6 +6,7 @@ import { bootstrapFirebase } from "@/firebase/bootstrap";
 import type { AuthSession } from "@/repositories/contracts";
 import { firebaseAuthRepository } from "@/repositories/firebase/authRepository";
 import { recordAppSession } from "@/services/accessTelemetry";
+import { hasAcceptedCurrentPolicies } from "@/services/policyConsentService";
 import { registerPushNotifications, subscribePushResponse } from "@/services/pushService";
 import { brand } from "@/ui/brand";
 
@@ -15,6 +16,8 @@ export default function RootLayout() {
   const [sessionResolved, setSessionResolved] = useState(false);
   const [minimumLaunchElapsed, setMinimumLaunchElapsed] = useState(false);
   const [session, setSession] = useState<AuthSession | null>(null);
+  const [consentResolved, setConsentResolved] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -40,20 +43,43 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!ready || !sessionResolved) return;
-    const insideAuthGroup = segments[0] === "(auth)";
-    if (!session && !insideAuthGroup) router.replace("/login");
-  }, [ready, segments, session, sessionResolved]);
+    if (!session?.uid) {
+      setConsentAccepted(false);
+      setConsentResolved(true);
+      return;
+    }
+    let active = true;
+    setConsentResolved(false);
+    void hasAcceptedCurrentPolicies(session.uid)
+      .then((accepted) => { if (active) setConsentAccepted(accepted); })
+      .catch(() => { if (active) setConsentAccepted(false); })
+      .finally(() => { if (active) setConsentResolved(true); });
+    return () => { active = false; };
+  }, [ready, sessionResolved, session?.uid, segments[0]]);
 
   useEffect(() => {
-    if (!ready || !session?.uid) return;
+    if (!ready || !sessionResolved || !consentResolved) return;
+    const insideAuthGroup = segments[0] === "(auth)";
+    const insideLegalGroup = segments[0] === "legal";
+    if (!session && !insideAuthGroup && !insideLegalGroup) {
+      router.replace("/login");
+      return;
+    }
+    if (session && !consentAccepted && !insideLegalGroup) {
+      router.replace("/legal/consent");
+    }
+  }, [ready, segments, session, sessionResolved, consentAccepted, consentResolved]);
+
+  useEffect(() => {
+    if (!ready || !session?.uid || !consentAccepted) return;
     void recordAppSession(session.uid).catch(() => undefined);
     void registerPushNotifications(session.uid).catch(() => undefined);
-  }, [ready, session?.uid]);
+  }, [ready, session?.uid, consentAccepted]);
 
   useEffect(() => subscribePushResponse((route) => router.push(route as never)), []);
 
   if (error) return <LaunchScreen message={error} error />;
-  if (!ready || !sessionResolved || !minimumLaunchElapsed) return <LaunchScreen />;
+  if (!ready || !sessionResolved || !minimumLaunchElapsed || (session && !consentResolved)) return <LaunchScreen />;
 
   const noHeader = { headerShown: false } as const;
   return (
@@ -68,6 +94,9 @@ export default function RootLayout() {
     >
       <Stack.Screen name="(tabs)" options={noHeader} />
       <Stack.Screen name="(auth)" options={noHeader} />
+      <Stack.Screen name="legal/index" options={noHeader} />
+      <Stack.Screen name="legal/consent" options={noHeader} />
+      <Stack.Screen name="account/delete" options={noHeader} />
       <Stack.Screen name="athlete/[uid]" options={{ title: "Perfil do atleta" }} />
       <Stack.Screen name="profile/edit" options={{ title: "Editar perfil" }} />
       <Stack.Screen name="post/[id]" options={noHeader} />
@@ -85,6 +114,7 @@ export default function RootLayout() {
       <Stack.Screen name="team/create" options={noHeader} />
       <Stack.Screen name="team/invite" options={noHeader} />
       <Stack.Screen name="team/invites" options={noHeader} />
+      <Stack.Screen name="report" options={noHeader} />
     </Stack>
   );
 }

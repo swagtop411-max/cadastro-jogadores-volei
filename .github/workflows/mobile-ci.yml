@@ -1,0 +1,205 @@
+name: Mobile Native CI
+
+on:
+  push:
+    branches:
+      - "feature/mobile-store-ready-v30"
+      - "mobile-v1-foundation"
+    paths:
+      - "mobile/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    branches:
+      - "mobile-v1-foundation"
+    paths:
+      - "mobile/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".github/workflows/mobile-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "mobile-native-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck mobile
+        working-directory: mobile
+        run: npm run typecheck
+
+      - name: Test mobile domain
+        working-directory: mobile
+        run: npm run test:domain
+
+      - name: Expo Doctor
+        working-directory: mobile
+        run: npx expo-doctor
+
+      - name: Reproduce Android API 36 prebuild
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/google-services-ci.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "demo-cadastro-atletas",
+              "storage_bucket": "demo-cadastro-atletas.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "br.com.cadastrodeatletas.app"
+                  }
+                },
+                "api_key": [{ "current_key": "AIzaSyDUMMY_CI_ONLY_NOT_A_REAL_KEY" }]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+          export GOOGLE_SERVICES_JSON=/tmp/google-services-ci.json
+          npx expo prebuild --no-install --platform android
+          grep -R "targetSdkVersion.*36\|targetSdk = 36\|targetSdk 36" android -n | head -20 || true
+
+      - name: Build release AAB
+        working-directory: mobile/android
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew :app:bundleRelease --stacktrace
+          test -f app/build/outputs/bundle/release/app-release.aab
+          ls -lh app/build/outputs/bundle/release/app-release.aab
+
+      - name: Validate 16 KB page-size compatibility on 64-bit ABIs
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="android/app/build/outputs/bundle/release/app-release.aab"
+          test -f "$AAB"
+
+          BUNDLETOOL_VERSION="1.18.3"
+          BUNDLETOOL_JAR="/tmp/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+          curl --fail --location --silent --show-error \
+            "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar" \
+            --output "$BUNDLETOOL_JAR"
+
+          java -jar "$BUNDLETOOL_JAR" dump config --bundle="$AAB" | tee /tmp/bundle-config.txt
+          if ! grep -q "PAGE_ALIGNMENT_16K" /tmp/bundle-config.txt; then
+            echo "AAB não declara PAGE_ALIGNMENT_16K."
+            exit 1
+          fi
+
+          rm -rf /tmp/aab-native
+          mkdir -p /tmp/aab-native
+          unzip -qq "$AAB" 'base/lib/*/*.so' -d /tmp/aab-native
+
+          bad=0
+          checked=0
+          for abi in arm64-v8a x86_64; do
+            abi_dir="/tmp/aab-native/base/lib/$abi"
+            if [ ! -d "$abi_dir" ]; then
+              echo "ABI 64-bit obrigatória não encontrada no AAB: $abi"
+              bad=1
+              continue
+            fi
+            mapfile -t libs < <(find "$abi_dir" -type f -name '*.so' | sort)
+            if [ "${#libs[@]}" -eq 0 ]; then
+              echo "Nenhuma biblioteca nativa encontrada para $abi."
+              bad=1
+              continue
+            fi
+            for so in "${libs[@]}"; do
+              checked=$((checked + 1))
+              echo "Checking 64-bit ELF alignment: $so"
+              mapfile -t aligns < <(readelf -lW "$so" | awk '$1 == "LOAD" { print $NF }')
+              if [ "${#aligns[@]}" -eq 0 ]; then
+                echo "Não foi possível localizar segmentos LOAD em $so"
+                bad=1
+                continue
+              fi
+              for align in "${aligns[@]}"; do
+                value=$((align))
+                if [ "$value" -lt 16384 ]; then
+                  echo "Incompatível com 16 KB: $so possui LOAD align=$align"
+                  bad=1
+                fi
+              done
+            done
+          done
+          if [ "$checked" -eq 0 ] || [ "$bad" -ne 0 ]; then
+            exit 1
+          fi
+          echo "AAB PAGE_ALIGNMENT_16K confirmado; bibliotecas arm64-v8a e x86_64 compatíveis com páginas de 16 KB."
+
+      - name: Install backend dependencies
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+
+      - name: Validate backend syntax
+        working-directory: functions
+        run: npm run check
+
+      - name: Verify Store Ready requirements in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"targetSdkVersion": 36' mobile/app.json
+          grep -q '"version": "1.0.0"' mobile/app.json
+          grep -q '"buildType": "app-bundle"' mobile/eas.json
+          grep -q '"expo-iap"' mobile/package.json
+          grep -q 'MOBILE_V30_POLICY_CONSENT' firestore.rules
+          grep -q 'excluir-conta.html' mobile/src/services/policyConsentService.ts
+          grep -q 'deleteAccount' functions/index.js
+          grep -q 'sendActivityPush' functions/index.js
+          grep -q 'createMediaUploadSignature' functions/media-functions.js
+          grep -q 'deleteMediaAsset' functions/media-functions.js
+          grep -q 'verifyTeamSubscription' functions/billing-functions.js
+          grep -q 'refreshTeamSubscriptions' functions/billing-functions.js
+          test -f excluir-conta.html
+          test -f politica-privacidade.html
+          test -f termos-de-uso.html
+          test -f seguranca-infantil.html
+
+      - name: Compile Firebase rules in emulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.1.0 emulators:exec \
+            --project demo-cadastro-atletas \
+            --only firestore,storage \
+            "node -e \"console.log('Firebase rules compiled successfully')\""

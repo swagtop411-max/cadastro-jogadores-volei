@@ -27,7 +27,6 @@ type SelectedMedia = {
   mimeType: string | null;
   fileSize: number | null;
   fileName: string | null;
-  base64: string | null;
 };
 
 function sizeLabel(size: number | null) {
@@ -60,13 +59,12 @@ export default function PublishScreen() {
       mimeType: asset.mimeType ?? null,
       fileSize: asset.fileSize ?? null,
       fileName: asset.fileName ?? null,
-      base64: asset.base64 ?? null,
     }));
     if (selected.length > 1 && selected.some((item) => item.kind === "video")) return setError("Para carrossel, selecione apenas fotos. Vídeos devem ser publicados individualmente.");
     for (const item of selected) {
       const max = item.kind === "video" ? 45 * 1024 * 1024 : 10 * 1024 * 1024;
       if (item.fileSize && item.fileSize > max) return setError(`Um arquivo ultrapassa o limite de ${item.kind === "video" ? 45 : 10} MB.`);
-      if (item.kind === "image" && !item.base64) return setError("Uma das imagens não pôde ser preparada. Selecione novamente.");
+      if (!item.uri) return setError("Uma das mídias não pôde ser localizada. Selecione novamente.");
     }
     setMedia(selected);
     setError(null);
@@ -82,7 +80,7 @@ export default function PublishScreen() {
       quality: 0.9,
       allowsMultipleSelection: true,
       selectionLimit: 10,
-      base64: true,
+      base64: false,
     });
     if (!result.canceled) normalizeAssets(result.assets);
   }
@@ -91,7 +89,7 @@ export default function PublishScreen() {
     setError(null);
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) return setError("Permita o acesso à câmera para registrar uma foto ou vídeo.");
-    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images", "videos"], quality: 0.9, base64: true });
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ["images", "videos"], quality: 0.9, base64: false });
     if (!result.canceled && result.assets[0]) normalizeAssets([result.assets[0]]);
   }
 
@@ -113,8 +111,7 @@ export default function PublishScreen() {
           mimeType: item.mimeType,
           fileSize: item.fileSize,
           fileName: item.fileName,
-          base64: item.base64,
-        }));
+        }, "posts"));
       }
       setProgress("Publicando…");
       const result = await publishSocialContent({ uid: user.uid, email: user.email, name, body: text, media: uploaded });
@@ -124,7 +121,7 @@ export default function PublishScreen() {
       setMessage(media.length > 1 ? "Carrossel publicado com sucesso." : "Publicação criada com sucesso.");
       setTimeout(() => router.push({ pathname: "/post/[id]", params: { id: result.id, kind: result.kind } }), 250);
     } catch (cause) {
-      await Promise.all(uploaded.map((item) => deleteUploadedMedia(item.path).catch(() => undefined)));
+      await Promise.all(uploaded.map((item) => deleteUploadedMedia(item.path, item.kind).catch(() => undefined)));
       setError(cause instanceof Error ? cause.message : "Não foi possível publicar.");
       setProgress("");
     } finally {
