@@ -20,7 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { formatFirebaseDate } from "@/services/mobileContent";
 import { deleteOwnMessage, sendDirectMessage, subscribeMessages, type DirectMessage } from "@/services/messageService";
-import { uploadPublicationMedia } from "@/services/mediaUpload";
+import { deleteUploadedMedia, uploadPublicationMedia, type UploadedMedia } from "@/services/mediaUpload";
 import { resolveProfile } from "@/services/profileResolver";
 import { brand } from "@/ui/brand";
 
@@ -74,26 +74,29 @@ export default function ChatScreen() {
 
   async function attach() {
     setError(null);
+    if (!currentUid) return setError("Entre novamente na sua conta para enviar mídia.");
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) return setError("Permita acesso à galeria para enviar mídia.");
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], quality: 0.85, base64: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], quality: 0.85, base64: false });
     const asset = !result.canceled ? result.assets[0] : null;
     if (!asset) return;
     const kind = asset.type === "video" ? "video" as const : "image" as const;
-    if (kind === "image" && !asset.base64) return setError("Não foi possível preparar a imagem.");
+    const max = kind === "video" ? 45 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (asset.fileSize && asset.fileSize > max) return setError(`O arquivo ultrapassa o limite de ${kind === "video" ? 45 : 10} MB.`);
     setSending(true);
+    let uploaded: UploadedMedia | null = null;
     try {
-      const uploaded = await uploadPublicationMedia({
+      uploaded = await uploadPublicationMedia({
         uid: currentUid,
         uri: asset.uri,
         kind,
         mimeType: asset.mimeType ?? null,
         fileSize: asset.fileSize ?? null,
         fileName: asset.fileName ?? null,
-        base64: asset.base64 ?? null,
-      });
+      }, "messages");
       await sendDirectMessage({ otherUid, media: uploaded, text: "" });
     } catch (cause) {
+      if (uploaded) await deleteUploadedMedia(uploaded.path, uploaded.kind).catch(() => undefined);
       setError(cause instanceof Error ? cause.message : "Não foi possível enviar a mídia.");
     } finally {
       setSending(false);
@@ -178,14 +181,14 @@ const styles = StyleSheet.create({
   composer: { flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: brand.colors.borderSoft, backgroundColor: brand.colors.surface },
   attach: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: brand.colors.border, backgroundColor: brand.colors.bgDeep },
   attachText: { color: brand.colors.cyan, fontSize: 25, lineHeight: 27 },
-  input: { flex: 1, maxHeight: 110, minHeight: 42, borderWidth: 1, borderColor: brand.colors.border, borderRadius: 21, backgroundColor: brand.colors.bgDeep, color: brand.colors.text, paddingHorizontal: 13, paddingVertical: 9 },
+  input: { flex: 1, maxHeight: 100, minHeight: 42, borderWidth: 1, borderColor: brand.colors.border, borderRadius: 21, backgroundColor: brand.colors.bgDeep, color: brand.colors.text, paddingHorizontal: 14, paddingVertical: 10 },
   send: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: brand.colors.gold },
-  sendText: { color: brand.colors.bgDeep, fontSize: 18, fontWeight: "900" },
+  sendText: { color: brand.colors.bgDeep, fontSize: 17, fontWeight: "900" },
   disabled: { opacity: 0.4 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 9 },
-  muted: { color: brand.colors.muted, textAlign: "center", lineHeight: 18 },
-  empty: { alignItems: "center", margin: 20, marginTop: 70, borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.xl, backgroundColor: brand.colors.surface, padding: 25 },
-  emptyIcon: { color: brand.colors.cyan, fontSize: 34 },
-  emptyTitle: { marginTop: 8, marginBottom: 6, color: brand.colors.text, fontSize: 17, fontWeight: "900" },
-  error: { marginHorizontal: 12, marginTop: 6, borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, color: "#ffd5dd", padding: 9 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8 },
+  empty: { alignItems: "center", justifyContent: "center", minHeight: 250, padding: 30 },
+  emptyIcon: { color: brand.colors.cyan, fontSize: 36 },
+  emptyTitle: { marginTop: 8, color: brand.colors.text, fontSize: 17, fontWeight: "900" },
+  muted: { marginTop: 5, color: brand.colors.muted, textAlign: "center", fontSize: 10, lineHeight: 15 },
+  error: { margin: 9, borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, color: "#ffd5dd", padding: 9, fontSize: 10 },
 });
