@@ -2,7 +2,7 @@ name: Validate and deploy static content to Pages
 
 on:
   push:
-    branches: ["main", "feature/mobile-total-v29"]
+    branches: ["main"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
