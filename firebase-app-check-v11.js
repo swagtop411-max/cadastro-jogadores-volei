@@ -27,4 +27,6 @@ if(!globalThis.__BD_APP_CHECK_PROMISE__){
  })();
 }
 
+import("./admin-shortcut-v34.js?v=20260908-34").catch(error=>console.warn("Atalho ADM V34:",error));
+
 export default globalThis.__BD_APP_CHECK_PROMISE__;
