@@ -29,6 +29,7 @@ type UploadSignature = {
   folder: string;
   tags: string;
   timestamp: string;
+  format?: string;
   signature: string;
   resourceType: "image" | "video";
 };
@@ -109,10 +110,10 @@ function responseError(data: Record<string, unknown>, status: number): Error {
   return new Error(message ? `Falha no envio: ${message}` : `Não foi possível enviar a mídia (HTTP ${status}).`);
 }
 
-async function requestSignature(kind: UploadKind, purpose: MediaPurpose): Promise<UploadSignature> {
+async function requestSignature(kind: UploadKind, purpose: MediaPurpose, sourceMime: string): Promise<UploadSignature> {
   const functions = getFunctions(getApp(), REGION);
   const callable = httpsCallable(functions, "createMediaUploadSignature");
-  const result = await callable({ kind, purpose });
+  const result = await callable({ kind, purpose, sourceMime });
   const data = result.data as Partial<UploadSignature>;
   if (!data.cloudName || !data.apiKey || !data.signature || !data.timestamp || !data.folder || !data.resourceType) {
     throw new Error("O servidor não conseguiu autorizar o envio da mídia.");
@@ -127,6 +128,7 @@ function buildForm(input: LocalMediaInput, mime: string, ext: string, signed: Up
   form.append("timestamp", signed.timestamp);
   form.append("folder", signed.folder);
   form.append("tags", signed.tags);
+  if (signed.format) form.append("format", signed.format);
   form.append("signature", signed.signature);
   return form;
 }
@@ -145,6 +147,14 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function responseMime(kind: UploadKind, format: unknown, fallback: string) {
+  const normalized = String(format || "").trim().toLowerCase();
+  if (!normalized) return fallback;
+  if (kind === "image" && (normalized === "jpg" || normalized === "jpeg")) return "image/jpeg";
+  if (kind === "video" && normalized === "mov") return "video/quicktime";
+  return `${kind}/${normalized}`;
+}
+
 async function uploadCloudinary(
   input: LocalMediaInput,
   purpose: MediaPurpose,
@@ -153,7 +163,7 @@ async function uploadCloudinary(
   const mime = normalizeMime(input.kind, input.mimeType);
   const size = validateSize(input.kind, input.fileSize, maxOverride);
   const ext = extensionFromMime(mime);
-  const signed = await requestSignature(input.kind, purpose);
+  const signed = await requestSignature(input.kind, purpose, mime);
   const endpoint = `https://api.cloudinary.com/v1_1/${signed.cloudName}/${signed.resourceType}/upload`;
   const timeout = input.kind === "video" ? 180_000 : 75_000;
   let lastError: Error | null = null;
@@ -172,7 +182,7 @@ async function uploadCloudinary(
       return {
         url,
         path,
-        mime: String(data.format ? `${input.kind}/${data.format}` : mime),
+        mime: responseMime(input.kind, data.format, mime),
         size: Number(data.bytes || size || 0),
         kind: input.kind,
         provider: "cloudinary",
