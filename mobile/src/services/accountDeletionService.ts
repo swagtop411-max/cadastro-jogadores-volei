@@ -1,3 +1,4 @@
+import { getApp } from "@react-native-firebase/app";
 import {
   EmailAuthProvider,
   getAuth,
@@ -16,7 +17,7 @@ export async function deleteCurrentAccount(password: string) {
   const credential = EmailAuthProvider.credential(user.email, cleanPassword);
   await reauthenticateWithCredential(user, credential);
 
-  const functions = getFunctions(undefined, REGION);
+  const functions = getFunctions(getApp(), REGION);
   const callable = httpsCallable(functions, "deleteAccount");
   await callable({ confirmation: "DELETE_ACCOUNT" });
 }
