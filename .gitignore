@@ -1,0 +1,18 @@
+# Android / Gradle
+android-twa/.gradle/
+android-twa/**/build/
+android-twa/local.properties
+android-twa/keystore.properties
+android-twa/*.jks
+android-twa/*.keystore
+
+# Firebase Functions
+functions/node_modules/
+functions/.env
+functions/.env.*
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
