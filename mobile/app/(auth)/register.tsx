@@ -3,6 +3,7 @@ import { useState, type ComponentProps } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -15,6 +16,11 @@ import {
 import { BrandHeader } from "@/components/BrandHeader";
 import { firebaseErrorMessage } from "@/firebase/errors";
 import { registerIdentity } from "@/services/identityService";
+import {
+  PRIVACY_URL,
+  TERMS_URL,
+  recordPolicyConsent,
+} from "@/services/policyConsentService";
 import { brand } from "@/ui/brand";
 
 export default function RegisterScreen() {
@@ -22,6 +28,7 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,11 +38,13 @@ export default function RegisterScreen() {
     if (!email.trim()) return setError("Digite seu e-mail.");
     if (password.length < 6) return setError("A senha precisa ter pelo menos 6 caracteres.");
     if (password !== confirmPassword) return setError("As senhas não são iguais.");
+    if (!acceptedPolicies) return setError("Leia e aceite os Termos de Uso e a Política de Privacidade para criar sua conta.");
 
     setLoading(true);
     setError(null);
     try {
-      await registerIdentity({ name: cleanName, email, password });
+      const session = await registerIdentity({ name: cleanName, email, password });
+      await recordPolicyConsent(session.uid);
       router.replace("/");
     } catch (cause) {
       setError(firebaseErrorMessage(cause));
@@ -62,6 +71,17 @@ export default function RegisterScreen() {
           <Field label="E-mail" value={email} onChangeText={setEmail} placeholder="seuemail@exemplo.com" autoCapitalize="none" autoComplete="email" keyboardType="email-address" />
           <Field label="Senha" value={password} onChangeText={setPassword} placeholder="Mínimo de 6 caracteres" autoCapitalize="none" autoComplete="new-password" secureTextEntry />
           <Field label="Confirmar senha" value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Repita a senha" autoCapitalize="none" autoComplete="new-password" secureTextEntry />
+
+          <Pressable onPress={() => setAcceptedPolicies((value) => !value)} style={({ pressed }) => [styles.consentRow, pressed && styles.pressed]}>
+            <View style={[styles.checkbox, acceptedPolicies && styles.checkboxActive]}>
+              <Text style={styles.checkmark}>{acceptedPolicies ? "✓" : ""}</Text>
+            </View>
+            <Text style={styles.consentText}>Li e aceito os Termos de Uso, as regras da comunidade e a Política de Privacidade.</Text>
+          </Pressable>
+          <View style={styles.legalLinks}>
+            <Pressable onPress={() => void Linking.openURL(TERMS_URL)}><Text style={styles.legalLink}>TERMOS DE USO</Text></Pressable>
+            <Pressable onPress={() => void Linking.openURL(PRIVACY_URL)}><Text style={styles.legalLink}>POLÍTICA DE PRIVACIDADE</Text></Pressable>
+          </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -108,6 +128,13 @@ const styles = StyleSheet.create({
   fieldWrap: { marginBottom: 11 },
   label: { marginBottom: 6, color: brand.colors.cyanSoft, fontSize: 11, fontWeight: "900", textTransform: "uppercase", letterSpacing: 0.7 },
   input: { minHeight: 52, borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.md, backgroundColor: brand.colors.bgDeep, color: brand.colors.text, paddingHorizontal: 14, fontSize: 16 },
+  consentRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginTop: 3, paddingVertical: 6 },
+  checkbox: { width: 23, height: 23, borderWidth: 1, borderColor: brand.colors.border, borderRadius: 7, alignItems: "center", justifyContent: "center", backgroundColor: brand.colors.bgDeep },
+  checkboxActive: { borderColor: brand.colors.cyan, backgroundColor: brand.colors.cyan },
+  checkmark: { color: brand.colors.bgDeep, fontWeight: "900" },
+  consentText: { flex: 1, color: brand.colors.mutedStrong, fontSize: 11, lineHeight: 17 },
+  legalLinks: { flexDirection: "row", flexWrap: "wrap", gap: 14, marginLeft: 33, marginTop: 2, marginBottom: 9 },
+  legalLink: { color: brand.colors.gold, fontSize: 9, fontWeight: "900" },
   error: { borderRadius: brand.radius.sm, backgroundColor: brand.colors.dangerBg, color: "#ffd5dd", padding: 11, lineHeight: 19 },
   primaryButton: { minHeight: 54, alignItems: "center", justifyContent: "center", marginTop: 5, borderWidth: 1, borderColor: brand.colors.cyanSoft, borderRadius: brand.radius.md, backgroundColor: brand.colors.cyan, ...brand.shadow },
   primaryButtonText: { color: brand.colors.bgDeep, fontSize: 14, fontWeight: "900", letterSpacing: 0.4 },
