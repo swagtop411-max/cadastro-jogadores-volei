@@ -873,5 +873,26 @@ service cloud.firestore {
       );
     }
 
+
+    // MOBILE_V30_POLICY_CONSENT
+    match /consentimentos/{uid} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && request.resource.data.uid == uid
+        && request.resource.data.termsVersion is string
+        && request.resource.data.termsVersion.size() >= 8
+        && request.resource.data.termsVersion.size() <= 40
+        && request.resource.data.privacyVersion is string
+        && request.resource.data.privacyVersion.size() >= 8
+        && request.resource.data.privacyVersion.size() <= 40
+        && request.resource.data.platform == 'app'
+        && request.resource.data.acceptedAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'uid','termsVersion','privacyVersion','platform','acceptedAt','updatedAt'
+        ]);
+      allow delete: if isAdmin();
+    }
+
   }
 }
