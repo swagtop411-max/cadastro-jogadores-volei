@@ -1,0 +1,23 @@
+name: Admin V34 owner shortcut
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  audit-v34:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Validate JavaScript syntax
+        run: node --check admin-shortcut-v34.js && node --check firebase-app-check-v11.js
+      - name: Validate owner-only shortcut
+        run: node scripts/audit-v34-admin-shortcut.mjs
