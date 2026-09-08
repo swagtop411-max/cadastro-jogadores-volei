@@ -43,6 +43,29 @@ const urlParams = new URLSearchParams(location.search);
 const returnTarget = urlParams.get("return");
 const requestedTab = urlParams.get("tab");
 
+function adultCutoffDate(reference = new Date()) {
+  const cutoff = new Date(reference.getFullYear() - 18, reference.getMonth(), reference.getDate());
+  const year = cutoff.getFullYear();
+  const month = String(cutoff.getMonth() + 1).padStart(2, "0");
+  const day = String(cutoff.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isAdult18(value, reference = new Date()) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const birth = new Date(year, month - 1, day);
+  if (Number.isNaN(birth.getTime()) || birth.getFullYear() !== year || birth.getMonth() !== month - 1 || birth.getDate() !== day) return false;
+  const cutoff = new Date(reference.getFullYear() - 18, reference.getMonth(), reference.getDate(), 23, 59, 59, 999);
+  return birth <= cutoff;
+}
+
+const registerBirth = $("registerBirth");
+if (registerBirth) {
+  registerBirth.max = adultCutoffDate();
+  registerBirth.setAttribute("aria-describedby", "accountStatus");
+}
+
 function safeReturnDestination(raw) {
   if (!raw) return "";
   try {
@@ -212,6 +235,13 @@ loginForm.addEventListener("submit", async (event) => {
 
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
+    const userDoc = await getDoc(doc(db, "usuarios", credential.user.uid)).catch(() => null);
+    const nascimento = userDoc?.exists() ? String(userDoc.data()?.nascimento || "") : "";
+    if (nascimento && !isAdult18(nascimento)) {
+      await signOut(auth).catch(() => {});
+      setStatus("Esta plataforma é exclusiva para maiores de 18 anos.", "error");
+      return;
+    }
     await recordAuthEvent(credential.user, "login");
     setStatus(`Login realizado. Bem-vindo, ${credential.user.displayName || "atleta"}!`, "success");
     await goAfterLogin(credential.user);
@@ -226,12 +256,28 @@ registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const name = $("registerName").value.trim();
+  const birth = $("registerBirth").value;
   const email = $("registerEmail").value.trim().toLowerCase();
   const password = $("registerPassword").value;
   const confirm = $("registerPasswordConfirm").value;
 
   if (name.length < 2) {
     setStatus("Informe seu nome ou nome esportivo.", "error");
+    return;
+  }
+
+  if (!birth) {
+    setStatus("Informe sua data de nascimento.", "error");
+    return;
+  }
+
+  if (!isAdult18(birth)) {
+    setStatus("O Cadastro de Atletas é exclusivo para pessoas com 18 anos ou mais.", "error");
+    return;
+  }
+
+  if (!$("confirmAdult").checked) {
+    setStatus("Confirme que você tem 18 anos ou mais para continuar.", "error");
     return;
   }
 
@@ -251,7 +297,7 @@ registerForm.addEventListener("submit", async (event) => {
   }
 
   if (!$("acceptTerms").checked) {
-    setStatus("Aceite os termos de uso para continuar.", "error");
+    setStatus("Aceite os Termos de Uso e a Política de Privacidade para continuar.", "error");
     return;
   }
 
@@ -275,6 +321,7 @@ registerForm.addEventListener("submit", async (event) => {
         email,
         papel: "usuario",
         status: "ativo",
+        nascimento: birth,
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp()
       }, { merge: true });
