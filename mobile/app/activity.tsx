@@ -21,7 +21,7 @@ import {
 } from "@/services/notificationService";
 import { brand } from "@/ui/brand";
 
-type Filter = "all" | "unread" | "interactions" | "network" | "messages";
+type Filter = "all" | "unread" | "interactions" | "network" | "messages" | "teams";
 
 export default function ActivityScreen() {
   const router = useRouter();
@@ -41,11 +41,16 @@ export default function ActivityScreen() {
     if (filter === "interactions") return item.type === "like" || item.type === "comment" || item.type === "mention";
     if (filter === "network") return item.type === "follow";
     if (filter === "messages") return item.type === "message";
+    if (filter === "teams") return item.type === "team_invite";
     return true;
   }), [filter, items]);
 
   async function open(item: MobileNotification) {
     if (!item.read) await markNotificationRead(item.id).catch(() => undefined);
+    if (item.type === "team_invite") {
+      router.push("/team/invites");
+      return;
+    }
     if (item.type === "message") {
       router.push({ pathname: "/messages/[uid]", params: { uid: item.actorUid } });
       return;
@@ -75,12 +80,13 @@ export default function ActivityScreen() {
         <Chip label="Interações" active={filter === "interactions"} onPress={() => setFilter("interactions")} />
         <Chip label="Rede" active={filter === "network"} onPress={() => setFilter("network")} />
         <Chip label="Mensagens" active={filter === "messages"} onPress={() => setFilter("messages")} />
+        <Chip label="Equipes" active={filter === "teams"} onPress={() => setFilter("teams")} />
       </ScrollView>
 
       <ScrollView contentContainerStyle={styles.list}>
         {loading ? <View style={styles.center}><ActivityIndicator color={brand.colors.cyan} /><Text style={styles.muted}>Carregando atividades…</Text></View> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        {!loading && !visible.length ? <View style={styles.empty}><Text style={styles.emptyIcon}>✓</Text><Text style={styles.emptyTitle}>Nenhuma atividade neste filtro</Text><Text style={styles.muted}>Novas curtidas, comentários, seguidores, menções e mensagens aparecem aqui em tempo real.</Text></View> : null}
+        {!loading && !visible.length ? <View style={styles.empty}><Text style={styles.emptyIcon}>✓</Text><Text style={styles.emptyTitle}>Nenhuma atividade neste filtro</Text><Text style={styles.muted}>Curtidas, comentários, seguidores, mensagens e convites de equipe aparecem aqui em tempo real.</Text></View> : null}
         {visible.map((item) => (
           <Pressable key={item.id} onPress={() => void open(item)} style={({ pressed }) => [styles.row, !item.read && styles.rowUnread, pressed && styles.pressed]}>
             {item.actorPhoto ? <Image source={{ uri: item.actorPhoto }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.avatarText}>{item.actorName.slice(0, 1).toUpperCase()}</Text></View>}
@@ -89,7 +95,7 @@ export default function ActivityScreen() {
               {item.text && item.text !== notificationLabel(item.type) ? <Text numberOfLines={2} style={styles.detail}>{item.text}</Text> : null}
               <Text style={styles.time}>{formatFirebaseDate(item.createdAt)}</Text>
             </View>
-            <View style={[styles.typeBadge, item.type === "message" && styles.typeBadgeGold]}><Text style={[styles.typeText, item.type === "message" && styles.typeTextGold]}>{iconFor(item.type)}</Text></View>
+            <View style={[styles.typeBadge, (item.type === "message" || item.type === "team_invite") && styles.typeBadgeGold]}><Text style={[styles.typeText, (item.type === "message" || item.type === "team_invite") && styles.typeTextGold]}>{iconFor(item.type)}</Text></View>
             {!item.read ? <View style={styles.unreadDot} /> : null}
           </Pressable>
         ))}
@@ -103,6 +109,7 @@ function iconFor(type: MobileNotification["type"]) {
   if (type === "comment") return "◌";
   if (type === "follow") return "+";
   if (type === "message") return "✉";
+  if (type === "team_invite") return "🏐";
   return "@";
 }
 
