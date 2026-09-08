@@ -26,13 +26,18 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "9.5.0"
-      - name: Build debug APK
+      - name: Build debug APK and unsigned release AAB
         working-directory: android-twa
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:assembleDebug :app:bundleRelease --stacktrace
       - uses: actions/upload-artifact@v4
         with:
           name: cadastro-atletas-debug-apk
           path: android-twa/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cadastro-atletas-unsigned-release-aab
+          path: android-twa/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
   release-aab:
