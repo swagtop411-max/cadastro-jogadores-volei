@@ -20,11 +20,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-          cache: npm
-          cache-dependency-path: functions/package-lock.json
       - name: Install dependencies
         working-directory: functions
-        run: npm install --package-lock-only && npm ci
+        run: npm install
       - name: Syntax check
         working-directory: functions
         run: npm run lint
