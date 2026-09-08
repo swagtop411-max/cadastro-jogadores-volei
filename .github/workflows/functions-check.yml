@@ -1,0 +1,33 @@
+name: Firebase Functions check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "firebase.json"
+      - ".github/workflows/functions-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - name: Install dependencies
+        working-directory: functions
+        run: npm install --package-lock-only && npm ci
+      - name: Syntax check
+        working-directory: functions
+        run: npm run lint
+      - name: Verify Firebase configuration
+        run: |
+          node -e "const f=require('./firebase.json'); if(f.functions?.runtime!=='nodejs22'||f.functions?.source!=='functions') process.exit(1); console.log('Firebase Functions configuration OK')"
