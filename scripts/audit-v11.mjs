@@ -11,6 +11,7 @@ const ok=m=>passes.push(m);
 const fail=m=>failures.push(m);
 function requireFile(p){exists(p)?ok(`arquivo ${p}`):fail(`arquivo ausente: ${p}`)}
 function requireText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`);read(p).includes(text)?ok(`${p}: ${label}`):fail(`${p}: não encontrou ${label}`)}
+function requireRegex(p,pattern,label=String(pattern)){if(!exists(p))return fail(`${p} ausente`);pattern.test(read(p))?ok(`${p}: ${label}`):fail(`${p}: não encontrou ${label}`)}
 function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`);read(p).includes(text)?fail(`${p}: padrão proibido (${label})`):ok(`${p}: sem ${label}`)}
 
 [
@@ -108,7 +109,7 @@ requireText('profile-autosync-v13.js','ensureSocialProfile','sincronização aut
 requireText('profile-autosync-v13.js','completo:false','perfil automático nasce incompleto');
 requireText('site-v5.js','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado globalmente');
 requireText('conta.js','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado no cadastro/login');
-requireText('meu-perfil.js','completo:true','perfil completo marcado ao salvar');
+requireRegex('meu-perfil.js',/completo\s*:\s*true/,'perfil completo marcado ao salvar');
 requireText('public.js','profiles=[...profileMap.values()].filter(a=>a.nome&&normal(a.status)!=="inativo")','diretório inclui perfil básico sem cidade');
 requireText('admin-profile-browser-v13.js','CRIAR E ABRIR PERFIL','ADM pode criar e abrir perfil ausente');
 requireText('admin-profile-browser-v13.js','ABRIR PERFIL','ADM pode abrir perfil existente');
