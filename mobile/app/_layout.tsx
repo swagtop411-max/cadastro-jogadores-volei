@@ -81,6 +81,8 @@ export default function RootLayout() {
       <Stack.Screen name="teams" options={noHeader} />
       <Stack.Screen name="team/[id]" options={noHeader} />
       <Stack.Screen name="team/create" options={noHeader} />
+      <Stack.Screen name="team/invite" options={noHeader} />
+      <Stack.Screen name="team/invites" options={noHeader} />
     </Stack>
   );
 }
