@@ -18,6 +18,9 @@ jobs:
         with:
           node-version: 22
       - name: Validate JavaScript syntax
-        run: node --check profile-publish-compat-v35.js
+        run: |
+          node --check profile-publish-compat-v35.js
+          node --check owner-publish-v35.js
+          node --check site-v5.js
       - name: Validate profile and Story publishing
         run: node scripts/audit-v35-profile-publish.mjs
