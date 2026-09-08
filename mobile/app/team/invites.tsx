@@ -80,6 +80,7 @@ export default function TeamInvitesScreen() {
           <Text style={styles.title}>Convites de equipe</Text>
           <Text style={styles.subtitle}>{pendingIncoming ? `${pendingIncoming} convite${pendingIncoming === 1 ? "" : "s"} aguardando resposta` : "Nenhum convite pendente"}</Text>
         </View>
+        <Pressable onPress={() => router.push("/team/invite")} style={styles.newInvite}><Text style={styles.newInviteText}>＋</Text></Pressable>
       </View>
 
       <View style={styles.tabs}>
@@ -98,7 +99,7 @@ export default function TeamInvitesScreen() {
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🏐</Text>
             <Text style={styles.emptyTitle}>{mode === "incoming" ? "Nenhum convite recebido" : "Nenhum convite enviado"}</Text>
-            <Text style={styles.muted}>{mode === "incoming" ? "Quando uma equipe convidar você, a solicitação aparecerá aqui." : "Abra o perfil de um atleta para convidá-lo para uma equipe que você administra."}</Text>
+            <Text style={styles.muted}>{mode === "incoming" ? "Quando uma equipe convidar você, a solicitação aparecerá aqui." : "Use o botão + para buscar um atleta e enviar um convite."}</Text>
           </View>
         ) : null}
 
@@ -149,6 +150,8 @@ const styles = StyleSheet.create({
   eyebrow: { color: brand.colors.gold, fontSize: 8, fontWeight: "900", letterSpacing: 1.1 },
   title: { color: brand.colors.text, fontSize: 23, fontWeight: "900" },
   subtitle: { marginTop: 2, color: brand.colors.muted, fontSize: 10 },
+  newInvite: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", backgroundColor: brand.colors.gold },
+  newInviteText: { color: brand.colors.bgDeep, fontSize: 27, fontWeight: "900", lineHeight: 29 },
   tabs: { flexDirection: "row", gap: 8, paddingHorizontal: 14, paddingBottom: 10 },
   tab: { flex: 1, alignItems: "center", borderWidth: 1, borderColor: brand.colors.borderSoft, borderRadius: brand.radius.pill, backgroundColor: brand.colors.surface, paddingVertical: 10 },
   tabActive: { borderColor: brand.colors.cyan, backgroundColor: "#0a4160" },
