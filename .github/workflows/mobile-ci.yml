@@ -104,7 +104,7 @@ jobs:
           test -f app/build/outputs/bundle/release/app-release.aab
           ls -lh app/build/outputs/bundle/release/app-release.aab
 
-      - name: Validate 16 KB page-size compatibility
+      - name: Validate 16 KB page-size compatibility on 64-bit ABIs
         working-directory: mobile
         shell: bash
         run: |
@@ -127,33 +127,44 @@ jobs:
           rm -rf /tmp/aab-native
           mkdir -p /tmp/aab-native
           unzip -qq "$AAB" 'base/lib/*/*.so' -d /tmp/aab-native
-          mapfile -t libs < <(find /tmp/aab-native -type f -name '*.so' | sort)
-          if [ "${#libs[@]}" -eq 0 ]; then
-            echo "Nenhuma biblioteca nativa encontrada no AAB."
-            exit 1
-          fi
 
           bad=0
-          for so in "${libs[@]}"; do
-            echo "Checking ELF alignment: $so"
-            mapfile -t aligns < <(readelf -lW "$so" | awk '$1 == "LOAD" { print $NF }')
-            if [ "${#aligns[@]}" -eq 0 ]; then
-              echo "Não foi possível localizar segmentos LOAD em $so"
+          checked=0
+          for abi in arm64-v8a x86_64; do
+            abi_dir="/tmp/aab-native/base/lib/$abi"
+            if [ ! -d "$abi_dir" ]; then
+              echo "ABI 64-bit obrigatória não encontrada no AAB: $abi"
               bad=1
               continue
             fi
-            for align in "${aligns[@]}"; do
-              value=$((align))
-              if [ "$value" -lt 16384 ]; then
-                echo "Incompatível com 16 KB: $so possui LOAD align=$align"
+            mapfile -t libs < <(find "$abi_dir" -type f -name '*.so' | sort)
+            if [ "${#libs[@]}" -eq 0 ]; then
+              echo "Nenhuma biblioteca nativa encontrada para $abi."
+              bad=1
+              continue
+            fi
+            for so in "${libs[@]}"; do
+              checked=$((checked + 1))
+              echo "Checking 64-bit ELF alignment: $so"
+              mapfile -t aligns < <(readelf -lW "$so" | awk '$1 == "LOAD" { print $NF }')
+              if [ "${#aligns[@]}" -eq 0 ]; then
+                echo "Não foi possível localizar segmentos LOAD em $so"
                 bad=1
+                continue
               fi
+              for align in "${aligns[@]}"; do
+                value=$((align))
+                if [ "$value" -lt 16384 ]; then
+                  echo "Incompatível com 16 KB: $so possui LOAD align=$align"
+                  bad=1
+                fi
+              done
             done
           done
-          if [ "$bad" -ne 0 ]; then
+          if [ "$checked" -eq 0 ] || [ "$bad" -ne 0 ]; then
             exit 1
           fi
-          echo "AAB e bibliotecas nativas compatíveis com páginas de 16 KB."
+          echo "AAB PAGE_ALIGNMENT_16K confirmado; bibliotecas arm64-v8a e x86_64 compatíveis com páginas de 16 KB."
 
       - name: Install backend dependencies
         working-directory: functions
@@ -170,10 +181,15 @@ jobs:
           grep -q '"targetSdkVersion": 36' mobile/app.json
           grep -q '"version": "1.0.0"' mobile/app.json
           grep -q '"buildType": "app-bundle"' mobile/eas.json
+          grep -q '"expo-iap"' mobile/package.json
           grep -q 'MOBILE_V30_POLICY_CONSENT' firestore.rules
           grep -q 'excluir-conta.html' mobile/src/services/policyConsentService.ts
           grep -q 'deleteAccount' functions/index.js
           grep -q 'sendActivityPush' functions/index.js
+          grep -q 'createMediaUploadSignature' functions/media-functions.js
+          grep -q 'deleteMediaAsset' functions/media-functions.js
+          grep -q 'verifyTeamSubscription' functions/billing-functions.js
+          grep -q 'refreshTeamSubscriptions' functions/billing-functions.js
           test -f excluir-conta.html
           test -f politica-privacidade.html
           test -f termos-de-uso.html
