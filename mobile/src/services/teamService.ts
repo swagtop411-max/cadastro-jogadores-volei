@@ -1,0 +1,14 @@
+import { getAuth } from "@react-native-firebase/auth";
+import { addDoc, collection, doc, getDoc, getDocs, getFirestore, limit, query } from "@react-native-firebase/firestore";
+
+const db=getFirestore();
+export type MobileTeam={id:string;ownerUid:string;nome:string;uf:string;cidade:string;modalidade:string;categoria:string;logo:string;atletas:string[]};
+export type TeamPlan="gratuito"|"bronze"|"prata"|"ouro"|"premium";
+const PLANS:Record<TeamPlan,{name:string;value:number}>={gratuito:{name:"Gratuito",value:0},bronze:{name:"Bronze",value:9.9},prata:{name:"Prata",value:19.9},ouro:{name:"Ouro",value:34.9},premium:{name:"Premium",value:49.9}};
+function text(v:unknown){return typeof v==="string"?v.trim():"";}
+function list(v:unknown){return Array.isArray(v)?v.map(text).filter(Boolean).slice(0,30):[];}
+function fromDoc(entry:{id:string;data:()=>Record<string,unknown>}):MobileTeam{const d=entry.data();return{id:entry.id,ownerUid:text(d.ownerUid),nome:text(d.nome)||"Equipe",uf:text(d.uf),cidade:text(d.cidade).replace(/^([A-Z]{2})\s*[-,]\s*/i,""),modalidade:text(d.modalidade),categoria:text(d.categoria),logo:text(d.logo),atletas:list(d.atletas)};}
+export async function loadTeams(){const snap=await getDocs(query(collection(db,"equipes"),limit(120)));return snap.docs.map((d)=>fromDoc(d as unknown as {id:string;data:()=>Record<string,unknown>})).sort((a,b)=>a.nome.localeCompare(b.nome,"pt-BR"));}
+export async function loadTeam(id:string){const snap=await getDoc(doc(db,"equipes",id));return snap.exists()?fromDoc({id:snap.id,data:()=>snap.data() as Record<string,unknown>}):null;}
+export async function submitTeam(input:{nome:string;responsavel:string;uf:string;cidade:string;modalidade:string;categoria:string;contato:string;logo?:string;atletas:string[];plan:TeamPlan}){const user=getAuth().currentUser;if(!user?.email)throw new Error("Entre na sua conta para cadastrar uma equipe.");const nome=text(input.nome),responsavel=text(input.responsavel),cidade=text(input.cidade),contato=text(input.contato),uf=text(input.uf).toUpperCase();if(nome.length<2||responsavel.length<2||cidade.length<2||contato.length<5||uf.length!==2)throw new Error("Preencha os dados obrigatórios da equipe.");if(!["Iniciante","Intermediário","Avançado"].includes(input.categoria))throw new Error("Categoria inválida.");const plan=PLANS[input.plan];const created=await addDoc(collection(db,"equipes_pendentes"),{ownerUid:user.uid,ownerEmail:user.email,nome,responsavel,uf,cidade:`${uf} - ${cidade.replace(/^([A-Z]{2})\s*[-,]\s*/i,"")}`,modalidade:text(input.modalidade),categoria:input.categoria,contato,logo:text(input.logo),atletas:input.atletas.map(text).filter(Boolean).slice(0,30),plano:plan.name,planoId:input.plan,valorPlano:plan.value,planoStatus:input.plan==="gratuito"?"ativo":"aguardando_pagamento",status:"ativo",aprovacao:"pendente",pagamentoConfirmado:false,criadoEm:new Date().toISOString()});return created.id;}
+export const TEAM_PLANS=PLANS;

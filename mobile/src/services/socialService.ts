@@ -15,6 +15,8 @@ import {
   writeBatch,
 } from "@react-native-firebase/firestore";
 
+import { createActivityNotification } from "./notificationService";
+
 const db = getFirestore();
 
 export type SocialPostState = {
@@ -40,10 +42,31 @@ export type FollowState = {
   followingCount: number;
 };
 
+export type SocialUserRef = {
+  uid: string;
+  createdAt: unknown;
+};
+
 function requireUser() {
   const user = getAuth().currentUser;
   if (!user) throw new Error("Entre na sua conta para usar os recursos sociais.");
   return user;
+}
+
+async function socialTargetOwner(postId: string) {
+  try {
+    const image = await getDoc(doc(db, "publicacoes", postId));
+    if (image.exists()) return String(image.data()?.ownerUid || "");
+  } catch {
+    // Tenta a coleção de vídeos abaixo.
+  }
+  try {
+    const video = await getDoc(doc(db, "videos", postId));
+    if (video.exists()) return String(video.data()?.ownerUid || "");
+  } catch {
+    // Notificação é melhor esforço e não bloqueia a ação social.
+  }
+  return "";
 }
 
 async function loadApprovedComments(postId: string) {
@@ -90,6 +113,15 @@ export async function toggleLike(postId: string, currentlyLiked: boolean) {
     return false;
   }
   await setDoc(ref, { uid: user.uid, criadoEm: serverTimestamp() });
+  void socialTargetOwner(postId).then(async (targetUid) => {
+    if (!targetUid) return;
+    await createActivityNotification({
+      targetUid,
+      type: "like",
+      sourceId: postId,
+      text: "curtiu sua publicação",
+    });
+  }).catch(() => undefined);
   return true;
 }
 
@@ -145,6 +177,15 @@ export async function addComment(postId: string, rawText: string) {
     status: "publicado",
     criadoEm: serverTimestamp(),
   });
+  void socialTargetOwner(postId).then(async (targetUid) => {
+    if (!targetUid) return;
+    await createActivityNotification({
+      targetUid,
+      type: "comment",
+      sourceId: postId,
+      text: texto.slice(0, 180),
+    });
+  }).catch(() => undefined);
   return created.id;
 }
 
@@ -190,6 +231,16 @@ export async function loadFollowState(targetUid: string): Promise<FollowState> {
   };
 }
 
+export async function loadFollowerRefs(uid: string): Promise<SocialUserRef[]> {
+  const snapshot = await getDocs(collection(db, "seguidores", uid, "usuarios"));
+  return snapshot.docs.map((entry) => ({ uid: entry.id, createdAt: entry.data()?.criadoEm }));
+}
+
+export async function loadFollowingRefs(uid: string): Promise<SocialUserRef[]> {
+  const snapshot = await getDocs(collection(db, "seguindo", uid, "usuarios"));
+  return snapshot.docs.map((entry) => ({ uid: entry.id, createdAt: entry.data()?.criadoEm }));
+}
+
 export async function toggleFollow(targetUid: string, state: FollowState): Promise<"following" | "requested" | "none"> {
   const user = requireUser();
   if (user.uid === targetUid) return "following";
@@ -213,6 +264,7 @@ export async function toggleFollow(targetUid: string, state: FollowState): Promi
       status: "pendente",
       criadoEm: serverTimestamp(),
     });
+    void createActivityNotification({ targetUid, type: "follow", sourceId: user.uid, text: "solicitou seguir você" }).catch(() => undefined);
     return "requested";
   }
 
@@ -226,5 +278,6 @@ export async function toggleFollow(targetUid: string, state: FollowState): Promi
     criadoEm: serverTimestamp(),
   });
   await batch.commit();
+  void createActivityNotification({ targetUid, type: "follow", sourceId: user.uid, text: "começou a seguir você" }).catch(() => undefined);
   return "following";
 }
