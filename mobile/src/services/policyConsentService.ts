@@ -7,6 +7,7 @@ export const TERMS_VERSION = "2026-09-08";
 export const PRIVACY_VERSION = "2026-09-08";
 export const TERMS_URL = "https://cadastrodeatletas.com.br/termos-de-uso.html";
 export const PRIVACY_URL = "https://cadastrodeatletas.com.br/politica-privacidade.html";
+export const CHILD_SAFETY_URL = "https://cadastrodeatletas.com.br/seguranca-infantil.html";
 export const ACCOUNT_DELETION_URL = "https://cadastrodeatletas.com.br/excluir-conta.html";
 
 export async function hasAcceptedCurrentPolicies(uid: string) {
