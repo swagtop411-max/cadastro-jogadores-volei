@@ -9,7 +9,7 @@ need(cmd.includes('Crescimento de contas'),'crescimento ausente');
 need(cmd.includes('Fila de denúncias'),'fila de denúncias ausente');
 need(cmd.includes('safeBlockList'),'leitura administrativa de bloqueios ausente');
 need(cmd.includes('getCountFromServer'),'contadores de inventário ausentes');
-need(cmd.includes('collection(db,"conversas")'),'volume de conversas ausente');
+need(cmd.includes('safeList("conversas",1000)'),'volume de conversas ausente');
 need(!cmd.includes('collection(db,"mensagens")'),'V33 não deve ler conteúdo do Direct');
 need(cmd.includes('sourceId:`admin:${Date.now()}`'),'avisos administrativos não estão identificados');
 need(cmd.includes('type:"mention"'),'aviso não reutiliza contrato seguro de notificações');
