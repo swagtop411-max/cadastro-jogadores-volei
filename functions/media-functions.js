@@ -10,6 +10,7 @@ const CLOUDINARY_API_SECRET = defineSecret("CLOUDINARY_API_SECRET");
 const CLOUDINARY_CLOUD_NAME = "hmputmfr";
 const ALLOWED_PURPOSES = new Set(["posts", "stories", "profiles", "teams", "messages"]);
 const ALLOWED_KINDS = new Set(["image", "video"]);
+const HEIC_MIMES = new Set(["image/heic", "image/heif"]);
 
 function text(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -49,9 +50,13 @@ exports.createMediaUploadSignature = onCall(
     if (!ALLOWED_KINDS.has(kind)) throw new HttpsError("invalid-argument", "Tipo de mídia inválido.");
 
     const folder = mediaFolder(uid, request.data?.purpose);
+    const sourceMime = text(request.data?.sourceMime).toLowerCase();
+    const outputFormat = kind === "image" && HEIC_MIMES.has(sourceMime) ? "jpg" : "";
     const timestamp = String(Math.floor(Date.now() / 1000));
     const tags = `cadastro-de-atletas,mobile,uid-${uid}`;
-    const params = { folder, tags, timestamp };
+    const params = outputFormat
+      ? { folder, format: outputFormat, tags, timestamp }
+      : { folder, tags, timestamp };
 
     return {
       cloudName: CLOUDINARY_CLOUD_NAME,
@@ -59,6 +64,7 @@ exports.createMediaUploadSignature = onCall(
       folder,
       tags,
       timestamp,
+      format: outputFormat,
       signature: sign(params, CLOUDINARY_API_SECRET.value()),
       resourceType: kind === "video" ? "video" : "image",
     };
