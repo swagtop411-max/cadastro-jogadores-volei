@@ -1,5 +1,6 @@
 import("./firebase-app-check-v11.js?v=20260904-2").then(()=>import("./profile-autosync-v13.js?v=20260904-3")).catch(error=>console.warn("Inicialização segura do perfil:",error));
 import("./public-beta-v19.js?v=20260907-21").catch(error=>console.warn("Beta Mobile:",error));
+if((location.pathname.split("/").pop()||"index.html")==="meu-perfil.html")import("./owner-publish-v35.js?v=20260908-35").catch(error=>console.warn("Publicação do proprietário V35:",error));
 const THEME_VERSION="20260901-9";
 const MENU_ID="siteMenuDrawer";
 const MENU_TRIGGER_ID="siteMenuTrigger";
