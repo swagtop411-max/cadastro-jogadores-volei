@@ -1,0 +1,126 @@
+name: Mobile Native CI
+
+on:
+  push:
+    branches:
+      - "feature/mobile-store-ready-v30"
+      - "mobile-v1-foundation"
+    paths:
+      - "mobile/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".github/workflows/mobile-ci.yml"
+  pull_request:
+    branches:
+      - "mobile-v1-foundation"
+    paths:
+      - "mobile/**"
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".github/workflows/mobile-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "mobile-native-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Install mobile dependencies
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck mobile
+        working-directory: mobile
+        run: npm run typecheck
+
+      - name: Test mobile domain
+        working-directory: mobile
+        run: npm run test:domain
+
+      - name: Expo Doctor
+        working-directory: mobile
+        run: npx expo-doctor
+
+      - name: Reproduce Android API 36 prebuild
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/google-services-ci.json <<'JSON'
+          {
+            "project_info": {
+              "project_number": "000000000000",
+              "project_id": "demo-cadastro-atletas",
+              "storage_bucket": "demo-cadastro-atletas.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                  "android_client_info": {
+                    "package_name": "br.com.cadastrodeatletas.app"
+                  }
+                },
+                "api_key": [{ "current_key": "AIzaSyDUMMY_CI_ONLY_NOT_A_REAL_KEY" }]
+              }
+            ],
+            "configuration_version": "1"
+          }
+          JSON
+          export GOOGLE_SERVICES_JSON=/tmp/google-services-ci.json
+          npx expo prebuild --no-install --platform android
+          grep -R "targetSdkVersion.*36\|targetSdk = 36\|targetSdk 36" android -n | head -20 || true
+
+      - name: Install backend dependencies
+        working-directory: functions
+        run: npm install --no-audit --no-fund
+
+      - name: Validate backend syntax
+        working-directory: functions
+        run: npm run check
+
+      - name: Verify Store Ready requirements in repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '"targetSdkVersion": 36' mobile/app.json
+          grep -q '"version": "1.0.0"' mobile/app.json
+          grep -q '"buildType": "app-bundle"' mobile/eas.json
+          grep -q 'MOBILE_V30_POLICY_CONSENT' firestore.rules
+          grep -q 'excluir-conta.html' mobile/src/services/policyConsentService.ts
+          grep -q 'deleteAccount' functions/index.js
+          test -f excluir-conta.html
+          test -f politica-privacidade.html
+          test -f termos-de-uso.html
+
+      - name: Compile Firebase rules in emulators
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.1.0 emulators:exec \
+            --project demo-cadastro-atletas \
+            --only firestore,storage \
+            "node -e \"console.log('Firebase rules compiled successfully')\""
