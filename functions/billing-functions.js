@@ -1,6 +1,7 @@
 const crypto = require("node:crypto");
 
 const { getFirestore } = require("firebase-admin/firestore");
+const { onDocumentDeleted } = require("firebase-functions/v2/firestore");
 const { HttpsError, onCall } = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { GoogleAuth } = require("google-auth-library");
@@ -114,6 +115,20 @@ async function persistEntitlement({ uid, teamRequestId, planId, purchaseToken, p
   return { active, expiresAt, state, productId: expectedProduct };
 }
 
+async function deleteBillingForUid(uid) {
+  const [privateSnapshot, entitlementSnapshot] = await Promise.all([
+    db.collection("billing_private").where("uid", "==", uid).get(),
+    db.collection("billing_entitlements").where("uid", "==", uid).get(),
+  ]);
+  const refs = [...privateSnapshot.docs, ...entitlementSnapshot.docs].map((entry) => entry.ref);
+  for (let index = 0; index < refs.length; index += 400) {
+    const batch = db.batch();
+    for (const ref of refs.slice(index, index + 400)) batch.delete(ref);
+    await batch.commit();
+  }
+  return refs.length;
+}
+
 exports.verifyTeamSubscription = onCall(
   {
     enforceAppCheck: true,
@@ -177,6 +192,7 @@ exports.refreshTeamSubscriptions = onSchedule(
   async () => {
     const snapshot = await db.collection("billing_private").limit(500).get();
     let updated = 0;
+    let removed = 0;
     let failed = 0;
     for (const entry of snapshot.docs) {
       const data = entry.data() || {};
@@ -186,6 +202,11 @@ exports.refreshTeamSubscriptions = onSchedule(
       const purchaseToken = text(data.purchaseToken);
       if (!uid || !teamRequestId || !PLAN_PRODUCTS[planId] || !purchaseToken) continue;
       try {
+        const account = await db.collection("usuarios").doc(uid).get();
+        if (!account.exists) {
+          removed += await deleteBillingForUid(uid);
+          continue;
+        }
         const purchase = await fetchSubscription(purchaseToken);
         await persistEntitlement({ uid, teamRequestId, planId, purchaseToken, purchase });
         updated += 1;
@@ -194,6 +215,13 @@ exports.refreshTeamSubscriptions = onSchedule(
         console.error("Subscription reconciliation failed", { teamRequestId, error: String(error) });
       }
     }
-    console.log("Subscription reconciliation complete", { checked: snapshot.size, updated, failed });
+    console.log("Subscription reconciliation complete", { checked: snapshot.size, updated, removed, failed });
   },
 );
+
+exports.cleanupBillingAfterAccountDeletion = onDocumentDeleted("usuarios/{uid}", async (event) => {
+  const uid = text(event.params.uid);
+  if (!uid) return;
+  const deleted = await deleteBillingForUid(uid);
+  console.log("Billing cleanup after account deletion complete", { uid, deleted });
+});
