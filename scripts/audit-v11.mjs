@@ -17,7 +17,7 @@ function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`)
  'firestore.rules','storage.rules','cloudinary-upload.js','firebase-app-check-v11.js','auth-audit-v11.js',
  'admin-data-migration-v11.js','admin-commerce-v11.js','meu-perfil.js','cadastro-direto.js','cadastro-equipe.js',
  'campeonatos-public.js','campeonatos-admin.js','comunidade.js','home-social.js','social-network.js','social-v6.js',
- 'admin.js','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js',
+ 'admin.js','owner-core-5e8a7c2d.js','controle-privado-91b73f.html','admin-control-center-v10.js','ranking.js','public.js','manifest.webmanifest','site-v8.js','site-v5.js','site-v7-autoload.js',
  'profile-autosync-v13.js','admin-profile-browser-v13.js'
 ].forEach(requireFile);
 
@@ -41,6 +41,7 @@ requireText('firebase-app-check-v11.js','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmz
 forbidText('firebase-app-check-v11.js','ReCaptchaV3Provider','provedor V3 antigo');
 requireText('site-v5.js','firebase-app-check-v11.js?v=20260904-2','shell aguarda App Check');
 requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
+requireText('controle-privado-91b73f.html','firebase-app-check-v11.js?v=20260904-2','gateway privado inicializa App Check antes do acesso ADM');
 
 // Mídia e editor.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage legado no editor');
@@ -84,9 +85,15 @@ requireText('firestore.rules','allow create: if isAdmin() || (\n        signedIn
 requireText('admin-data-migration-v11.js','repairVisibility','reparo automático de visibilidade legado');
 requireText('comunidade-admin.js','Promise.allSettled','comunidade ADM tolera falha parcial');
 requireText('public.js','const results=await Promise.allSettled','atletas toleram falha parcial');
-requireText('admin.js','const result=await Promise.allSettled','monetização tolera falha parcial');
+requireText('owner-core-5e8a7c2d.js','const result=await Promise.allSettled','monetização tolera falha parcial');
 requireText('atletas.html','public.js?v=20260904-3','cache bust público V13 atualizado');
-for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','admin.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260904-2',`App Check antes de ${mod}`);
+for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260904-2',`App Check antes de ${mod}`);
+
+// V31: o ADM não nasce no shell público; passa por gateway autenticado e pelas regras do Firestore.
+requireText('admin.js','owner_console_v31','wrapper administrativo exige gateway');
+requireText('admin.js','owner-core-5e8a7c2d.js','wrapper administrativo aponta para o núcleo preservado');
+requireText('controle-privado-91b73f.html',"collection(db,'access_logs')",'gateway usa leitura permitida apenas ao ADM');
+requireText('firestore.rules','allow read, delete: if isAdmin();','leitura de access_logs restrita ao ADM');
 
 // V13: conta sempre ganha identidade social mínima, sem inventar dados esportivos.
 requireText('firestore.rules','// V13_PERFIL_SOCIAL_BASICO','regra de perfil social básico');
@@ -102,14 +109,14 @@ requireText('admin-profile-browser-v13.js','ABRIR PERFIL','ADM pode abrir perfil
 requireText('site-v7-autoload.js','admin-profile-browser-v13.js?v=20260904-3','browser de perfil V13 carregado no ADM');
 
 // Aprovação segura sem campos pessoais no documento público.
-requireText('admin.js','cadastro-atleta-v11','aprovação segura de atleta na fonte');
-requireText('admin.js','cadastro-equipe-v11','aprovação segura de equipe na fonte');
-const admin=read('admin.js');
+requireText('owner-core-5e8a7c2d.js','cadastro-atleta-v11','aprovação segura de atleta na fonte privada');
+requireText('owner-core-5e8a7c2d.js','cadastro-equipe-v11','aprovação segura de equipe na fonte privada');
+const admin=read('owner-core-5e8a7c2d.js');
 const athleteApproval=(admin.match(/async function aprovarNovoCadastro\(id\)[\s\S]*?async function recusarNovoCadastro/)||[''])[0];
 const teamApproval=(admin.match(/async function aprovarEquipe\(id\)[\s\S]*?async function recusarEquipe/)||[''])[0];
 for(const [name,block,keys] of [['atleta',athleteApproval,['nascimento:a.nascimento','contato:a.contato','ownerEmail:a.ownerEmail']],['equipe',teamApproval,['responsavel:a.responsavel','contato:a.contato','ownerEmail:a.ownerEmail']]]){
- if(!block)fail(`admin.js: bloco de aprovação ${name} não localizado`);
- for(const k of keys)block.includes(`publicData={${k}`)||block.includes(`,${k}`)?fail(`admin.js: ${name} ainda mistura ${k} no publicData`):ok(`admin.js: ${name} sem ${k} no publicData`);
+ if(!block)fail(`owner-core-5e8a7c2d.js: bloco de aprovação ${name} não localizado`);
+ for(const k of keys)block.includes(`publicData={${k}`)||block.includes(`,${k}`)?fail(`owner-core-5e8a7c2d.js: ${name} ainda mistura ${k} no publicData`):ok(`owner-core-5e8a7c2d.js: ${name} sem ${k} no publicData`);
 }
 
 // Segredos e resíduos temporários.
