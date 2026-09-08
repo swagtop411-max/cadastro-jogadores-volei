@@ -105,7 +105,7 @@ export default function PublishScreen() {
     try {
       for (let index = 0; index < media.length; index += 1) {
         setProgress(`Enviando mídia ${index + 1} de ${media.length}…`);
-        const item = media[index];
+        const item = media[index]!;
         uploaded.push(await uploadPublicationMedia({
           uid: user.uid,
           uri: item.uri,
