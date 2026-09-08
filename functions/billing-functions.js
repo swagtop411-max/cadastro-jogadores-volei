@@ -19,10 +19,6 @@ function text(value) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function accountHash(uid) {
-  return crypto.createHash("sha256").update(uid).digest("hex");
-}
-
 function tokenHash(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -92,8 +88,10 @@ exports.verifyTeamSubscription = onCall(
       throw new HttpsError("failed-precondition", "A assinatura ainda não está ativa ou o pagamento não foi concluído.");
     }
 
+    // Firebase Auth UID é um identificador opaco/pseudônimo. Ele é enviado ao Billing
+    // como obfuscatedAccountId e permite impedir que um token seja reutilizado por outra conta.
     const externalAccountId = text(purchase.externalAccountIdentifiers?.obfuscatedExternalAccountId);
-    if (externalAccountId && externalAccountId !== accountHash(uid)) {
+    if (externalAccountId && externalAccountId !== uid) {
       throw new HttpsError("permission-denied", "Esta compra está vinculada a outra conta do aplicativo.");
     }
 
