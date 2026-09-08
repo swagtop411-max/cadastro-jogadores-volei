@@ -1,3 +1,4 @@
+import { getAuth } from "@react-native-firebase/auth";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -31,6 +32,7 @@ function VideoMedia({ uri }: { uri: string }) {
 
 export function SocialPostCard({ item }: { item: MobileFeedItemV2 }) {
   const router = useRouter();
+  const currentUid = getAuth().currentUser?.uid || "";
   const [social, setSocial] = useState<SocialPostState>(EMPTY);
   const [loadingSocial, setLoadingSocial] = useState(true);
   const [acting, setActing] = useState(false);
@@ -46,6 +48,7 @@ export function SocialPostCard({ item }: { item: MobileFeedItemV2 }) {
 
   const openPost = () => router.push({ pathname: "/post/[id]", params: { id: item.id, kind: item.kind } });
   const openAthlete = () => item.ownerUid && router.push({ pathname: "/athlete/[uid]", params: { uid: item.ownerUid } });
+  const report = () => router.push({ pathname: "/report", params: { type: "publicacao", targetId: item.id } });
 
   const handleLike = useCallback(async () => {
     if (acting) return;
@@ -81,11 +84,14 @@ export function SocialPostCard({ item }: { item: MobileFeedItemV2 }) {
   return (
     <View style={styles.card}>
       <View style={styles.accent} />
-      <Pressable onPress={openAthlete} disabled={!item.ownerUid} style={({ pressed }) => [styles.authorRow, pressed && styles.pressed]}>
-        {item.authorPhoto ? <Image source={{ uri: item.authorPhoto }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.avatarText}>{item.authorName.slice(0, 1).toUpperCase()}</Text></View>}
-        <View style={styles.authorCopy}><Text style={styles.authorName}>{item.authorName}</Text><Text style={styles.date}>{formatFirebaseDate(item.createdAt)}</Text></View>
+      <View style={styles.authorRow}>
+        <Pressable onPress={openAthlete} disabled={!item.ownerUid} style={({ pressed }) => [styles.authorIdentity, pressed && styles.pressed]}>
+          {item.authorPhoto ? <Image source={{ uri: item.authorPhoto }} style={styles.avatar} /> : <View style={styles.avatarFallback}><Text style={styles.avatarText}>{item.authorName.slice(0, 1).toUpperCase()}</Text></View>}
+          <View style={styles.authorCopy}><Text style={styles.authorName}>{item.authorName}</Text><Text style={styles.date}>{formatFirebaseDate(item.createdAt)}</Text></View>
+        </Pressable>
         <View style={styles.kindPill}><Text style={styles.kind}>{item.media.length > 1 ? `${item.media.length} FOTOS` : item.kind === "video" ? "VÍDEO" : "POST"}</Text></View>
-      </Pressable>
+        {currentUid && item.ownerUid && currentUid !== item.ownerUid ? <Pressable onPress={report} hitSlop={8} style={styles.more}><Text style={styles.moreText}>•••</Text></Pressable> : null}
+      </View>
 
       {item.text ? <Pressable onPress={openPost}><Text style={styles.postText}>{item.text}</Text></Pressable> : null}
 
@@ -127,15 +133,18 @@ const cardWidth = Math.min(Dimensions.get("window").width - 32, 720);
 const styles = StyleSheet.create({
   card: { position: "relative", overflow: "hidden", borderRadius: brand.radius.xl, borderWidth: 1, borderColor: brand.colors.borderSoft, backgroundColor: brand.colors.surface, ...brand.shadow },
   accent: { position: "absolute", left: 0, right: 0, top: 0, height: 3, backgroundColor: brand.colors.cyan, zIndex: 2 },
-  authorRow: { flexDirection: "row", alignItems: "center", gap: 11, padding: 14 },
+  authorRow: { flexDirection: "row", alignItems: "center", gap: 8, padding: 14 },
+  authorIdentity: { flex: 1, minWidth: 0, flexDirection: "row", alignItems: "center", gap: 11 },
   avatar: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, borderColor: brand.colors.cyan },
   avatarFallback: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: brand.colors.cyan, backgroundColor: brand.colors.bgDeep },
   avatarText: { color: brand.colors.cyanSoft, fontSize: 17, fontWeight: "900" },
-  authorCopy: { flex: 1 },
+  authorCopy: { flex: 1, minWidth: 0 },
   authorName: { color: brand.colors.text, fontSize: 14, fontWeight: "900" },
   date: { marginTop: 3, color: brand.colors.muted, fontSize: 10 },
   kindPill: { borderWidth: 1, borderColor: brand.colors.border, borderRadius: brand.radius.pill, backgroundColor: brand.colors.bgDeep, paddingHorizontal: 9, paddingVertical: 6 },
   kind: { color: brand.colors.cyan, fontSize: 8, fontWeight: "900", letterSpacing: 0.7 },
+  more: { minWidth: 28, height: 28, alignItems: "center", justifyContent: "center" },
+  moreText: { color: brand.colors.mutedStrong, fontSize: 13, fontWeight: "900" },
   postText: { color: brand.colors.text, fontSize: 14, lineHeight: 20, paddingHorizontal: 14, paddingBottom: 13 },
   mediaWrap: { position: "relative", backgroundColor: "#000" },
   mediaPage: { width: cardWidth, maxWidth: "100%", aspectRatio: 4 / 3, backgroundColor: "#000" },
