@@ -16,6 +16,11 @@ import type {
   AuthSession,
   SignUpInput,
 } from "../contracts";
+import {
+  recordAppLogin,
+  recordAppLogout,
+  recordAppSignup,
+} from "../../services/accessTelemetry";
 
 function toSession(user: User): AuthSession {
   return {
@@ -23,6 +28,10 @@ function toSession(user: User): AuthSession {
     email: user.email,
     emailVerified: user.emailVerified,
   };
+}
+
+async function bestEffort(task: Promise<void>): Promise<void> {
+  await task.catch(() => undefined);
 }
 
 export const firebaseAuthRepository: AuthRepository = {
@@ -39,6 +48,7 @@ export const firebaseAuthRepository: AuthRepository = {
       password,
     );
 
+    await bestEffort(recordAppLogin());
     return toSession(credential.user);
   },
 
@@ -53,10 +63,15 @@ export const firebaseAuthRepository: AuthRepository = {
       displayName: input.name.trim(),
     });
 
+    await bestEffort(recordAppSignup());
     return toSession(credential.user);
   },
 
   async signOut() {
+    await Promise.race([
+      bestEffort(recordAppLogout()),
+      new Promise<void>((resolve) => setTimeout(resolve, 1200)),
+    ]);
     await signOut(getAuth());
   },
 
