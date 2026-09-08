@@ -113,12 +113,15 @@ export async function toggleLike(postId: string, currentlyLiked: boolean) {
     return false;
   }
   await setDoc(ref, { uid: user.uid, criadoEm: serverTimestamp() });
-  void socialTargetOwner(postId).then((targetUid) => targetUid && createActivityNotification({
-    targetUid,
-    type: "like",
-    sourceId: postId,
-    text: "curtiu sua publicação",
-  })).catch(() => undefined);
+  void socialTargetOwner(postId).then(async (targetUid) => {
+    if (!targetUid) return;
+    await createActivityNotification({
+      targetUid,
+      type: "like",
+      sourceId: postId,
+      text: "curtiu sua publicação",
+    });
+  }).catch(() => undefined);
   return true;
 }
 
@@ -174,12 +177,15 @@ export async function addComment(postId: string, rawText: string) {
     status: "publicado",
     criadoEm: serverTimestamp(),
   });
-  void socialTargetOwner(postId).then((targetUid) => targetUid && createActivityNotification({
-    targetUid,
-    type: "comment",
-    sourceId: postId,
-    text: texto.slice(0, 180),
-  })).catch(() => undefined);
+  void socialTargetOwner(postId).then(async (targetUid) => {
+    if (!targetUid) return;
+    await createActivityNotification({
+      targetUid,
+      type: "comment",
+      sourceId: postId,
+      text: texto.slice(0, 180),
+    });
+  }).catch(() => undefined);
   return created.id;
 }
 
