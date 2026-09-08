@@ -33,17 +33,19 @@ if (PAGE === "perfil-social.html") {
       #storyList,#storyArchiveList{display:none!important}
       .pp-tabs{justify-content:flex-start!important}.pp-tabs .pp-tab[data-tab="posts"]{display:inline-flex!important}
       .profile-highlights-v37{margin-top:16px;padding:16px 18px;border:1px solid rgba(244,200,77,.22);border-radius:20px;background:#07100d;color:#fff;overflow:hidden}
+      .profile-highlights-v37.embedded{margin:10px 0 0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+      .profile-highlights-v37.embedded .profile-highlights-v37-head{display:none}
       .profile-highlights-v37-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
       .profile-highlights-v37-head strong{font:900 12px/1 Montserrat,Arial,sans-serif;letter-spacing:.6px;color:#fff}
       .profile-highlights-v37-head span{font:700 8px/1 Montserrat,Arial,sans-serif;color:#7f929f}
       .profile-highlights-v37-list{display:flex;gap:13px;overflow-x:auto;padding:3px 1px 6px;scrollbar-width:none}
       .profile-highlights-v37-list::-webkit-scrollbar{display:none}
       .profile-highlight-v37{flex:0 0 76px;width:76px;border:0;background:transparent;padding:0;color:#fff;cursor:pointer;text-align:center}
-      .profile-highlight-v37-media{width:70px;height:70px;margin:0 auto 7px;border-radius:50%;padding:3px;background:linear-gradient(135deg,#f4c84d,#d99c2e);box-sizing:border-box;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+      .profile-highlight-v37-media{display:block;width:70px;height:70px;margin:0 auto 7px;border-radius:50%;padding:3px;background:linear-gradient(135deg,#f4c84d,#d99c2e);box-sizing:border-box;box-shadow:0 6px 18px rgba(0,0,0,.25)}
       .profile-highlight-v37-media>img,.profile-highlight-v37-media>video{display:block;width:100%;height:100%;border-radius:50%;object-fit:cover;background:#031424;border:3px solid #07100d;box-sizing:border-box}
       .profile-highlight-v37 small{display:block;max-width:76px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#d7e1e7;font:700 8px/1.25 Montserrat,Arial,sans-serif}
       .profile-highlights-v37-empty{padding:6px 0 2px;color:#83939f;font:700 9px/1.45 Montserrat,Arial,sans-serif}
-      @media(max-width:720px){.profile-highlights-v37{margin:14px 10px 0;padding:14px 12px}.profile-highlight-v37{flex-basis:72px;width:72px}.profile-highlight-v37-media{width:66px;height:66px}}
+      @media(max-width:720px){.profile-highlights-v37:not(.embedded){margin:14px 10px 0;padding:14px 12px}.profile-highlight-v37{flex-basis:72px;width:72px}.profile-highlight-v37-media{width:66px;height:66px}}
     `;
     document.head.appendChild(style);
   }
@@ -65,14 +67,13 @@ if (PAGE === "perfil-social.html") {
     for (const el of candidates) {
       if (el.id === "profileHighlightsV37") continue;
       const ownText = [...el.childNodes]
-        .filter(node => node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE)
-        .slice(0, 4)
+        .slice(0, 6)
         .map(node => node.textContent || "")
         .join(" ")
         .replace(/\s+/g, " ")
         .trim()
         .toUpperCase();
-      if (ownText.startsWith("DESTAQUES") || /(^|\s)DESTAQUES($|\s)/.test(ownText.slice(0, 80))) return el;
+      if (ownText.startsWith("DESTAQUES") || /(^|\s)DESTAQUES($|\s)/.test(ownText.slice(0, 100))) return el;
     }
     return null;
   }
@@ -85,8 +86,7 @@ if (PAGE === "perfil-social.html") {
     if (existing) {
       shell = document.createElement("div");
       shell.id = "profileHighlightsV37";
-      shell.className = "profile-highlights-v37";
-      shell.style.marginTop = "12px";
+      shell.className = "profile-highlights-v37 embedded";
       shell.innerHTML = '<div class="profile-highlights-v37-head"><strong>STORIES ARQUIVADOS</strong><span>após 24h</span></div><div id="profileHighlightsV37List" class="profile-highlights-v37-list"></div>';
       existing.appendChild(shell);
       return shell;
