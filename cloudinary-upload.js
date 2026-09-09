@@ -2,10 +2,6 @@ import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebase
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
 
 const CLOUDINARY_CLOUD_NAME = "hmputmfr";
-// Compatibilidade temporária para o site até as Cloud Functions de produção serem implantadas.
-// O fluxo seguro assinado é sempre tentado primeiro. Remover os presets depois do deploy validado.
-const CLOUDINARY_IMAGE_PRESET = "cadastro_atletas_images";
-const CLOUDINARY_VIDEO_PRESET = "cadastro_atletas_videos";
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
@@ -19,10 +15,11 @@ const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
 let signUploadCallable = null;
 
+// Mantém a forma antiga do objeto para módulos legados, mas sem qualquer preset público.
 export const CLOUDINARY_CONFIG = Object.freeze({
   cloudName: CLOUDINARY_CLOUD_NAME,
-  imagePreset: CLOUDINARY_IMAGE_PRESET,
-  videoPreset: CLOUDINARY_VIDEO_PRESET,
+  imagePreset: null,
+  videoPreset: null,
 });
 
 function firebaseFunctions() {
@@ -31,7 +28,7 @@ function firebaseFunctions() {
 }
 
 function signer() {
-  if (!signUploadCallable) signUploadCallable = httpsCallable(firebaseFunctions(), "signCloudinaryUpload");
+  if (!signUploadCallable) signUploadCallable = httpsCallable(firebaseFunctions(), "signCloudinaryUpload", { timeout: 30000 });
   return signUploadCallable;
 }
 
@@ -46,16 +43,6 @@ function inferKind({ tags = [], allowImage = true, allowVideo = false, kind = ""
   if (normalized.some(value => value.includes("carrossel"))) return "carousel";
   if (allowVideo && !allowImage) return "video";
   return "social";
-}
-
-function appMode() {
-  try {
-    return new URLSearchParams(location.search).get("app") === "1"
-      || window.matchMedia?.("(display-mode: standalone)")?.matches === true
-      || navigator.standalone === true;
-  } catch {
-    return false;
-  }
 }
 
 /*
@@ -117,12 +104,23 @@ function validateFile(file, { maxBytes, allowImage = true, allowVideo = false } 
 }
 
 async function requestSignedTicket({ resourceType, tags, kind }) {
-  const result = await signer()({ resourceType, tags, kind });
-  const ticket = result?.data || {};
-  if (!ticket.signature || !ticket.timestamp || !ticket.apiKey || !ticket.cloudName) {
-    throw new Error("O serviço seguro de mídia não retornou uma assinatura válida.");
+  try {
+    const result = await signer()({ resourceType, tags, kind });
+    const ticket = result?.data || {};
+    if (!ticket.signature || !ticket.timestamp || !ticket.apiKey || !ticket.cloudName || !ticket.folder) {
+      throw new Error("O serviço seguro de mídia não retornou uma assinatura válida.");
+    }
+    if (ticket.expiresAt && Math.floor(Date.now() / 1000) > Number(ticket.expiresAt)) {
+      throw new Error("A autorização de envio expirou. Tente publicar novamente.");
+    }
+    return ticket;
+  } catch (error) {
+    const code = String(error?.code || "").toLowerCase();
+    if (code.includes("unauthenticated")) throw new Error("Entre na sua conta novamente antes de enviar a mídia.");
+    if (code.includes("resource-exhausted")) throw new Error("Muitos envios em pouco tempo. Aguarde alguns instantes e tente novamente.");
+    if (code.includes("failed-precondition")) throw new Error("O serviço seguro de mídia ainda não está configurado corretamente.");
+    throw new Error("Não foi possível autorizar o envio seguro da mídia. Verifique sua conexão e tente novamente.");
   }
-  return ticket;
 }
 
 async function signedUpload(file, { resourceType, tags, kind, signal, onProgress }) {
@@ -139,25 +137,12 @@ async function signedUpload(file, { resourceType, tags, kind, signal, onProgress
   form.append("overwrite", "false");
   form.append("unique_filename", "true");
   form.append("use_filename", "false");
+  if (ticket.allowedFormats) form.append("allowed_formats", Array.isArray(ticket.allowedFormats) ? ticket.allowedFormats.join(",") : String(ticket.allowedFormats));
   if (typeof onProgress === "function") onProgress(10);
   const response = await fetch(endpoint, { method: "POST", body: form, signal });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data?.error?.message || "Não foi possível enviar o arquivo com segurança.");
-  if (typeof onProgress === "function") onProgress(100);
-  return data;
-}
-
-async function legacyUnsignedUpload(file, { resourceType, signal, tags, onProgress }) {
-  const preset = resourceType === "video" ? CLOUDINARY_VIDEO_PRESET : CLOUDINARY_IMAGE_PRESET;
-  const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
-  const form = new FormData();
-  form.append("file", file);
-  form.append("upload_preset", preset);
-  if (Array.isArray(tags) && tags.length) form.append("tags", tags.join(","));
-  if (typeof onProgress === "function") onProgress(5);
-  const response = await fetch(endpoint, { method: "POST", body: form, signal });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.error?.message || "Não foi possível enviar o arquivo para o Cloudinary.");
+  if (!data?.secure_url || !data?.public_id) throw new Error("O Cloudinary não confirmou o arquivo enviado.");
   if (typeof onProgress === "function") onProgress(100);
   return data;
 }
@@ -175,16 +160,7 @@ export async function uploadCloudinary(file, options = {}) {
   const { isVideo } = validateFile(file, { maxBytes, allowImage, allowVideo });
   const resourceType = isVideo ? "video" : "image";
   const kind = inferKind(options);
-  let data;
-  try {
-    data = await signedUpload(file, { resourceType, tags, kind, signal, onProgress });
-  } catch (secureError) {
-    const code = String(secureError?.code || secureError?.message || "").toLowerCase();
-    const backendUnavailable = code.includes("not-found") || code.includes("internal") || code.includes("unavailable") || code.includes("cors") || code.includes("network");
-    if (appMode() && !backendUnavailable) throw secureError;
-    console.warn("Upload assinado ainda não disponível; usando compatibilidade temporária.", secureError);
-    data = await legacyUnsignedUpload(file, { resourceType, signal, tags, onProgress });
-  }
+  const data = await signedUpload(file, { resourceType, tags, kind, signal, onProgress });
 
   return {
     url: data.secure_url || "",
