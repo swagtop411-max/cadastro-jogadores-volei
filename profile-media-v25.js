@@ -1,7 +1,7 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{collection,deleteDoc,doc,getDocs,getFirestore,limit,query,updateDoc,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{inspectImageUrl,sourceImageUrl,thumbImageUrl}from"./media-utils.js?v=20260907-1";
+import{inspectImageUrl,sourceImageUrl,thumbImageUrl}from"./media-utils.js?v=20260909-46";
 
 const PAGE=location.pathname.split("/").pop()||"index.html";
 if(PAGE==="perfil-social.html"){

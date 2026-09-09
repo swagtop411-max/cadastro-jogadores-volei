@@ -117,4 +117,4 @@ if (avatar && uid) {
   setTimeout(updateAvatarState, 1200);
 }
 
-import("./profile-story-access-v45.js?v=20260909-45").catch(error => console.warn("Stories públicos V45:", error));
+import("./profile-story-access-v45.js?v=20260909-46").catch(error => console.warn("Stories públicos V45:", error));

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 const read=p=>fs.readFileSync(p,'utf8');
-const page=read('atividade.html'),js=read('activity-center-v27.js'),css=read('activity-center-v27.css'),deep=read('activity-deeplink-v27.js'),site=read('site-v5.js'),sw=read('sw.js');
+const page=read('atividade.html'),js=read('activity-center-v27.js'),css=read('activity-center-v27.css'),deep=read('activity-deeplink-v27.js'),site=read('site-v5.js?v=20260909-46'),sw=read('sw.js');
 const checks=[
  ['pagina central',page.includes('CENTRAL DE <em>ATIVIDADES</em>')],
  ['filtros',page.includes('data-activity-filter="unread"')&&page.includes('data-activity-filter="interactions"')],

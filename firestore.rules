@@ -196,36 +196,8 @@ service cloud.firestore {
         && request.resource.data.get('handle','') is string && request.resource.data.get('handle','').size() <= 40
         && request.resource.data.get('instagramUrl','') is string && request.resource.data.get('instagramUrl','').size() <= 300;
       allow delete: if isAdmin() || isOwner(uid);
-    }
-    match /perfis/{uid}/privado/{documento} {
-      allow read: if isAdmin() || isOwner(uid);
-      allow create, update, delete: if isAdmin();
-    }
+    
 
-    match /handles/{handle} {
-      allow read: if true;
-      allow create: if isAdmin() || (
-        signedIn()
-        && request.resource.data.uid == request.auth.uid
-        && request.resource.data.handle == handle
-        && request.resource.data.handle is string && request.resource.data.handle.size() >= 3 && request.resource.data.handle.size() <= 40
-        && request.resource.data.atualizadoEm is timestamp
-        && request.resource.data.keys().hasOnly(['uid','handle','atualizadoEm'])
-      );
-      allow update: if isAdmin() || (
-        signedIn() && resource.data.uid == request.auth.uid
-        && request.resource.data.uid == resource.data.uid
-        && request.resource.data.handle == handle
-        && request.resource.data.atualizadoEm is timestamp
-        && request.resource.data.keys().hasOnly(['uid','handle','atualizadoEm'])
-      );
-      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
-    }
-
-    // V13_PERFIL_SOCIAL_BASICO
-    // Toda conta pode possuir um perfil público mínimo antes de concluir os dados esportivos.
-    // completo=false aceita somente campos públicos vazios/limitados; completo=true exige cidade, UF e categoria válidas.
-    match /perfis/{uid} {
       allow create: if (isOwner(uid) || isAdmin())
         && request.resource.data.uid == uid
         && request.resource.data.keys().hasOnly([
@@ -324,6 +296,35 @@ service cloud.firestore {
           )
         );
     }
+    match /perfis/{uid}/privado/{documento} {
+      allow read: if isAdmin() || isOwner(uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /handles/{handle} {
+      allow read: if true;
+      allow create: if isAdmin() || (
+        signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.handle == handle
+        && request.resource.data.handle is string && request.resource.data.handle.size() >= 3 && request.resource.data.handle.size() <= 40
+        && request.resource.data.atualizadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['uid','handle','atualizadoEm'])
+      );
+      allow update: if isAdmin() || (
+        signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.handle == handle
+        && request.resource.data.atualizadoEm is timestamp
+        && request.resource.data.keys().hasOnly(['uid','handle','atualizadoEm'])
+      );
+      allow delete: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+    }
+
+    // V13_PERFIL_SOCIAL_BASICO
+    // Toda conta pode possuir um perfil público mínimo antes de concluir os dados esportivos.
+    // completo=false aceita somente campos públicos vazios/limitados; completo=true exige cidade, UF e categoria válidas.
+
 
     match /config_perfis/{uid} {
       allow read: if true;
@@ -504,7 +505,7 @@ service cloud.firestore {
     }
 
     match /publicacoes/{publicacaoId} {
-      allow read: if isAdmin() || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid) || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.get('ownerEmail','') == authEmail()
@@ -570,7 +571,7 @@ service cloud.firestore {
     }
 
     match /stories/{storyId} {
-      allow read: if isAdmin() || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid) || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.keys().hasAll(['ownerUid','mediaUrl','legenda','tipo','criadoEm','expiraEm','aprovado','status'])
         && request.resource.data.keys().hasOnly(['ownerUid','nome','mediaUrl','mediaPath','mediaType','legenda','tipo','visibilidade','criadoEm','expiraEm','aprovado','status'])
@@ -599,7 +600,7 @@ service cloud.firestore {
     }
 
     match /videos/{videoId} {
-      allow read: if isAdmin() || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
+      allow read: if isAdmin() || (signedIn() && resource.data.ownerUid == request.auth.uid) || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));
       allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid
         && request.resource.data.videoUrl is string && request.resource.data.videoUrl.size() <= 2000
         && request.resource.data.get('videoPath','') is string && request.resource.data.get('videoPath','').size() <= 1000

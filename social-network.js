@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
@@ -282,13 +282,33 @@ export function mountMessageButton(container, targetUid, targetName="Atleta", ta
   b.onclick=()=>openChatWith(targetUid,targetName,targetAvatar);container.appendChild(b);
 }
 
+let storyBlockCache={uid:"",expires:0,values:new Set()};
+async function blockedStoryOwners(){
+  if(!currentUser)return new Set();
+  if(storyBlockCache.uid===currentUser.uid&&storyBlockCache.expires>Date.now())return storyBlockCache.values;
+  try{
+    const snap=await getDocs(query(collection(socialDb,"bloqueios",currentUser.uid,"usuarios"),limit(1000)));
+    storyBlockCache={uid:currentUser.uid,expires:Date.now()+30000,values:new Set(snap.docs.map(d=>d.id))};
+  }catch{storyBlockCache={uid:currentUser.uid,expires:Date.now()+5000,values:new Set()}}
+  return storyBlockCache.values;
+}
+
 export async function getActiveStories({ownerUid="",max=40}={}){
   try{
+    const blocked=await blockedStoryOwners();
+    if(ownerUid&&blocked.has(ownerUid))return[];
     let q;
-    if(ownerUid)q=query(collection(socialDb,"stories"),where("ownerUid","==",ownerUid),where("aprovado","==",true),limit(max));
-    else q=query(collection(socialDb,"stories"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(max));
+    if(ownerUid){
+      let privateAccess=currentUser?.uid===ownerUid;
+      if(!privateAccess&&currentUser){
+        try{privateAccess=(await getDoc(doc(socialDb,"seguidores",ownerUid,"usuarios",currentUser.uid))).exists()}catch{}
+      }
+      const constraints=[where("ownerUid","==",ownerUid),where("aprovado","==",true)];
+      if(!privateAccess)constraints.push(where("visibilidade","==","publico"));
+      q=query(collection(socialDb,"stories"),...constraints,limit(max));
+    }else q=query(collection(socialDb,"stories"),where("aprovado","==",true),where("visibilidade","==","publico"),limit(max));
     const snap=await getDocs(q),now=Date.now();
-    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>!millis(x.expiraEm)||millis(x.expiraEm)>now).sort((a,b)=>millis(a.criadoEm)-millis(b.criadoEm));
+    return snap.docs.map(d=>({id:d.id,...d.data()})).filter(x=>!blocked.has(x.ownerUid)&&(!millis(x.expiraEm)||millis(x.expiraEm)>now)).sort((a,b)=>millis(a.criadoEm)-millis(b.criadoEm));
   }catch(e){console.warn("Stories:",e);return[]}
 }
 

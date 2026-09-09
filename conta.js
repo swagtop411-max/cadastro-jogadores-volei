@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 await import("./profile-autosync-v13.js?v=20260904-3");
 import { recordAuthEvent } from "./auth-audit-v11.js?v=20260904-2";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";

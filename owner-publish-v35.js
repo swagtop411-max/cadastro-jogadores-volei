@@ -1,7 +1,7 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{addDoc,collection,doc,getDoc,getDocs,getFirestore,query,serverTimestamp,Timestamp,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{uploadCloudinary}from"./cloudinary-upload.js?v=20260904-2";
+import{uploadCloudinary}from"./cloudinary-upload.js?v=20260909-46";
 
 const PAGE=location.pathname.split("/").pop()||"index.html";
 if(PAGE==="meu-perfil.html"){

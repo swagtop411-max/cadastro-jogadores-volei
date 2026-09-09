@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 import "./site-v7-autoload.js?v=20260904-3";
 // Analytics + consentimento de cookies
 const GA_ID="G-K033D1K41Y";

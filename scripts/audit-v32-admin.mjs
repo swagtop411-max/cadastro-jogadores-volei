@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 const read=p=>fs.readFileSync(p,'utf8');
 const need=(ok,msg)=>{if(!ok)throw new Error(`V32 Admin: ${msg}`)};
-const admin=read('admin.js'),control=read('admin-control-center-v32.js'),css=read('admin-private-v32.css'),audit=read('auth-audit-v11.js'),beta=read('public-beta-v19.js'),site=read('site-v5.js');
+const admin=read('admin.js'),control=read('admin-control-center-v32.js'),css=read('admin-private-v32.css'),audit=read('auth-audit-v11.js'),beta=read('public-beta-v19.js'),site=read('site-v5.js?v=20260909-46');
 need(admin.includes('oc_6f9c2a71_session'),'gateway privado deixou de ser obrigatório');
 need(admin.includes('admin-control-center-v32.js'),'Controle Geral V32 não é carregado pelo console privado');
 need(admin.includes('admin-private-v32.css'),'layout privado V32 não é carregado');
-need(control.includes('admin-control-center-v10.js'),'recursos do Controle V10 não foram preservados');
+need(control.includes('admin-control-center-v10.js?v=20260909-46'),'recursos do Controle V10 não foram preservados');
 need(control.includes('Entradas e saídas do app'),'painel de entradas e saídas ausente');
 need(control.includes('collection(db,"access_logs")'),'Controle não lê logs de acesso');
 need(control.includes('collection(db,"usuarios")'),'Controle não lê as contas cadastradas');

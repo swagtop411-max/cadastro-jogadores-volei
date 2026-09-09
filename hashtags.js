@@ -1,4 +1,4 @@
-import "./site-v5.js?v=20260904-2";
+import "./site-v5.js?v=20260909-46";
 import { getApp,getApps,initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth,onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { collection,doc,getDoc,getDocs,getFirestore,limit,query,where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -13,7 +13,7 @@ let user=auth.currentUser,results=[],profileCache=new Map(),following=new Set(),
 
 function tagsOf(item){const stored=Array.isArray(item.hashtags)?item.hashtags.map(norm).filter(Boolean):[];const parsed=(String(item.legenda||item.texto||"").match(/#[\p{L}\p{N}_-]+/gu)||[]).map(norm).filter(Boolean);return[...new Set([...stored,...parsed])]}
 async function profileOf(uid){if(profileCache.has(uid))return profileCache.get(uid);try{const s=await getDoc(doc(db,"perfis",uid)),p=s.exists()?{uid,...s.data()}:{uid,nome:"Atleta",fotoUrl:fallback};p.fotoUrl=p.fotoUrl||fallback;profileCache.set(uid,p);return p}catch{return{uid,nome:"Atleta",fotoUrl:fallback}}}
-async function loadViewerState(){following=new Set();blocked=new Set();if(!user)return;try{const s=await getDocs(collection(db,"seguindo",user.uid,"usuarios"));following=new Set(s.docs.map(d=>d.id))}catch{}try{const s=await getDocs(collection(db,"bloqueios",user.uid,"usuarios"));blocked=new Set(s.docs.map(d=>d.id))}catch{}}
+async function loadViewerState(){following=new Set();blocked=new Set();if(!user)return;try{const s=await getDocs(query(collection(db,"seguindo",user.uid,"usuarios"),limit(1000)));following=new Set(s.docs.map(d=>d.id))}catch{}try{const s=await getDocs(query(collection(db,"bloqueios",user.uid,"usuarios"),limit(1000)));blocked=new Set(s.docs.map(d=>d.id))}catch{}}
 async function privateOf(uid){if(privacy.has(uid))return privacy.get(uid);try{const s=await getDoc(doc(db,"config_perfis",uid)),v=s.exists()&&s.data().privado===true;privacy.set(uid,v);return v}catch{return false}}
 async function visible(item){if(!item.ownerUid)return true;if(user?.uid===item.ownerUid)return true;if(blocked.has(item.ownerUid))return false;const isPrivate=await privateOf(item.ownerUid);return !isPrivate||following.has(item.ownerUid)}
 function coverOf(item){if(item.kind==="video")return item.videoUrl||"";if(Array.isArray(item.midias)&&item.midias.length)return item.midias[0]?.url||item.imagemUrl||item.imagem||"";return item.imagemUrl||item.imagem||""}

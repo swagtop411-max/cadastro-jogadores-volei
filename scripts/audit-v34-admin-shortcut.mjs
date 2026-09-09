@@ -1,8 +1,8 @@
 import fs from "node:fs";
 const read=p=>fs.readFileSync(p,"utf8");
 const need=(ok,msg)=>{if(!ok)throw new Error(`V34 Admin shortcut: ${msg}`)};
-const shortcut=read("admin-shortcut-v34.js");
-const appCheck=read("firebase-app-check-v11.js");
+const shortcut=read("admin-shortcut-v34.js?v=20260909-46");
+const appCheck=read("firebase-app-check-v11.js?v=20260909-46");
 const sw=read("sw.js");
 const publicAdmin=read("admin.html");
 const gateway=read("z8k3v6n1.html");
@@ -14,8 +14,8 @@ need(shortcut.includes('sessionStorage.setItem(GATE,"ok")'),'não abre o gateway
 need(shortcut.includes('document.getElementById(MENU_BUTTON_ID)?.remove()'),'não remove o botão após perder autorização');
 need(shortcut.includes('top.hidden=true'),'não oculta o CTA público de contas comuns');
 need(!/password|senha\s*[:=]/i.test(shortcut),'não deve conter senha administrativa');
-need(appCheck.includes('admin-shortcut-v34.js'),'atalho não é carregado pelo bootstrap seguro');
-need(sw.includes('/admin-shortcut-v34.js'),'atalho não está no cache PWA');
+need(appCheck.includes('admin-shortcut-v34.js?v=20260909-46'),'atalho não é carregado pelo bootstrap seguro');
+need(sw.includes('/admin-shortcut-v34.js?v=20260909-46'),'atalho não está no cache PWA');
 need(publicAdmin.includes('Página indisponível'),'admin.html público deve continuar indisponível');
 need(gateway.includes("sessionStorage.getItem(G)!=='ok'"),'shell privado perdeu o gateway');
 console.log("V34 admin shortcut audit OK");

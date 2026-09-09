@@ -16,7 +16,7 @@ const replaceRegex=(p,re,repl,label,min=1)=>{
 };
 
 // 1. Stories: consulta central respeita privacidade e bloqueios.
-replace("social-network.js",
+replace("social-network.js?v=20260909-46",
 `export async function getActiveStories({ownerUid="",max=40}={}){
   try{
     let q;
@@ -58,7 +58,7 @@ export async function getActiveStories({ownerUid="",max=40}={}){
 "privacidade central de Stories");
 
 // 2. Perfil público: bloqueio também remove acesso ao Story e limpa estado visual.
-replace("profile-story-access-v45.js",
+replace("profile-story-access-v45.js?v=20260909-46",
 `  async function readStories() {
     if (!uid) return [];
     const privateAccess = await canReadPrivateStories();`,
@@ -77,7 +77,7 @@ replace("profile-story-access-v45.js",
     if (await isOwnerBlockedByViewer()) return [];
     const privateAccess = await canReadPrivateStories();`,
 "Story respeita bloqueio");
-replace("profile-story-access-v45.js",
+replace("profile-story-access-v45.js?v=20260909-46",
 `    } else {
       avatar.style.removeProperty("box-shadow");
     }`,
@@ -88,7 +88,7 @@ replace("profile-story-access-v45.js",
       avatar.removeAttribute("title");
     }`,
 "limpeza do avatar sem Story");
-replace("profile-story-access-v45.js",
+replace("profile-story-access-v45.js?v=20260909-46",
 `  window.addEventListener("sn:story-deleted", () => setTimeout(refresh, 120));
   window.addEventListener("focus", () => void refresh());`,
 `  window.addEventListener("sn:story-deleted", () => setTimeout(refresh, 120));
@@ -97,7 +97,7 @@ replace("profile-story-access-v45.js",
 "refresh após bloqueio");
 
 // 3. Segurança UGC: Destaques V45 e legado são ocultados quando o usuário é bloqueado.
-replaceRegex("ugc-safety-v41.js",/document\.getElementById\("profileHighlightsV37"\)/g,'document.querySelector("#profileHighlightsV45,#profileHighlightsV37")',"compatibilidade Destaques V45",2);
+replaceRegex("ugc-safety-v41.js?v=20260909-46",/document\.getElementById\("profileHighlightsV37"\)/g,'document.querySelector("#profileHighlightsV45,#profileHighlightsV37")',"compatibilidade Destaques V45",2);
 
 // 4. Meu Perfil: não esconde perfil legado com ownerUid antigo e limita varredura.
 replace("meu-perfil.js","  Timestamp\n} from \"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js\";","  Timestamp,\n  limit\n} from \"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js\";","import limit");
@@ -121,7 +121,7 @@ replace("meu-perfil.js",
 "aviso de vínculo anterior");
 
 // 5. Admin: reivindicação apontando para perfil já vinculado pode ser revisada e transferida com confirmação explícita.
-replace("admin-profile-link-v10.js",
+replace("admin-profile-link-v10.js?v=20260909-46",
 `  const currentOwner=text(athlete.ownerUid);
   if(currentOwner&&currentOwner!==uid)throw new Error("Esse perfil legado já está vinculado a outra conta.");`,
 `  const currentOwner=text(athlete.ownerUid);
@@ -132,23 +132,23 @@ replace("admin-profile-link-v10.js",
       return text(data.perfilId)===profileId&&text(data.solicitanteUid)===uid&&text(data.status).toLowerCase()==="pendente";
     });
     if(!pending)throw new Error("Esse perfil legado já está vinculado a outra conta e não existe uma reivindicação pendente deste UID.");
-    if(!confirm(`ATENÇÃO: este perfil está vinculado ao UID ${currentOwner}. A solicitação do UID ${uid} está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?`)){
+    if(!confirm("ATENÇÃO: este perfil está vinculado ao UID " + currentOwner + ". A solicitação do UID " + uid + " está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?")){
       throw new Error("Transferência cancelada pelo administrador.");
     }
   }`,
 "transferência administrativa protegida");
-replace("admin-claims-v9.js",
+replace("admin-claims-v9.js?v=20260909-46",
 `  const profilesByUid=new Map(model.profiles.map(p=>[p.id,p]));
   const athleteByUid=new Map(model.athletes.filter(a=>txt(a.ownerUid)).map(a=>[txt(a.ownerUid),a]));`,
 `  const profilesByUid=new Map(model.profiles.map(p=>[p.id,p]));
   const athleteById=new Map(model.athletes.map(a=>[a.id,a]));
   const athleteByUid=new Map(model.athletes.filter(a=>txt(a.ownerUid)).map(a=>[txt(a.ownerUid),a]));`,
 "índice admin por atleta");
-replace("admin-claims-v9.js",
+replace("admin-claims-v9.js?v=20260909-46",
 `    const uid=txt(account.uid||account.id),linked=athleteByUid.get(uid),claim=claimsByUid.get(uid),social=profilesByUid.get(uid),suggestion=!linked?bestSuggestion(account,orphans):null;`,
 `    const uid=txt(account.uid||account.id),linked=athleteByUid.get(uid),claim=claimsByUid.get(uid),social=profilesByUid.get(uid),claimTarget=claim?.perfilId?athleteById.get(txt(claim.perfilId)):null,suggestion=!linked&&!claimTarget?bestSuggestion(account,orphans):null;`,
 "alvo reivindicado no admin");
-replace("admin-claims-v9.js",`    const target=linked||suggestion||null;`,`    const target=linked||claimTarget||suggestion||null;`,"usar alvo da reivindicação");
+replace("admin-claims-v9.js?v=20260909-46",`    const target=linked||suggestion||null;`,`    const target=linked||claimTarget||suggestion||null;`,"usar alvo da reivindicação");
 
 // 6. Rules: dono sempre pode ler seus próprios conteúdos, inclusive legados pendentes.
 const oldRead=`allow read: if isAdmin() || (resource.data.aprovado == true && canReadSocialOwner(resource.data.ownerUid, resource.data.get('visibilidade','privado')));`;
@@ -205,7 +205,7 @@ replace("sw.js","caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE).catch(()
 }
 {
   let t=read("sw.js");
-  const anchor='  "/assets/app-icon.svg",';
+  const anchor='"/manifest.webmanifest",';
   if(!t.includes(anchor))throw new Error("sw.js: âncora de ícone ausente");
   t=t.replace(anchor,anchor+'\n  "/assets/app-icon-192.png",\n  "/assets/app-icon-512.png",');
   write("sw.js",t);
@@ -213,9 +213,9 @@ replace("sw.js","caches.open(CACHE_NAME).then(cache=>cache.addAll(CORE).catch(()
 
 // 10. Normaliza versões de módulos compartilhados para impedir instâncias ESM duplicadas e cache antigo.
 const runtimeAssets=[
-  "firebase-app-check-v11.js","media-utils.js","site-v5.js","admin-claims-v9.js","admin-commerce-v11.js",
-  "admin-control-center-v10.js","admin-data-migration-v11.js","admin-profile-browser-v13.js","admin-profile-link-v10.js",
-  "admin-shortcut-v34.js","admin-v8-hardening.js","social-network.js","ugc-safety-v41.js","cloudinary-upload.js","profile-story-access-v45.js"
+  "firebase-app-check-v11.js?v=20260909-46","media-utils.js?v=20260909-46","site-v5.js?v=20260909-46","admin-claims-v9.js?v=20260909-46","admin-commerce-v11.js?v=20260909-46",
+  "admin-control-center-v10.js?v=20260909-46","admin-data-migration-v11.js?v=20260909-46","admin-profile-browser-v13.js?v=20260909-46","admin-profile-link-v10.js?v=20260909-46",
+  "admin-shortcut-v34.js?v=20260909-46","admin-v8-hardening.js?v=20260909-46","social-network.js?v=20260909-46","ugc-safety-v41.js?v=20260909-46","cloudinary-upload.js?v=20260909-46","profile-story-access-v45.js?v=20260909-46"
 ];
 function escapeRe(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
 for(const p of [...fs.readdirSync(root).filter(f=>/\.(?:js|html)$/i.test(f)),...fs.readdirSync(path.join(root,"scripts")).filter(f=>f.endsWith(".mjs")).map(f=>`scripts/${f}`)]){

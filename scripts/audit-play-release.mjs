@@ -28,9 +28,9 @@ for(const p of [
   "exclusao-conta.html",
   "politica-privacidade.html",
   "termos-de-uso.html",
-  "ugc-safety-v41.js",
+  "ugc-safety-v41.js?v=20260909-46",
   "admin-moderation-v42.js",
-  "cloudinary-upload.js",
+  "cloudinary-upload.js?v=20260909-46",
   "play-store/store-listing-pt-BR.md",
   "play-store/data-safety-pt-BR.md",
   "play-store/content-declarations-pt-BR.md"
@@ -62,8 +62,8 @@ need("exclusao-conta.html","deleteMyAccount","exclusão autenticada disponível 
 need("exclusao-conta.html","EXCLUIR CONTA E DADOS","confirmação explícita de exclusão");
 need("politica-privacidade.html","exclusao-conta.html","política aponta para exclusão de conta");
 need("termos-de-uso.html","Denúncia, bloqueio e moderação","termos cobrem moderação de UGC");
-need("ugc-safety-v41.js",'collection(db,"denuncias")',"denúncia UGC persistente");
-need("ugc-safety-v41.js",'collection(db,"bloqueios",currentUser.uid,"usuarios")',"bloqueio persistente entre dispositivos");
+need("ugc-safety-v41.js?v=20260909-46",'collection(db,"denuncias")',"denúncia UGC persistente");
+need("ugc-safety-v41.js?v=20260909-46",'collection(db,"bloqueios",currentUser.uid,"usuarios")',"bloqueio persistente entre dispositivos");
 need("admin-moderation-v42.js",'collection(db,"denuncias")',"fila administrativa de moderação");
 
 need("functions/index.js","exports.signCloudinaryUpload","backend de upload assinado");
@@ -71,7 +71,7 @@ need("functions/index.js","exports.deleteMyAccount","backend de exclusão de con
 need("functions/index.js","enforceAppCheck: true","Cloud Functions protegidas por App Check");
 forbid("functions/index.js","CLOUDINARY_API_SECRET = \"","segredo Cloudinary não pode estar hardcoded");
 need("firebase.json",'"runtime": "nodejs22"',"Functions configuradas em Node 22");
-need("cloudinary-upload.js","signedUpload","frontend prefere upload assinado");
+need("cloudinary-upload.js?v=20260909-46","signedUpload","frontend prefere upload assinado");
 
 need("play-store/store-listing-pt-BR.md","Somente maiores de 18 anos","ficha da loja declara público adulto");
 need("play-store/data-safety-pt-BR.md","Segurança dos dados","roteiro de Data Safety presente");

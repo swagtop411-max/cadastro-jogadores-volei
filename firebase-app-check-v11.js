@@ -27,7 +27,7 @@ if(!globalThis.__BD_APP_CHECK_PROMISE__){
  })();
 }
 
-import("./admin-shortcut-v34.js?v=20260908-42").catch(error=>console.warn("Atalho ADM:",error));
-import("./ugc-safety-v41.js?v=20260908-42").catch(error=>console.warn("Segurança persistente da comunidade:",error));
+import("./admin-shortcut-v34.js?v=20260909-46").catch(error=>console.warn("Atalho ADM:",error));
+import("./ugc-safety-v41.js?v=20260909-46").catch(error=>console.warn("Segurança persistente da comunidade:",error));
 
 export default globalThis.__BD_APP_CHECK_PROMISE__;

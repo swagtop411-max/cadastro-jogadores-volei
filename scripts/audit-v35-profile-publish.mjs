@@ -4,7 +4,7 @@ const need=(ok,msg)=>{if(!ok)throw new Error(`V35 Profile publish: ${msg}`)};
 const fix=read("profile-publish-compat-v35.js");
 const ownerFix=read("owner-publish-v35.js");
 const html=read("perfil-social.html");
-const site=read("site-v5.js");
+const site=read("site-v5.js?v=20260909-46");
 const rules=read("firestore.rules");
 const sw=read("sw.js");
 need(html.indexOf("profile-publish-compat-v35.js")<html.indexOf("perfil-social.js"),"compatibilidade precisa carregar antes do publicador legado");

@@ -1,9 +1,9 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { collection, doc, getDoc, getDocs, getFirestore, limit, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { storyImageUrl } from "./media-utils.js?v=20260904-2";
-import { openStoryViewer } from "./social-network.js?v=20260904-2";
+import { storyImageUrl } from "./media-utils.js?v=20260909-46";
+import { openStoryViewer } from "./social-network.js?v=20260909-46";
 
 const PAGE = location.pathname.split("/").pop() || "";
 if (PAGE === "perfil-social.html") {
@@ -86,8 +86,19 @@ if (PAGE === "perfil-social.html") {
     }
   }
 
+  async function isOwnerBlockedByViewer() {
+    const user = auth.currentUser;
+    if (!user || !uid || user.uid === uid) return false;
+    try {
+      return (await getDoc(doc(db, "bloqueios", user.uid, "usuarios", uid))).exists();
+    } catch {
+      return false;
+    }
+  }
+
   async function readStories() {
     if (!uid) return [];
+    if (await isOwnerBlockedByViewer()) return [];
     const privateAccess = await canReadPrivateStories();
     const constraints = [
       where("ownerUid", "==", uid),
@@ -115,6 +126,9 @@ if (PAGE === "perfil-social.html") {
       avatar.title = "Ver Stories";
     } else {
       avatar.style.removeProperty("box-shadow");
+      avatar.style.removeProperty("cursor");
+      avatar.removeAttribute("aria-label");
+      avatar.removeAttribute("title");
     }
     const count = document.getElementById("stories");
     if (count) count.textContent = String(activeStories.length);
@@ -216,6 +230,7 @@ if (PAGE === "perfil-social.html") {
   bindAvatarCapture();
   onAuthStateChanged(auth, () => void refresh());
   window.addEventListener("sn:story-deleted", () => setTimeout(refresh, 120));
+  window.addEventListener("bd:block-list-changed", () => void refresh());
   window.addEventListener("focus", () => void refresh());
   setTimeout(refresh, 120);
   setTimeout(refresh, 900);

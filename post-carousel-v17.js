@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { collection, documentId, getDocs, getFirestore, query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { feedImageUrl } from "./media-utils.js?v=20260907-1";
+import { feedImageUrl } from "./media-utils.js?v=20260909-46";
 
 const page = location.pathname.split("/").pop() || "index.html";
 const supported = page === "index.html" || page === "comunidade.html";

@@ -1,4 +1,4 @@
-import {inspectImageUrl,sourceImageUrl} from "./media-utils.js?v=20260907-1";
+import {inspectImageUrl,sourceImageUrl} from "./media-utils.js?v=20260909-46";
 
 const ROOT_ID="bdMediaViewerV15";
 const STYLE_ID="bdMediaViewerStylesV15";

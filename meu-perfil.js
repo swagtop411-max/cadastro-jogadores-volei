@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
@@ -15,9 +15,10 @@ import {
   serverTimestamp,
   deleteField,
   deleteDoc,
-  Timestamp
+  Timestamp,
+  limit
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { uploadCloudinary } from "./cloudinary-upload.js?v=20260904-2";
+import { uploadCloudinary } from "./cloudinary-upload.js?v=20260909-46";
 
 const cfg = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
@@ -486,7 +487,7 @@ async function loadClaimableProfiles() {
   try {
     const [claimsSnap, athletesSnap] = await Promise.all([
       getDocs(query(collection(db, "reivindicacoes_perfis"), where("solicitanteUid", "==", user.uid))),
-      getDocs(collection(db, "atletas"))
+      getDocs(query(collection(db, "atletas"), limit(300)))
     ]);
 
     const claims = claimsSnap.docs.map(item => ({ id: item.id, ...item.data() }));
@@ -518,7 +519,7 @@ async function loadClaimableProfiles() {
       .filter(item => {
         const id = String(item.id || "");
         return id &&
-          !String(item.ownerUid || "").trim() &&
+          String(item.ownerUid || "") !== String(user.uid) &&
           !approvedIds.has(id) &&
           !pendingByMe.has(id);
       })
@@ -536,6 +537,7 @@ async function loadClaimableProfiles() {
       '<div class="claim-choice"><div><strong>' + esc(item.nome || "Atleta") +
       '</strong><small>' + esc([item.cidade, item.uf, item.categoria].filter(Boolean).join(" · ")) +
       '</small><small>UID do perfil: ' + esc(item.id) +
+      (String(item.ownerUid || "").trim() ? '</small><small>Vínculo anterior detectado: a transferência dependerá da revisão do administrador.' : '') +
       '</small></div><button type="button" data-claim-profile="' + esc(item.id) + '">REIVINDICAR</button></div>'
     ).join("");
 

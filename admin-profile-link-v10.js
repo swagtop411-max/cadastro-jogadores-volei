@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
@@ -88,7 +88,17 @@ export async function linkLegacyProfile(profileId,uid){
 
   const athlete=athleteSnap.data()||{};
   const currentOwner=text(athlete.ownerUid);
-  if(currentOwner&&currentOwner!==uid)throw new Error("Esse perfil legado já está vinculado a outra conta.");
+  if(currentOwner&&currentOwner!==uid){
+    const claims=await getDocs(collection(db,"reivindicacoes_perfis"));
+    const pending=claims.docs.some(item=>{
+      const data=item.data()||{};
+      return text(data.perfilId)===profileId&&text(data.solicitanteUid)===uid&&text(data.status).toLowerCase()==="pendente";
+    });
+    if(!pending)throw new Error("Esse perfil legado já está vinculado a outra conta e não existe uma reivindicação pendente deste UID.");
+    if(!confirm("ATENÇÃO: este perfil está vinculado ao UID " + currentOwner + ". A solicitação do UID " + uid + " está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?")){
+      throw new Error("Transferência cancelada pelo administrador.");
+    }
+  }
 
   const conflicts=ownedSnap.docs.filter(item=>item.id!==profileId);
   if(conflicts.length){

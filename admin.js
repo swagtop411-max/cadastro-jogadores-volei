@@ -35,14 +35,14 @@ async function bootPrivateConsole(){
   try{
     await import("./owner-core-5e8a7c2d.js?v=20260908-42");
     await Promise.allSettled([
-      import("./admin-v8-hardening.js?v=20260908-42"),
-      import("./admin-claims-v9.js?v=20260908-42"),
-      import("./admin-profile-link-v10.js?v=20260908-42"),
+      import("./admin-v8-hardening.js?v=20260909-46"),
+      import("./admin-claims-v9.js?v=20260909-46"),
+      import("./admin-profile-link-v10.js?v=20260909-46"),
       import("./admin-control-center-v32.js?v=20260908-42"),
       import("./admin-command-center-v33.js?v=20260908-42"),
-      import("./admin-data-migration-v11.js?v=20260908-42"),
-      import("./admin-commerce-v11.js?v=20260908-42"),
-      import("./admin-profile-browser-v13.js?v=20260908-42"),
+      import("./admin-data-migration-v11.js?v=20260909-46"),
+      import("./admin-commerce-v11.js?v=20260909-46"),
+      import("./admin-profile-browser-v13.js?v=20260909-46"),
       import("./admin-moderation-v42.js?v=20260908-42")
     ]);
   }catch(error){

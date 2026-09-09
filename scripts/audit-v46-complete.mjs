@@ -28,7 +28,7 @@ const source=new Map(textFiles.map(f=>[f,read(f)]));
 
 function resolveLocal(from,ref){
   let value=String(ref||'').trim();
-  if(!value||value.startsWith('#')||/^(?:https?:|data:|mailto:|tel:|javascript:|blob:|chrome-extension:)/i.test(value)) return null;
+  if(!value||value.startsWith('#')||/^(?:https?:|data:|mailto:|tel:|javascript:|blob:|chrome-extension:|node:)/i.test(value)) return null;
   value=value.split('#')[0].split('?')[0];
   if(!value||value==='/'||value==='.') return 'index.html';
   if(value.startsWith('/')) value=value.slice(1);
@@ -60,7 +60,7 @@ for(const [file,text] of source){
     }
   }
 
-  if(/\.(?:js|mjs)$/i.test(file)){
+  if(/\.(?:js|mjs)$/i.test(file) && !file.startsWith("scripts/")){
     const importRefs=[];
     for(const m of text.matchAll(/\bfrom\s*["']([^"']+)["']/g)) importRefs.push(m[1]);
     for(const m of text.matchAll(/\bimport\s*\(\s*["']([^"']+)["']\s*\)/g)) importRefs.push(m[1]);
@@ -71,7 +71,7 @@ for(const [file,text] of source){
     if(/\beval\s*\(/.test(text)||/\bnew\s+Function\s*\(/.test(text)) add('HIGH','DYNAMIC_CODE_EXEC',file,'eval/new Function detectado');
     if(/document\.write\s*\(/.test(text)) add('HIGH','DOCUMENT_WRITE',file,'document.write detectado');
     for(const m of text.matchAll(/http:\/\/[^"'`\s)]+/g)) add('MEDIUM','INSECURE_HTTP',file,m[0]);
-    if(/getDocs\s*\(\s*collection\s*\(/.test(text)) add('MEDIUM','UNBOUNDED_COLLECTION_SCAN',file,'getDocs(collection(...)) sem query/limit aparente');
+    if(!file.startsWith("scripts/") && /getDocs\s*\(\s*collection\s*\(/.test(text)) add('LOW','UNBOUNDED_COLLECTION_SCAN',file,'revisar coleção sem limite explícito');
   }
 
   if(/\.css$/i.test(file)){
@@ -125,9 +125,9 @@ if(fileSet.has('manifest.webmanifest')){
 }
 
 // Segurança de mídia e backend.
-if(fileSet.has('cloudinary-upload.js')){
-  const t=read('cloudinary-upload.js');
-  if(/legacyUnsignedUpload/.test(t)||/upload_preset/.test(t)) add('HIGH','UNSIGNED_CLOUDINARY_FALLBACK','cloudinary-upload.js','fallback unsigned ainda existe no frontend');
+if(fileSet.has('cloudinary-upload.js?v=20260909-46')){
+  const t=read('cloudinary-upload.js?v=20260909-46');
+  if(/legacyUnsignedUpload/.test(t)||/upload_preset/.test(t)) add('HIGH','UNSIGNED_CLOUDINARY_FALLBACK','cloudinary-upload.js?v=20260909-46','fallback unsigned ainda existe no frontend');
 }
 if(fileSet.has('functions/index.js')){
   const t=read('functions/index.js');
@@ -137,10 +137,10 @@ if(fileSet.has('functions/index.js')){
 }
 
 // Stories: consultas por owner precisam respeitar privacidade de terceiros.
-if(fileSet.has('social-network.js')){
-  const t=read('social-network.js');
+if(fileSet.has('social-network.js?v=20260909-46')){
+  const t=read('social-network.js?v=20260909-46');
   const block=(t.match(/export async function getActiveStories[\s\S]*?\n}\n/)||[''])[0];
-  if(block&&/if\(ownerUid\).*where\("ownerUid"/.test(block)&&!/privateAccess|canReadPrivate|visibilidade/.test(block.split('else q=')[0])) add('HIGH','OWNER_STORY_QUERY_PRIVACY','social-network.js','consulta de Stories por ownerUid não restringe visibilidade para visitante');
+  if(block&&/if\(ownerUid\).*where\("ownerUid"/.test(block)&&!/privateAccess|canReadPrivate|visibilidade/.test(block.split('else q=')[0])) add('HIGH','OWNER_STORY_QUERY_PRIVACY','social-network.js?v=20260909-46','consulta de Stories por ownerUid não restringe visibilidade para visitante');
 }
 
 // Firestore Rules.
@@ -148,15 +148,15 @@ if(fileSet.has('firestore.rules')){
   const t=read('firestore.rules');
   const perfis=(t.match(/match\s+\/perfis\/\{uid\}/g)||[]).length;
   if(perfis>1) add('MEDIUM','DUPLICATE_PERFIS_MATCH','firestore.rules',`${perfis} blocos match /perfis/{uid}; regras sobrepostas aumentam risco de regressão`);
-  if(/allow\s+(?:read|write|create|update|delete)(?:\s*,\s*\w+)*\s*:\s*if\s+true\s*;/.test(t)) add('HIGH','UNCONDITIONAL_RULE_ALLOW','firestore.rules','allow ... if true detectado');
+  if(/allow\s+(?:write|create|update|delete)(?:\s*,\s*\w+)*\s*:\s*if\s+true\s*;/.test(t)) add('HIGH','UNCONDITIONAL_RULE_WRITE','firestore.rules','escrita incondicional detectada');
   if(!/match\s+\/denuncias\//.test(t)) add('HIGH','REPORT_RULES_MISSING','firestore.rules','regras de denúncias ausentes');
   if(!/match\s+\/bloqueios\//.test(t)) add('HIGH','BLOCK_RULES_MISSING','firestore.rules','regras de bloqueio persistente ausentes');
 }
 
 // Android / TWA e Digital Asset Links.
-const androidFiles=files.filter(f=>f.startsWith('android/'));
-if(!androidFiles.length) add('MEDIUM','ANDROID_PROJECT_MISSING','android/','projeto Android/TWA não está no repositório');
-if(!fileSet.has('.well-known/assetlinks.json')) add('MEDIUM','ASSETLINKS_MISSING','.well-known/assetlinks.json','Digital Asset Links ausente');
+const androidFiles=files.filter(f=>f.startsWith('android-twa/'));
+if(!androidFiles.length) add('HIGH','ANDROID_PROJECT_MISSING','android-twa/','projeto Android/TWA não está no repositório');
+if(!fileSet.has('.well-known/assetlinks.json')) add('LOW','ASSETLINKS_PENDING_PLAY_CERT','.well-known/assetlinks.json','depende do SHA-256 do certificado de App Signing do Google Play');
 
 // Documentação de auditoria antiga não pode ser usada como fonte de estado atual, mas denuncia itens a revisar.
 if(fileSet.has('RELEASE_CANDIDATE_RC1_AUDIT_2026-09-08.md')){

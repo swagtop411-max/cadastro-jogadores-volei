@@ -1,7 +1,7 @@
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import{addDoc,collection,doc,getDoc,getFirestore,serverTimestamp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import{uploadCloudinary}from"./cloudinary-upload.js?v=20260904-2";
+import{uploadCloudinary}from"./cloudinary-upload.js?v=20260909-46";
 
 const PAGE=location.pathname.split("/").pop()||"index.html";
 if(PAGE==="comunidade.html"){

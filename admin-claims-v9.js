@@ -1,4 +1,4 @@
-await import("./firebase-app-check-v11.js?v=20260904-2");
+await import("./firebase-app-check-v11.js?v=20260909-46");
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { collection, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -59,6 +59,7 @@ function render(){
   const shell=ensureUI();if(!shell)return;
   const q=norm(document.getElementById("claimV9Search")?.value);
   const profilesByUid=new Map(model.profiles.map(p=>[p.id,p]));
+  const athleteById=new Map(model.athletes.map(a=>[a.id,a]));
   const athleteByUid=new Map(model.athletes.filter(a=>txt(a.ownerUid)).map(a=>[txt(a.ownerUid),a]));
   const claimsByUid=new Map();for(const c of model.claims){const uid=txt(c.solicitanteUid);if(!uid)continue;const old=claimsByUid.get(uid);if(!old||millis(c.atualizadoEm||c.criadoEm)>millis(old.atualizadoEm||old.criadoEm))claimsByUid.set(uid,c)}
   const orphans=model.athletes.filter(a=>!txt(a.ownerUid));
@@ -68,10 +69,10 @@ function render(){
 
   const accountBox=document.getElementById("claimV9Accounts");
   accountBox.innerHTML=filteredAccounts.length?filteredAccounts.map(account=>{
-    const uid=txt(account.uid||account.id),linked=athleteByUid.get(uid),claim=claimsByUid.get(uid),social=profilesByUid.get(uid),suggestion=!linked?bestSuggestion(account,orphans):null;
+    const uid=txt(account.uid||account.id),linked=athleteByUid.get(uid),claim=claimsByUid.get(uid),social=profilesByUid.get(uid),claimTarget=claim?.perfilId?athleteById.get(txt(claim.perfilId)):null,suggestion=!linked&&!claimTarget?bestSuggestion(account,orphans):null;
     const status=String(claim?.status||"").toLowerCase();
     const tags=[social?'<span class="claim-v9-tag ok">PERFIL SOCIAL</span>':'<span class="claim-v9-tag">SEM PERFIL SOCIAL</span>',linked?'<span class="claim-v9-tag ok">VINCULADO</span>':'<span class="claim-v9-tag warn">SEM VÍNCULO</span>',claim?`<span class="claim-v9-tag claim">REIVINDICAÇÃO: ${esc(status||"registrada")}</span>`:"",suggestion?'<span class="claim-v9-tag warn">SUGESTÃO ENCONTRADA</span>':""].join("");
-    const target=linked||suggestion||null;
+    const target=linked||claimTarget||suggestion||null;
     return `<article class="claim-v9-card"><div><div class="claim-v9-name">${esc(account.nome||"Conta sem nome")}</div><div class="claim-v9-meta">${esc(account.email||"E-mail não informado")}<br>${esc(fmtDate(account.criadoEm))}${linked?`<br>Perfil vinculado: <strong>${esc(linked.nome||linked.id)}</strong> · ID ${esc(linked.id)}`:""}${suggestion?`<br>Sugestão de perfil antigo: <strong>${esc(suggestion.nome)}</strong> · ${esc(suggestion.cidade||"cidade não informada")} · ID ${esc(suggestion.id)}`:""}${claim?`<br>Pedido: perfil ${esc(claim.perfilNome||claim.perfilId||"")} · ID ${esc(claim.perfilId||"")}`:""}</div><span class="claim-v9-uid">UID: ${esc(uid)}</span><div class="claim-v9-tags">${tags}</div></div><div class="claim-v9-actions"><button type="button" data-v9-copy="${esc(uid)}">COPIAR UID</button>${target?`<a href="perfil.html?id=${encodeURIComponent(target.id)}" target="_blank" rel="noopener">ABRIR PERFIL</a>`:""}${!linked&&target?`<button class="primary" type="button" data-v9-use-uid="${esc(uid)}" data-v9-use-profile="${esc(target.id)}">USAR NO VÍNCULO</button>`:""}</div></article>`
   }).join(""):'<div class="claim-v9-empty">Nenhuma conta corresponde à busca.</div>';
 

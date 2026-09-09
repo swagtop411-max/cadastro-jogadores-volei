@@ -1,7 +1,7 @@
 import fs from "node:fs";
 
 const read=(path)=>fs.readFileSync(path,"utf8");
-const media=read("media-utils.js");
+const media=read("media-utils.js?v=20260909-46");
 const viewer=read("media-viewer.js");
 const integration=read("social-v6-followfix.js");
 const serviceWorker=read("sw.js");

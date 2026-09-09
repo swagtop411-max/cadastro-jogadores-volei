@@ -94,7 +94,7 @@ async function loadV32(){
 
 function bootForOwner(user){
   if(!user||txt(user.email).toLowerCase()!==ADMIN_EMAIL)return;
-  import("./admin-control-center-v10.js?v=20260908-32").then(()=>{
+  import("./admin-control-center-v10.js?v=20260909-46").then(()=>{
     let attempts=0;
     const timer=setInterval(()=>{
       attempts++;

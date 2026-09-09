@@ -1,7 +1,7 @@
-import "./site-v5.js?v=20260904-2";
+import "./site-v5.js?v=20260909-46";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { collection, deleteDoc, doc, getDoc, getDocs, getFirestore, limit, query } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(cfg),db=getFirestore(app),auth=getAuth(app),grid=document.getElementById("savedGrid");
@@ -31,7 +31,7 @@ function renderEmpty(message="Você ainda não salvou nenhuma publicação."){
 async function load(){
   if(!user)return;
   try{
-    const snap=await getDocs(collection(db,"salvos",user.uid,"publicacoes"));
+    const snap=await getDocs(query(collection(db,"salvos",user.uid,"publicacoes"),limit(300)));
     const entries=await Promise.all(snap.docs.map(async d=>resolvePost({id:d.id,...d.data()})));
     const items=entries.filter(Boolean).filter(x=>x.url);
     if(!items.length){renderEmpty();return}

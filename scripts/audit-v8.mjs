@@ -13,10 +13,10 @@ const requireText=(file,text,label=text)=>{if(!exists(file))return fail(`${file}
 const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).includes(text)?fail(`${file}: padrão proibido encontrado (${label})`):ok(`${file}: sem ${label}`)};
 
 [
- 'site-v8.js','site-v8.css','site-v5.js','cloudinary-upload.js','media-utils.js','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
+ 'site-v8.js','site-v8.css','site-v5.js?v=20260909-46','cloudinary-upload.js?v=20260909-46','media-utils.js?v=20260909-46','sw.js','manifest.webmanifest','robots.txt','sitemap.xml',
  'cadastro-atleta.html','cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','campeonatos-admin.js','comunidade.js','perfil-social.js','public.js','home-social.js',
  'admin.html','admin.js','controle-privado-91b73f.html','p4x7m9q2.html','z8k3v6n1.html','m-5e2c7a9d.webmanifest','vault-7c3e91a6f4.html','owner-core-5e8a7c2d.js',
- 'admin-v8-hardening.js','admin-claims-v9.js','admin-profile-link-v10.js','admin-control-center-v10.js','auth-audit-v11.js','admin-data-migration-v11.js','admin-commerce-v11.js','reivindicacao.js','conta.js','firestore.rules'
+ 'admin-v8-hardening.js?v=20260909-46','admin-claims-v9.js?v=20260909-46','admin-profile-link-v10.js?v=20260909-46','admin-control-center-v10.js?v=20260909-46','auth-audit-v11.js','admin-data-migration-v11.js?v=20260909-46','admin-commerce-v11.js?v=20260909-46','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
 // Recursos V8 solicitados.
@@ -38,8 +38,8 @@ requireText('public.js','res.cloudinary.com','Cloudinary permitido nas listagens
 
 // V31: console administrativo privado, sem entrada pública.
 requireText('site-v8.js','removeAdminEntrypoints','entradas administrativas removidas do DOM público');
-forbidText('site-v5.js','data-v7-admin','atalho ADM no menu público');
-forbidText('site-v5.js','PAINEL ADM','texto de painel ADM no menu público');
+forbidText('site-v5.js?v=20260909-46','data-v7-admin','atalho ADM no menu público');
+forbidText('site-v5.js?v=20260909-46','PAINEL ADM','texto de painel ADM no menu público');
 requireText('admin.html','Página indisponível','rota administrativa pública antiga desativada');
 requireText('admin.html','noindex,nofollow,noarchive','rota antiga fora de indexação');
 requireText('controle-privado-91b73f.html','Página indisponível','gateway privado anterior desativado');
@@ -71,10 +71,10 @@ requireText('reivindicacao.js','url.searchParams.set("claim", "1")','marcador de
 requireText('reivindicacao.js','deterministicTaken','nova tentativa após reivindicação recusada');
 requireText('conta.js','safeReturnDestination(returnTarget)','cadastro de conta respeita retorno da reivindicação');
 requireText('conta.js','Voltando ao perfil para concluir sua reivindicação','mensagem de retorno após criação de conta');
-requireText('admin-claims-v9.js','CONTAS CADASTRADAS / UIDs','central administrativa de UIDs');
-requireText('admin-claims-v9.js','PERFIS ANTIGOS SEM DONO','lista de perfis legados sem ownerUid');
-requireText('admin-claims-v9.js','vinculoUid','preenchimento assistido do vínculo manual');
-requireText('site-v7-autoload.js','admin-claims-v9.js','central de UIDs carregada no ADM');
+requireText('admin-claims-v9.js?v=20260909-46','CONTAS CADASTRADAS / UIDs','central administrativa de UIDs');
+requireText('admin-claims-v9.js?v=20260909-46','PERFIS ANTIGOS SEM DONO','lista de perfis legados sem ownerUid');
+requireText('admin-claims-v9.js?v=20260909-46','vinculoUid','preenchimento assistido do vínculo manual');
+requireText('site-v7-autoload.js','admin-claims-v9.js?v=20260909-46','central de UIDs carregada no ADM');
 requireText('firestore.rules','match /reivindicacoes_perfis/{claimId}','regras de reivindicação presentes');
 
 // V10: contas, acessos, duplicidades e unificação segura.
@@ -85,14 +85,14 @@ requireText('auth-audit-v11.js','expiraEm','retenção preparada para TTL');
 requireText('auth-audit-v11.js','sessionStorage','sessão registrada uma vez por aba/sessão');
 requireText('conta.js','recordAuthEvent(credential.user, "login")','login sincronizado com painel ADM');
 requireText('conta.js','recordAuthEvent(user, "cadastro")','cadastro sincronizado com painel ADM');
-requireText('admin-profile-link-v10.js','export async function linkLegacyProfile','unificação segura de legado e perfil social');
-requireText('admin-profile-link-v10.js','event.stopImmediatePropagation()','bloqueio do handler legado quebrado');
-requireText('admin-profile-link-v10.js','ownerEmail:deleteField()','e-mail removido do documento público do atleta');
-requireText('admin-control-center-v10.js','Todas as contas cadastradas','painel geral de contas');
-requireText('admin-control-center-v10.js','UNIFICAR PERFIS','ação de unificação de duplicidades');
-requireText('admin-control-center-v10.js','plataforma = app','modelo preparado para futuro aplicativo');
+requireText('admin-profile-link-v10.js?v=20260909-46','export async function linkLegacyProfile','unificação segura de legado e perfil social');
+requireText('admin-profile-link-v10.js?v=20260909-46','event.stopImmediatePropagation()','bloqueio do handler legado quebrado');
+requireText('admin-profile-link-v10.js?v=20260909-46','ownerEmail:deleteField()','e-mail removido do documento público do atleta');
+requireText('admin-control-center-v10.js?v=20260909-46','Todas as contas cadastradas','painel geral de contas');
+requireText('admin-control-center-v10.js?v=20260909-46','UNIFICAR PERFIS','ação de unificação de duplicidades');
+requireText('admin-control-center-v10.js?v=20260909-46','plataforma = app','modelo preparado para futuro aplicativo');
 requireText('site-v7-autoload.js','auth-audit-v11.js','telemetria V11 carregada globalmente');
-requireText('site-v7-autoload.js','admin-control-center-v10.js','centro de controle carregado no ADM');
+requireText('site-v7-autoload.js','admin-control-center-v10.js?v=20260909-46','centro de controle carregado no ADM');
 requireText('firestore.rules','match /access_logs/{eventId}','coleção de logs protegida por regras');
 requireText('firestore.rules',"request.resource.data.tipo in ['cadastro','login','sessao']",'tipos de evento permitidos');
 requireText('firestore.rules',"request.resource.data.plataforma in ['web','app']",'origem web/app validada');
@@ -116,11 +116,11 @@ requireText('firestore.rules','match /equipes/{equipeId}/privado/{documento}','d
 requireText('firestore.rules','match /perfis/{uid}/privado/{documento}','dados privados de perfis');
 requireText('firestore.rules','approvedSocialTarget','proteção de alvo social');
 requireText('firestore.rules','match /conversas/{conversationId}','regras do Direct');
-requireText('admin-v8-hardening.js','secureApprovePending','aprovação segura de atleta');
-requireText('admin-v8-hardening.js','secureApproveTeam','aprovação segura de equipe');
-requireText('campeonatos-admin.js','admin-v8-hardening.js','hardening carregado pelo painel ADM');
-forbidText('admin-v8-hardening.js','nascimento:String(a.nascimento||""),cidade','nascimento misturado no payload público');
-forbidText('admin-v8-hardening.js','responsavel:String(a.responsavel||""),uf','responsável misturado no payload público da equipe');
+requireText('admin-v8-hardening.js?v=20260909-46','secureApprovePending','aprovação segura de atleta');
+requireText('admin-v8-hardening.js?v=20260909-46','secureApproveTeam','aprovação segura de equipe');
+requireText('campeonatos-admin.js','admin-v8-hardening.js?v=20260909-46','hardening carregado pelo painel ADM');
+forbidText('admin-v8-hardening.js?v=20260909-46','nascimento:String(a.nascimento||""),cidade','nascimento misturado no payload público');
+forbidText('admin-v8-hardening.js?v=20260909-46','responsavel:String(a.responsavel||""),uf','responsável misturado no payload público da equipe');
 
 const rules=read('firestore.rules');
 const athletePublicUpdate="'nome','cidade','uf','modalidades','posicoes','modalidade','posicao','categoria',\n          'time','historicoEquipes','historicoCampeonatos','observacoes','instagramUrl','foto','ownerUid','atualizadoEm'";
@@ -196,12 +196,12 @@ requireText('analytics.js','confiavel:false','analytics próprio marcado como te
 requireText('firestore.rules','socialTargetReadable','leitura social protegida por privacidade');
 requireText('firestore.rules',"request.resource.data.visibilidade in ['publico','privado']",'visibilidade social obrigatória');
 requireText('home-social.js','where(\"visibilidade\",\"==\",\"publico\")','Home consulta apenas conteúdo público');
-requireText('social-network.js','where(\"visibilidade\",\"==\",\"publico\")','Stories globais consultam apenas conteúdo público');
+requireText('social-network.js?v=20260909-46','where(\"visibilidade\",\"==\",\"publico\")','Stories globais consultam apenas conteúdo público');
 forbidText('social-v6.js','getDocs(collection(db,\"perfis\"))','diretório completo de perfis para menções');
 requireText('social-v6.js','doc(db,\"handles\",key)','menções resolvidas por índice de handles');
 requireText('cadastro-direto.js','sessionStorage.getItem(DRAFT_KEY)','rascunho sensível limitado à sessão');
 forbidText('cadastro-direto.js','localStorage.getItem(DRAFT_KEY)','rascunho persistente com dados sensíveis');
-requireText('firebase-app-check-v11.js','initializeAppCheck','cliente preparado para Firebase App Check');
+requireText('firebase-app-check-v11.js?v=20260909-46','initializeAppCheck','cliente preparado para Firebase App Check');
 requireText('manifest.webmanifest','app-icon.svg','ícone instalável PWA');
 requireText('site-v8.js','og:image','imagem social para compartilhamento');
 requireText('campeonatos-public.js','linkOrganizador: link','link de campeonato estruturado');
