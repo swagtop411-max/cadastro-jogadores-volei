@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Repair embedded template literal in one-shot script
+      - name: Repair one-shot script compatibility
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -29,9 +29,13 @@ jobs:
           t=p.read_text()
           old='    if(!confirm(`ATENÇÃO: este perfil está vinculado ao UID ${currentOwner}. A solicitação do UID ${uid} está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?`)){'
           new='    if(!confirm("ATENÇÃO: este perfil está vinculado ao UID " + currentOwner + ". A solicitação do UID " + uid + " está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?")){'
-          if old not in t:
-              raise SystemExit("Trecho esperado não encontrado no script V46")
-          p.write_text(t.replace(old,new,1))
+          if old in t:
+              t=t.replace(old,new,1)
+          old_anchor="const anchor='  \"/assets/app-icon.svg\",';"
+          new_anchor="const anchor='\"/manifest.webmanifest\",';"
+          if old_anchor in t:
+              t=t.replace(old_anchor,new_anchor,1)
+          p.write_text(t)
           PY
       - name: Apply deterministic V46 fixes
         run: node scripts/apply-v46-fixes.mjs
