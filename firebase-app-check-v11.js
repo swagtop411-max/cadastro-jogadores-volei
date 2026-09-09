@@ -27,7 +27,9 @@ if(!globalThis.__BD_APP_CHECK_PROMISE__){
  })();
 }
 
-import("./admin-shortcut-v34.js?v=20260909-46").catch(error=>console.warn("Atalho ADM:",error));
-import("./ugc-safety-v41.js?v=20260909-46").catch(error=>console.warn("Segurança persistente da comunidade:",error));
+import("./admin-shortcut-v34.js?v=20260909-47").catch(error=>console.warn("Atalho ADM:",error));
+import("./ugc-safety-v41.js?v=20260909-47").catch(error=>console.warn("Segurança persistente da comunidade:",error));
+import("./age-gate-v47.js?v=20260909-47").catch(error=>console.warn("Barreira 18+ V47:",error));
+import("./terms-consent-v47.js?v=20260909-47").catch(error=>console.warn("Aceite legal V47:",error));
 
 export default globalThis.__BD_APP_CHECK_PROMISE__;
