@@ -1,6 +1,6 @@
 const { initializeApp } = require("firebase-admin/app");
 const { getAuth } = require("firebase-admin/auth");
-const { getFirestore } = require("firebase-admin/firestore");
+const { FieldValue, getFirestore } = require("firebase-admin/firestore");
 const { getStorage } = require("firebase-admin/storage");
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { setGlobalOptions } = require("firebase-functions/v2");
@@ -23,6 +23,7 @@ const CLOUDINARY_CLOUD_NAME = "hmputmfr";
 const CLOUDINARY_API_KEY = defineSecret("CLOUDINARY_API_KEY");
 const CLOUDINARY_API_SECRET = defineSecret("CLOUDINARY_API_SECRET");
 const OWNER_EMAIL = "swagtop411@gmail.com";
+const LEGAL_VERSION = "2026-09-09";
 const UPLOAD_WINDOW_MS = 60 * 1000;
 const UPLOAD_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
 const UPLOADS_PER_MINUTE = 15;
@@ -146,6 +147,63 @@ exports.signCloudinaryUpload = onCall(
       maxBytes: resourceType === "video" ? 45 * 1024 * 1024 : kind === "avatar" ? 5 * 1024 * 1024 : kind === "cover" ? 8 * 1024 * 1024 : 25 * 1024 * 1024,
       expiresAt: timestamp + 5 * 60,
     };
+  }
+);
+
+function parseBirthDate(value) {
+  const raw = String(value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const [year, month, day] = raw.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null;
+  return date;
+}
+
+function isAdult18(value, reference = new Date()) {
+  const birth = parseBirthDate(value);
+  if (!birth) return null;
+  const cutoff = new Date(Date.UTC(reference.getUTCFullYear() - 18, reference.getUTCMonth(), reference.getUTCDate(), 23, 59, 59, 999));
+  return birth.getTime() <= cutoff.getTime();
+}
+
+exports.acceptLegalTerms = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+    timeoutSeconds: 30,
+  },
+  async (request) => {
+    const uid = requireUser(request);
+    const version = String(request.data?.version || "").trim();
+    const adultConfirmed = request.data?.adultConfirmed === true;
+    if (version !== LEGAL_VERSION) {
+      throw new HttpsError("failed-precondition", "A versão dos Termos mudou. Atualize a página e tente novamente.");
+    }
+    if (!adultConfirmed) {
+      throw new HttpsError("invalid-argument", "Confirme que você tem 18 anos ou mais.");
+    }
+
+    const userRef = db.collection("usuarios").doc(uid);
+    const userSnap = await userRef.get();
+    const birthCheck = isAdult18(userSnap.exists ? userSnap.data()?.nascimento : "");
+    if (birthCheck === false) {
+      logger.warn("Tentativa de aceite legal por conta menor de idade", { uid });
+      throw new HttpsError("permission-denied", "Esta plataforma é exclusiva para maiores de 18 anos.");
+    }
+
+    await userRef.set({
+      termosAceitosVersao: LEGAL_VERSION,
+      termosAceitosEm: FieldValue.serverTimestamp(),
+      politicaPrivacidadeAceitaVersao: LEGAL_VERSION,
+      politicaPrivacidadeAceitaEm: FieldValue.serverTimestamp(),
+      maioridadeDeclarada: true,
+      maioridadeDeclaradaEm: FieldValue.serverTimestamp(),
+      aceiteLegalOrigem: "app",
+      atualizadoEmLegal: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    logger.info("Aceite legal registrado", { uid, version: LEGAL_VERSION });
+    return { ok: true, version: LEGAL_VERSION };
   }
 );
 
