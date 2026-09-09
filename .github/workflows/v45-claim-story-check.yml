@@ -1,0 +1,34 @@
+name: Claim and Stories V45
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "reivindicacao-v45.js"
+      - "perfil.html"
+      - "profile-story-access-v45.js"
+      - "avatar-story-v36.js"
+      - "perfil-social.html"
+      - "sw.js"
+      - "scripts/audit-v45-claim-story.mjs"
+      - ".github/workflows/v45-claim-story-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate JavaScript syntax
+        run: |
+          node --check reivindicacao-v45.js
+          node --check profile-story-access-v45.js
+          node --check avatar-story-v36.js
+      - name: Audit claim and story behavior
+        run: node scripts/audit-v45-claim-story.mjs
