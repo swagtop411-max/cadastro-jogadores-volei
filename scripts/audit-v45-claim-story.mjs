@@ -7,7 +7,7 @@ const need=(p,s,label)=>{if(!fs.existsSync(p))return failures.push(`${p}: arquiv
 const forbid=(p,s,label)=>{if(!fs.existsSync(p))return failures.push(`${p}: arquivo ausente`);read(p).includes(s)?failures.push(`${p}: ${label}`):pass.push(label)};
 
 need("reivindicacao-v45.js",'status: "pendente"',"reivindicação cria pedido pendente");
-need("reivindicacao-v45.js",'perfil.ownerUid) !== user.uid',"vínculo anterior segue para revisão");
+need("reivindicacao-v45.js",'text(profile.ownerUid) && text(profile.ownerUid) !== user.uid',"vínculo anterior segue para revisão");
 need("reivindicacao-v45.js",'where("solicitanteUid", "==", user.uid)',"consulta apenas reivindicações do usuário");
 need("perfil.html",'reivindicacao-v45.js?v=20260909-45',"perfil legado usa fluxo V45");
 forbid("perfil.html",'src="reivindicacao.js?',"perfil legado não carrega fluxo antigo");
