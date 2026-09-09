@@ -1,0 +1,72 @@
+name: V47 Play Ready
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "android-twa/**"
+      - "play-store/**"
+      - "terms-consent-v47.js"
+      - "age-gate-v47.js"
+      - "firebase-app-check-v11.js"
+      - "admin-moderation-v42.js"
+      - "ugc-safety-v41.js"
+      - "firestore.rules"
+      - "storage.rules"
+      - "termos-de-uso.html"
+      - "politica-privacidade.html"
+      - "exclusao-conta.html"
+      - "sw.js"
+      - "scripts/audit-v47-play-ready.mjs"
+      - "tests/playwright/**"
+      - "playwright.config.mjs"
+      - "package.json"
+      - ".github/workflows/v47-play-ready.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  static-release-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Auditoria estática V47
+        run: node scripts/audit-v47-play-ready.mjs
+      - name: Validar JavaScript crítico
+        run: |
+          node --check functions/index.js
+          node --check terms-consent-v47.js
+          node --check age-gate-v47.js
+          node --check admin-moderation-v42.js
+
+  live-browser-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    needs: static-release-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar Playwright
+        run: npm install
+      - name: Instalar Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Smoke web público e autenticado opcional
+        env:
+          PLAY_BASE_URL: https://cadastrodeatletas.com.br
+          PLAY_TEST_EMAIL: ${{ secrets.PLAY_TEST_EMAIL }}
+          PLAY_TEST_PASSWORD: ${{ secrets.PLAY_TEST_PASSWORD }}
+        run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v47-playwright-report
+          path: playwright-report
+          if-no-files-found: ignore
