@@ -23,6 +23,10 @@ const CLOUDINARY_CLOUD_NAME = "hmputmfr";
 const CLOUDINARY_API_KEY = defineSecret("CLOUDINARY_API_KEY");
 const CLOUDINARY_API_SECRET = defineSecret("CLOUDINARY_API_SECRET");
 const OWNER_EMAIL = "swagtop411@gmail.com";
+const UPLOAD_WINDOW_MS = 60 * 1000;
+const UPLOAD_DAILY_WINDOW_MS = 24 * 60 * 60 * 1000;
+const UPLOADS_PER_MINUTE = 15;
+const UPLOADS_PER_DAY = 300;
 
 function requireUser(request) {
   if (!request.auth?.uid) {
@@ -60,14 +64,52 @@ function cloudinaryConfig() {
   return { apiKey, apiSecret };
 }
 
+async function consumeUploadQuota(uid) {
+  const ref = db.collection("upload_rate_limits").doc(uid);
+  const now = Date.now();
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() || {} : {};
+
+    let minuteStartedAt = Number(data.minuteStartedAt || 0);
+    let minuteCount = Number(data.minuteCount || 0);
+    let dayStartedAt = Number(data.dayStartedAt || 0);
+    let dayCount = Number(data.dayCount || 0);
+
+    if (!minuteStartedAt || now - minuteStartedAt >= UPLOAD_WINDOW_MS) {
+      minuteStartedAt = now;
+      minuteCount = 0;
+    }
+    if (!dayStartedAt || now - dayStartedAt >= UPLOAD_DAILY_WINDOW_MS) {
+      dayStartedAt = now;
+      dayCount = 0;
+    }
+
+    if (minuteCount >= UPLOADS_PER_MINUTE || dayCount >= UPLOADS_PER_DAY) {
+      throw new HttpsError("resource-exhausted", "Limite temporário de envios atingido. Aguarde e tente novamente.");
+    }
+
+    tx.set(ref, {
+      uid,
+      minuteStartedAt,
+      minuteCount: minuteCount + 1,
+      dayStartedAt,
+      dayCount: dayCount + 1,
+      updatedAt: now,
+    }, { merge: true });
+  });
+}
+
 exports.signCloudinaryUpload = onCall(
   {
     enforceAppCheck: true,
+    consumeAppCheckToken: true,
     secrets: [CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET],
     timeoutSeconds: 30,
   },
   async (request) => {
     const uid = requireUser(request);
+    await consumeUploadQuota(uid);
     const { apiKey, apiSecret } = cloudinaryConfig();
     const kind = cleanTag(request.data?.kind || "social");
     const allowedKinds = new Set(["photo", "video", "story", "carousel", "avatar", "cover", "direct", "social"]);
@@ -193,6 +235,7 @@ exports.deleteMyAccount = onCall(
     const refs = new Map();
     const addRef = (ref) => ref && refs.set(ref.path, ref);
     const postIds = [];
+    const storyIds = [];
     const athleteIds = [];
 
     const exactPaths = [
@@ -206,6 +249,7 @@ exports.deleteMyAccount = onCall(
       `notificacoes/${uid}`,
       `salvos/${uid}`,
       `destaques/${uid}`,
+      `upload_rate_limits/${uid}`,
     ];
 
     for (const path of exactPaths) {
@@ -242,15 +286,22 @@ exports.deleteMyAccount = onCall(
         addRef(docSnap.ref);
         collectMedia(docSnap.data(), assets);
         if (collectionName === "publicacoes" || collectionName === "videos") postIds.push(docSnap.id);
+        if (collectionName === "stories") storyIds.push(docSnap.id);
         if (collectionName === "atletas" || collectionName === "atletas_pendentes") athleteIds.push(docSnap.id);
       }
     }
 
     const conversations = await queryDocs("conversas", "participants", "array-contains", uid).catch(() => null);
-    for (const docSnap of conversations?.docs || []) addRef(docSnap.ref);
+    for (const docSnap of conversations?.docs || []) {
+      addRef(docSnap.ref);
+      const messages = await docSnap.ref.collection("mensagens").get().catch(() => null);
+      for (const message of messages?.docs || []) collectMedia(message.data(), assets);
+    }
 
-    const userGroup = await queryGroupDocs("usuarios", "uid", "==", uid).catch(() => null);
-    for (const docSnap of userGroup?.docs || []) addRef(docSnap.ref);
+    for (const field of ["uid", "viewerUid", "userUid"]) {
+      const userGroup = await queryGroupDocs("usuarios", field, "==", uid).catch(() => null);
+      for (const docSnap of userGroup?.docs || []) addRef(docSnap.ref);
+    }
 
     for (const field of ["actorUid", "targetUid", "ownerUid"]) {
       const items = await queryGroupDocs("itens", field, "==", uid).catch(() => null);
@@ -265,6 +316,8 @@ exports.deleteMyAccount = onCall(
       for (const docSnap of saved?.docs || []) addRef(docSnap.ref);
       for (const postId of group) addRef(db.doc(`curtidas_publicacoes/${postId}`));
     }
+
+    for (const storyId of [...new Set(storyIds)]) addRef(db.doc(`story_views/${storyId}`));
 
     for (const athleteId of [...new Set(athleteIds)]) {
       const comments = await db.collection("comentarios").where("atletaId", "==", athleteId).get().catch(() => null);
