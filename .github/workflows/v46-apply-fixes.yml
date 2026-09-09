@@ -21,6 +21,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Repair embedded template literal in one-shot script
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("scripts/apply-v46-fixes.mjs")
+          t=p.read_text()
+          old='    if(!confirm(`ATENÇÃO: este perfil está vinculado ao UID ${currentOwner}. A solicitação do UID ${uid} está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?`)){'
+          new='    if(!confirm("ATENÇÃO: este perfil está vinculado ao UID " + currentOwner + ". A solicitação do UID " + uid + " está pendente. Confirma a transferência do cadastro legado após conferir a identidade do atleta?")){'
+          if old not in t:
+              raise SystemExit("Trecho esperado não encontrado no script V46")
+          p.write_text(t.replace(old,new,1))
+          PY
       - name: Apply deterministic V46 fixes
         run: node scripts/apply-v46-fixes.mjs
       - name: Generate PWA PNG icons from canonical SVG
