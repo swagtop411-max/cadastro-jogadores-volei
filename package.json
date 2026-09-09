@@ -1,0 +1,12 @@
+{
+  "name": "cadastro-de-atletas-release-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "audit:v47": "node scripts/audit-v47-play-ready.mjs",
+    "test:play": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
