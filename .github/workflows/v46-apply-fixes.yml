@@ -1,0 +1,48 @@
+name: Apply V46 hardening fixes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/apply-v46-fixes.mjs"
+      - ".github/workflows/v46-apply-fixes.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Apply deterministic V46 fixes
+        run: node scripts/apply-v46-fixes.mjs
+      - name: Generate PWA PNG icons from canonical SVG
+        run: |
+          python3 -m pip install --quiet cairosvg
+          python3 - <<'PY'
+          import cairosvg
+          for size in (192, 512):
+              cairosvg.svg2png(url="assets/app-icon.svg", write_to=f"assets/app-icon-{size}.png", output_width=size, output_height=size)
+          PY
+      - name: Validate patched JavaScript and JSON
+        run: |
+          find . -maxdepth 2 -type f \( -name '*.js' -o -name '*.mjs' \) -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
+          node -e 'JSON.parse(require("fs").readFileSync("manifest.webmanifest","utf8")); JSON.parse(require("fs").readFileSync("firebase.json","utf8"));'
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração a aplicar."
+            exit 0
+          fi
+          git commit -m "fix: V46 full security reliability hardening"
+          git push origin HEAD:main
