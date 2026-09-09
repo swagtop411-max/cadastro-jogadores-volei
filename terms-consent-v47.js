@@ -7,6 +7,7 @@ const LEGAL_VERSION="2026-09-09";
 const PAGE=location.pathname.split("/").pop()||"index.html";
 const SOCIAL_PAGES=new Set(["index.html","perfil-social.html","comunidade.html","explorar.html","reels.html","salvos.html","hashtags.html","meu-perfil.html","atividade.html","conta.html"]);
 const PUBLIC_LEGAL_PAGES=new Set(["termos-de-uso.html","politica-privacidade.html","politica-cookies.html","exclusao-conta.html"]);
+const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 
 window.BD_LEGAL_VERSION=LEGAL_VERSION;
 if(!SOCIAL_PAGES.has(PAGE)||PUBLIC_LEGAL_PAGES.has(PAGE)){
@@ -84,6 +85,14 @@ if(!SOCIAL_PAGES.has(PAGE)||PUBLIC_LEGAL_PAGES.has(PAGE)){
     }
   }
 
+  async function waitForUserRecord(uid,attempts=20){
+    for(let attempt=0;attempt<attempts;attempt++){
+      try{const snap=await getDoc(doc(db,"usuarios",uid));if(snap.exists())return true}catch{}
+      await sleep(150);
+    }
+    return false;
+  }
+
   async function checkUser(user){
     const token=++serial;currentUser=user||null;
     if(!user){setReady(true);document.getElementById("legalConsentV47")?.setAttribute("hidden","");return}
@@ -101,8 +110,9 @@ if(!SOCIAL_PAGES.has(PAGE)||PUBLIC_LEGAL_PAGES.has(PAGE)){
 
     const registerAccepted=PAGE==="conta.html"&&document.getElementById("acceptTerms")?.checked&&document.getElementById("confirmAdult")?.checked;
     if(registerAccepted){
-      const ok=await recordAcceptance(true);
-      if(ok)return;
+      const accountReady=await waitForUserRecord(user.uid);
+      if(token!==serial)return;
+      if(accountReady){const ok=await recordAcceptance(true);if(ok)return}
     }
     const modal=ensureModal();modal.hidden=false;
   }
