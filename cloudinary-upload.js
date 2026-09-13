@@ -1,7 +1,10 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getToken as getAppCheckToken } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app-check.js";
+import appCheckReady from "./firebase-app-check-v11.js?v=20260909-47";
 
 const CLOUDINARY_CLOUD_NAME = "hmputmfr";
+const WORKER_API = "https://cadastro-atletas-api.swagtop411.workers.dev";
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",
   authDomain: "jogadores-de-volei.firebaseapp.com",
@@ -13,7 +16,6 @@ const FIREBASE_CONFIG = {
 
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const VIDEO_TYPES = new Set(["video/mp4", "video/webm", "video/quicktime"]);
-let signUploadCallable = null;
 
 // Mantém a forma antiga do objeto para módulos legados, mas sem qualquer preset público.
 export const CLOUDINARY_CONFIG = Object.freeze({
@@ -22,14 +24,62 @@ export const CLOUDINARY_CONFIG = Object.freeze({
   videoPreset: null,
 });
 
-function firebaseFunctions() {
-  const app = getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
-  return getFunctions(app, "southamerica-east1");
+function firebaseApp() {
+  return getApps().length ? getApp() : initializeApp(FIREBASE_CONFIG);
 }
 
-function signer() {
-  if (!signUploadCallable) signUploadCallable = httpsCallable(firebaseFunctions(), "signCloudinaryUpload", { timeout: 30000 });
-  return signUploadCallable;
+async function currentUserReady(timeoutMs = 10000) {
+  const auth = getAuth(firebaseApp());
+  if (auth.currentUser) return auth.currentUser;
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let unsubscribe = () => {};
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      unsubscribe();
+      reject(new Error("AUTH_TIMEOUT"));
+    }, timeoutMs);
+
+    unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe();
+        if (user) resolve(user);
+        else reject(new Error("AUTH_REQUIRED"));
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        unsubscribe();
+        reject(error);
+      }
+    );
+  });
+}
+
+async function secureRequestHeaders() {
+  const user = await currentUserReady();
+  const idToken = await user.getIdToken(false);
+  if (!idToken) throw new Error("AUTH_REQUIRED");
+
+  const appCheck = await appCheckReady;
+  if (!appCheck) throw new Error("APP_CHECK_UNAVAILABLE");
+
+  const appCheckResult = await getAppCheckToken(appCheck, false);
+  const appCheckToken = String(appCheckResult?.token || "").trim();
+  if (!appCheckToken) throw new Error("APP_CHECK_UNAVAILABLE");
+
+  return {
+    Authorization: `Bearer ${idToken}`,
+    "X-Firebase-AppCheck": appCheckToken,
+    "Content-Type": "application/json",
+  };
 }
 
 function inferKind({ tags = [], allowImage = true, allowVideo = false, kind = "" } = {}) {
@@ -104,40 +154,86 @@ function validateFile(file, { maxBytes, allowImage = true, allowVideo = false } 
 }
 
 async function requestSignedTicket({ resourceType, tags, kind }) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
   try {
-    const result = await signer()({ resourceType, tags, kind });
-    const ticket = result?.data || {};
-    if (!ticket.signature || !ticket.timestamp || !ticket.apiKey || !ticket.cloudName || !ticket.folder) {
-      throw new Error("O serviço seguro de mídia não retornou uma assinatura válida.");
+    const headers = await secureRequestHeaders();
+    const response = await fetch(`${WORKER_API}/v1/cloudinary/sign-upload`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ resourceType, tags, kind }),
+      signal: controller.signal,
+      cache: "no-store",
+    });
+
+    const ticket = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const code = String(ticket?.error || "").toLowerCase();
+      if (response.status === 401 || code.includes("unauthorized")) throw new Error("AUTH_REJECTED");
+      if (response.status === 403 || code.includes("origin_not_allowed")) throw new Error("ORIGIN_REJECTED");
+      throw new Error("SIGNER_REJECTED");
     }
+
+    if (
+      !ticket.signature ||
+      !ticket.timestamp ||
+      !ticket.apiKey ||
+      !ticket.cloudName ||
+      !ticket.publicId ||
+      !ticket.signedFields ||
+      typeof ticket.signedFields !== "object"
+    ) {
+      throw new Error("INVALID_SIGNED_TICKET");
+    }
+
     if (ticket.expiresAt && Math.floor(Date.now() / 1000) > Number(ticket.expiresAt)) {
-      throw new Error("A autorização de envio expirou. Tente publicar novamente.");
+      throw new Error("SIGNATURE_EXPIRED");
     }
+
     return ticket;
   } catch (error) {
-    const code = String(error?.code || "").toLowerCase();
-    if (code.includes("unauthenticated")) throw new Error("Entre na sua conta novamente antes de enviar a mídia.");
-    if (code.includes("resource-exhausted")) throw new Error("Muitos envios em pouco tempo. Aguarde alguns instantes e tente novamente.");
-    if (code.includes("failed-precondition")) throw new Error("O serviço seguro de mídia ainda não está configurado corretamente.");
+    const code = String(error?.message || error?.code || "").toUpperCase();
+    if (code.includes("AUTH_REQUIRED") || code.includes("AUTH_REJECTED")) {
+      throw new Error("Entre na sua conta novamente antes de enviar a mídia.");
+    }
+    if (code.includes("APP_CHECK")) {
+      throw new Error("Não foi possível validar a segurança deste dispositivo. Atualize a página e tente novamente.");
+    }
+    if (code.includes("ORIGIN_REJECTED")) {
+      throw new Error("Este endereço não está autorizado a enviar mídia.");
+    }
+    if (error?.name === "AbortError" || code.includes("AUTH_TIMEOUT")) {
+      throw new Error("O serviço de mídia demorou para responder. Tente novamente.");
+    }
+    if (code.includes("SIGNATURE_EXPIRED")) {
+      throw new Error("A autorização de envio expirou. Tente publicar novamente.");
+    }
     throw new Error("Não foi possível autorizar o envio seguro da mídia. Verifique sua conexão e tente novamente.");
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 async function signedUpload(file, { resourceType, tags, kind, signal, onProgress }) {
   const ticket = await requestSignedTicket({ resourceType, tags, kind });
-  if (ticket.maxBytes && file.size > Number(ticket.maxBytes)) throw new Error("Arquivo acima do limite permitido para este tipo de publicação.");
+  if (ticket.maxBytes && file.size > Number(ticket.maxBytes)) {
+    throw new Error("Arquivo acima do limite permitido para este tipo de publicação.");
+  }
+
   const endpoint = `https://api.cloudinary.com/v1_1/${ticket.cloudName}/${ticket.resourceType || resourceType}/upload`;
   const form = new FormData();
   form.append("file", file);
   form.append("api_key", ticket.apiKey);
-  form.append("timestamp", String(ticket.timestamp));
   form.append("signature", ticket.signature);
-  form.append("folder", ticket.folder);
-  form.append("tags", ticket.tags || "cadastro-de-atletas,signed");
-  form.append("overwrite", "false");
-  form.append("unique_filename", "true");
-  form.append("use_filename", "false");
-  if (ticket.allowedFormats) form.append("allowed_formats", Array.isArray(ticket.allowedFormats) ? ticket.allowedFormats.join(",") : String(ticket.allowedFormats));
+
+  // Em upload assinado, os campos enviados devem ser exatamente os campos que o Worker assinou.
+  for (const [key, value] of Object.entries(ticket.signedFields || {})) {
+    if (value === undefined || value === null || String(value) === "") continue;
+    form.append(key, String(value));
+  }
+
   if (typeof onProgress === "function") onProgress(10);
   const response = await fetch(endpoint, { method: "POST", body: form, signal });
   const data = await response.json().catch(() => ({}));
