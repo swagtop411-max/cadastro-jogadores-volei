@@ -1,7 +1,6 @@
 import {getApp,getApps,initializeApp} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import {getAuth,onAuthStateChanged,signOut} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import {doc,getDoc,getFirestore} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import {getFunctions,httpsCallable} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+import {doc,getDoc,getFirestore,serverTimestamp,updateDoc} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const LEGAL_VERSION="2026-09-09";
 const PAGE=location.pathname.split("/").pop()||"index.html";
@@ -15,8 +14,7 @@ if(!SOCIAL_PAGES.has(PAGE)||PUBLIC_LEGAL_PAGES.has(PAGE)){
 }else{
   const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
   const app=getApps().length?getApp():initializeApp(cfg);
-  const auth=getAuth(app),db=getFirestore(app),functions=getFunctions(app,"southamerica-east1");
-  const acceptLegalTerms=httpsCallable(functions,"acceptLegalTerms");
+  const auth=getAuth(app),db=getFirestore(app);
   let currentUser=null,busy=false,serial=0;
 
   function installStyles(){
@@ -70,13 +68,33 @@ if(!SOCIAL_PAGES.has(PAGE)||PUBLIC_LEGAL_PAGES.has(PAGE)){
     busy=true;button.disabled=true;exit.disabled=true;setStatus("Registrando seu aceite com segurança...");
     try{
       await globalThis.__BD_APP_CHECK_PROMISE__?.catch?.(()=>null);
-      const result=await acceptLegalTerms({version:LEGAL_VERSION,adultConfirmed:adultConfirmed===true});
-      if(result?.data?.version!==LEGAL_VERSION)throw new Error("Não foi possível confirmar a versão legal vigente.");
+      if(adultConfirmed!==true)throw new Error("Confirme que você tem 18 anos ou mais.");
+      const ref=doc(db,"usuarios",currentUser.uid);
+      await updateDoc(ref,{
+        termosAceitosVersao:LEGAL_VERSION,
+        termosAceitosEm:serverTimestamp(),
+        politicaPrivacidadeAceitaVersao:LEGAL_VERSION,
+        politicaPrivacidadeAceitaEm:serverTimestamp(),
+        maioridadeDeclarada:true,
+        maioridadeDeclaradaEm:serverTimestamp(),
+        aceiteLegalOrigem:"app",
+        atualizadoEmLegal:serverTimestamp(),
+      });
+      const confirmed=await getDoc(ref);
+      const data=confirmed.exists()?confirmed.data():{};
+      if(data.termosAceitosVersao!==LEGAL_VERSION||data.politicaPrivacidadeAceitaVersao!==LEGAL_VERSION){
+        throw new Error("Não foi possível confirmar a versão legal vigente.");
+      }
       setReady(true);modal.hidden=true;setStatus("");
       return true;
     }catch(error){
-      console.error("Aceite legal V47:",error);
-      setStatus(error?.message||"Não foi possível registrar o aceite agora. Tente novamente.",true);
+      console.error("Aceite legal V50:",error);
+      const code=String(error?.code||"").toLowerCase();
+      if(code.includes("permission-denied")){
+        setStatus("A atualização das regras de segurança ainda não foi publicada. Tente novamente em instantes.",true);
+      }else{
+        setStatus(error?.message||"Não foi possível registrar o aceite agora. Tente novamente.",true);
+      }
       return false;
     }finally{
       busy=false;exit.disabled=false;
