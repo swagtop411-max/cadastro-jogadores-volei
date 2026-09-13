@@ -4,8 +4,9 @@ import path from 'node:path';
 const root=process.cwd();
 const failures=[];
 const notes=[];
-const read=file=>fs.readFileSync(path.join(root,file),'utf8');
-const exists=file=>fs.existsSync(path.join(root,file));
+const physical=file=>String(file||'').split('#')[0].split('?')[0];
+const read=file=>fs.readFileSync(path.join(root,physical(file)),'utf8');
+const exists=file=>fs.existsSync(path.join(root,physical(file)));
 const fail=message=>failures.push(message);
 const ok=message=>notes.push(`OK ${message}`);
 const requireFile=file=>exists(file)?ok(`arquivo ${file}`):fail(`arquivo obrigatório ausente: ${file}`);
@@ -19,7 +20,6 @@ const forbidText=(file,text,label=text)=>{if(!exists(file))return;read(file).inc
  'admin-v8-hardening.js?v=20260909-46','admin-claims-v9.js?v=20260909-46','admin-profile-link-v10.js?v=20260909-46','admin-control-center-v10.js?v=20260909-46','auth-audit-v11.js','admin-data-migration-v11.js?v=20260909-46','admin-commerce-v11.js?v=20260909-46','reivindicacao.js','conta.js','firestore.rules'
 ].forEach(requireFile);
 
-// Recursos V8 solicitados.
 requireText('cadastro-direto.js','uploadCloudinary','cadastro de atleta usa Cloudinary');
 requireText('cadastro-direto.js','DRAFT_KEY','rascunho automático do atleta');
 requireText('cadastro-direto.js','cadInstagram','Instagram no cadastro');
@@ -36,7 +36,6 @@ requireText('perfil-social.js','getUserMedia','câmera real no perfil');
 requireText('perfil-social.js','mountMessageButton','botão de mensagem no perfil');
 requireText('public.js','res.cloudinary.com','Cloudinary permitido nas listagens');
 
-// V31: console administrativo privado, sem entrada pública.
 requireText('site-v8.js','removeAdminEntrypoints','entradas administrativas removidas do DOM público');
 forbidText('site-v5.js?v=20260909-46','data-v7-admin','atalho ADM no menu público');
 forbidText('site-v5.js?v=20260909-46','PAINEL ADM','texto de painel ADM no menu público');
@@ -65,7 +64,6 @@ requireText('home-social.js','feedImageUrl','feed usa imagem derivada otimizada'
 requireText('home-social.js','IntersectionObserver','feed hidrata interações por visibilidade');
 requireText('sw.js','request.mode==="navigate"','cache de navegação controlado');
 
-// Reivindicação de perfis e diagnóstico administrativo.
 requireText('reivindicacao.js','claimReturnUrl','retorno automático ao perfil antigo');
 requireText('reivindicacao.js','url.searchParams.set("claim", "1")','marcador de reivindicação após autenticação');
 requireText('reivindicacao.js','deterministicTaken','nova tentativa após reivindicação recusada');
@@ -77,7 +75,6 @@ requireText('admin-claims-v9.js?v=20260909-46','vinculoUid','preenchimento assis
 requireText('site-v7-autoload.js','admin-claims-v9.js?v=20260909-46','central de UIDs carregada no ADM');
 requireText('firestore.rules','match /reivindicacoes_perfis/{claimId}','regras de reivindicação presentes');
 
-// V10: contas, acessos, duplicidades e unificação segura.
 requireText('auth-audit-v11.js','export async function recordAuthEvent','registrador central de eventos autenticados V11');
 requireText('auth-audit-v11.js','fonte:"cliente"','telemetria identificada como cliente');
 requireText('auth-audit-v11.js','confiavel:false','telemetria não tratada como auditoria autoritativa');
@@ -101,7 +98,6 @@ requireText('firestore.rules','match /site_stats/{eventId}','regras de analytics
 requireText('firestore.rules','match /solicitacoes_planos/{uid}','solicitação segura de plano');
 requireText('firestore.rules','match /handles/{handle}','índice seguro de handles');
 
-// Fluxos novos não podem voltar ao Firebase Storage/base64 destrutivo.
 for(const file of ['cadastro-direto.js','cadastro-equipe.js','campeonatos-public.js','comunidade.js']){
  forbidText(file,'firebase-storage','Firebase Storage no fluxo novo');
  forbidText(file,'toDataURL(','compactação base64/toDataURL no fluxo novo');
@@ -109,7 +105,6 @@ for(const file of ['cadastro-direto.js','cadastro-equipe.js','campeonatos-public
 forbidText('comunidade.html','comunidade-cloudinary.js','publicador duplicado da Comunidade');
 forbidText('cadastro-atleta.html','cadastro-atleta.js','script legado concorrente no cadastro');
 
-// Segurança e privacidade essenciais.
 requireText('firestore.rules',"request.auth.token.email == 'swagtop411@gmail.com'",'fallback de ADM nas regras');
 requireText('firestore.rules','match /atletas/{atletaId}/privado/{documento}','dados privados de atletas');
 requireText('firestore.rules','match /equipes/{equipeId}/privado/{documento}','dados privados de equipes');
@@ -136,7 +131,6 @@ else ok('firestore.rules: access_logs presente');
 if(!rules.includes('allow read, delete: if isAdmin();'))fail('firestore.rules: leitura administrativa de auditoria ausente');
 else ok('firestore.rules: auditoria restrita ao ADM para leitura');
 
-// Validação de referências locais em HTML e imports locais em JS.
 function normalizeRef(from,value){
  let v=String(value||'').trim();
  if(!v||v.startsWith('#')||v.startsWith('data:')||v.startsWith('mailto:')||v.startsWith('tel:')||v.startsWith('javascript:')||/^https?:\/\//i.test(v)||v.startsWith('//'))return null;
@@ -185,14 +179,12 @@ if(failures.length){
 }
 console.log('\nAUDITORIA V8/V10 APROVADA ✓');
 
-// V11 core hardening.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage no editor de perfil');
 requireText('meu-perfil.js','solicitacoes_planos','alteração de plano vira solicitação administrativa');
 requireText('owner-core-5e8a7c2d.js','cadastro-atleta-v11','aprovação base do atleta sem dados privados públicos');
 requireText('owner-core-5e8a7c2d.js','cadastro-equipe-v11','aprovação base da equipe sem dados privados públicos');
 requireText('analytics.js','confiavel:false','analytics próprio marcado como telemetria');
 
-// V11 stage 2: privacidade, performance e PWA.
 requireText('firestore.rules','socialTargetReadable','leitura social protegida por privacidade');
 requireText('firestore.rules',"request.resource.data.visibilidade in ['publico','privado']",'visibilidade social obrigatória');
 requireText('home-social.js','where(\"visibilidade\",\"==\",\"publico\")','Home consulta apenas conteúdo público');
