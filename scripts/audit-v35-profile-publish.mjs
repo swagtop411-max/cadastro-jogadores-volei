@@ -1,12 +1,15 @@
 import fs from "node:fs";
+
 const read=p=>fs.readFileSync(p,"utf8");
 const need=(ok,msg)=>{if(!ok)throw new Error(`V35 Profile publish: ${msg}`)};
+
 const fix=read("profile-publish-compat-v35.js");
 const ownerFix=read("owner-publish-v35.js");
 const html=read("perfil-social.html");
-const site=read("site-v5.js?v=20260909-46");
+const site=read("site-v5.js");
 const rules=read("firestore.rules");
 const sw=read("sw.js");
+
 need(html.indexOf("profile-publish-compat-v35.js")<html.indexOf("perfil-social.js"),"compatibilidade precisa carregar antes do publicador legado");
 need(fix.includes("user.uid!==profileUid"),"publicação deve exigir o próprio perfil autenticado");
 need((fix.match(/ownerUid:user\.uid/g)||[]).length>=3,"foto, vídeo e Story do perfil público devem usar o UID autenticado");
@@ -15,7 +18,7 @@ need(fix.includes('doc(collection(db,"publicacoes"))')&&fix.includes('doc(collec
 need(fix.includes("writeVariants")&&fix.includes("if(!denied(error))throw error"),"fallback só pode acontecer após permission-denied");
 need(fix.includes('omit(modern,["visibilidade","aprovado","status"])'),"Story não cobre o contrato legado conhecido");
 need(fix.includes('omit(modern,["visibilidade","midias","hashtags","mencoes","armazenamento"])'),"foto não cobre o contrato legado conhecido");
-need(site.includes('owner-publish-v35.js?v=20260908-35b'),"Meu Perfil precisa carregar o hotfix do proprietário");
+need(/owner-publish-v35\.js\?v=[^"']+/.test(site),"Meu Perfil precisa carregar o hotfix do proprietário");
 need(ownerFix.includes('["photoInput","videoInput","storyInput"]'),"hotfix deve interceptar foto, vídeo e Story do Meu Perfil");
 need((ownerFix.match(/ownerUid:currentUser\.uid/g)||[]).length>=3,"foto, vídeo e Story do Meu Perfil devem usar o UID autenticado");
 need((ownerFix.match(/visibilidade:vis/g)||[]).length>=3,"todos os formatos do Meu Perfil devem declarar visibilidade compatível");
