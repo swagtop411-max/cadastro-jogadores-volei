@@ -4,7 +4,8 @@ import path from 'node:path';
 const root=process.cwd();
 const failures=[];
 const passes=[];
-const file=p=>path.join(root,p);
+const physical=p=>String(p||'').split('#')[0].split('?')[0];
+const file=p=>path.join(root,physical(p));
 const exists=p=>fs.existsSync(file(p));
 const read=p=>fs.readFileSync(file(p),'utf8');
 const ok=m=>passes.push(m);
@@ -22,7 +23,6 @@ function forbidText(p,text,label=text){if(!exists(p))return fail(`${p} ausente`)
  'profile-autosync-v13.js','admin-profile-browser-v13.js?v=20260909-46'
 ].forEach(requireFile);
 
-// Autoridade e privacidade.
 requireText('firestore.rules','match /solicitacoes_planos/{uid}','planos por solicitação');
 requireText('firestore.rules','match /site_stats/{eventId}','analytics próprio protegido');
 requireText('firestore.rules','match /handles/{handle}','índice de handles');
@@ -35,7 +35,6 @@ forbidText('auth-audit-v11.js','planoStatus','telemetria não altera plano');
 requireText('admin-commerce-v11.js?v=20260909-46','CONFIRMAR PAGAMENTO','pagamento confirmado pelo ADM');
 requireText('admin-data-migration-v11.js?v=20260909-46','migracao-v11','migração de legado disponível');
 
-// App Check Enterprise.
 requireText('firebase-app-check-v11.js?v=20260909-46','ReCaptchaEnterpriseProvider','provedor Enterprise');
 requireText('firebase-app-check-v11.js?v=20260909-46','isTokenAutoRefreshEnabled:true','renovação automática');
 requireText('firebase-app-check-v11.js?v=20260909-46','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR','site key pública configurada');
@@ -44,7 +43,6 @@ requireText('site-v5.js?v=20260909-46','firebase-app-check-v11.js?v=20260909-46'
 requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
 requireText('p4x7m9q2.html','firebase-app-check-v11.js?v=20260909-46','novo gateway privado inicializa App Check antes do acesso ADM');
 
-// Mídia e editor.
 forbidText('meu-perfil.js','firebase-storage','Firebase Storage legado no editor');
 requireText('meu-perfil.js','uploadCloudinary','perfil usa Cloudinary');
 requireText('meu-perfil.js','solicitacoes_planos','mudança de plano não é autoativada');
@@ -52,19 +50,16 @@ requireText('perfil-social.js','visibilidade','publicação do perfil grava visi
 requireText('comunidade.js','visibilidade','Comunidade grava visibilidade');
 requireText('social-v6.js','visibilidade','carrossel/privacidade gravam visibilidade');
 
-// Menções: não pode baixar o diretório inteiro.
 forbidText('social-v6.js','getDocs(collection(db,"perfis"))','scan completo de perfis para menções');
 requireText('social-v6.js','doc(db,"handles",key)','lookup de @handle por documento');
 requireText('social-v6.js','const profileCache=new Map(),privacyCache=new Map(),blockCache=new Map(),followCache=new Map(),handleCache=new Map()','cache de handles declarado');
 forbidText('social-v6.js','directoryPromise=null','diretório legado de menções');
 
-// Consultas globais só trazem conteúdo público.
 for(const p of ['home-social.js','comunidade.js','explorar.js','reels.js','hashtags.js']){
  requireText(p,'where("visibilidade","==","publico")','consulta global somente pública');
 }
 requireText('social-network.js?v=20260909-46','where("visibilidade","==","publico")','Stories globais somente públicos');
 
-// Dados locais e performance.
 requireText('cadastro-direto.js','sessionStorage.getItem(DRAFT_KEY)','rascunho na sessão');
 forbidText('cadastro-direto.js','localStorage.getItem(DRAFT_KEY)','rascunho sensível persistente');
 requireText('admin-control-center-v10.js?v=20260909-46','?800:400','limite nas leituras administrativas');
@@ -73,7 +68,6 @@ requireText('ranking.js','RANK_CACHE_MS','cache de ranking');
 requireText('public.js','max=600','teto de carga pública automática');
 requireText('social-network.js?v=20260909-46','Promise.all(otherUids.map(profileOf))','perfis do Direct em paralelo');
 
-// Estrutura e PWA.
 requireText('cadastro-direto.js','instagramUrl:instagram','Instagram estruturado');
 requireText('campeonatos-public.js','linkOrganizador: link','link de campeonato estruturado');
 requireText('firebase-app-check-v11.js?v=20260909-46','initializeAppCheck','cliente pronto para App Check');
@@ -81,7 +75,6 @@ requireText('manifest.webmanifest','app-icon.svg','ícone PWA');
 requireText('site-v8.js','og:image','Open Graph image');
 requireText('site-v8.js','twitter:image','Twitter image');
 
-// Recuperação V12.
 requireText('firestore.rules','allow create: if isAdmin() || (\n        signedIn()','ADM pode criar handles na migração');
 requireText('admin-data-migration-v11.js?v=20260909-46','repairVisibility','reparo automático de visibilidade legado');
 requireText('comunidade-admin.js','Promise.allSettled','comunidade ADM tolera falha parcial');
@@ -90,7 +83,6 @@ requireText('owner-core-5e8a7c2d.js','const result=await Promise.allSettled','mo
 requireText('atletas.html','public.js?v=20260904-3','cache bust público V13 atualizado');
 for(const mod of ['analytics.js','public.js','cadastro-direto.js','conta.js','comunidade-admin.js','meu-perfil.js'])requireText(mod,'firebase-app-check-v11.js?v=20260909-46',`App Check antes de ${mod}`);
 
-// V31: o ADM não nasce no shell público; passa pelo gateway rotacionado, conta proprietária e regras do Firestore.
 requireText('admin.js','oc_6f9c2a71_session','wrapper administrativo exige o novo gateway');
 requireText('admin.js','owner-core-5e8a7c2d.js','wrapper administrativo aponta para o núcleo preservado');
 requireText('controle-privado-91b73f.html','Página indisponível','gateway antigo permanece desativado');
@@ -102,7 +94,6 @@ forbidText('p4x7m9q2.html','serviceWorker.register','gateway privado não interf
 forbidText('z8k3v6n1.html','serviceWorker.register','shell privado não interfere no PWA público');
 requireText('firestore.rules','allow read, delete: if isAdmin();','leitura de access_logs restrita ao ADM');
 
-// V13: conta sempre ganha identidade social mínima, sem inventar dados esportivos.
 requireText('firestore.rules','// V13_PERFIL_SOCIAL_BASICO','regra de perfil social básico');
 requireText('firestore.rules',"request.resource.data.get('completo',false) == false",'perfil incompleto permitido com validação');
 requireText('profile-autosync-v13.js','ensureSocialProfile','sincronização automática de conta para perfil');
@@ -115,7 +106,6 @@ requireText('admin-profile-browser-v13.js?v=20260909-46','CRIAR E ABRIR PERFIL',
 requireText('admin-profile-browser-v13.js?v=20260909-46','ABRIR PERFIL','ADM pode abrir perfil existente');
 requireText('site-v7-autoload.js','admin-profile-browser-v13.js?v=20260909-46','browser de perfil V13 carregado no ADM');
 
-// Aprovação segura sem campos pessoais no documento público.
 requireText('owner-core-5e8a7c2d.js','cadastro-atleta-v11','aprovação segura de atleta na fonte privada');
 requireText('owner-core-5e8a7c2d.js','cadastro-equipe-v11','aprovação segura de equipe na fonte privada');
 const admin=read('owner-core-5e8a7c2d.js');
@@ -126,7 +116,6 @@ for(const [name,block,keys] of [['atleta',athleteApproval,['nascimento:a.nascime
  for(const k of keys)block.includes(`publicData={${k}`)||block.includes(`,${k}`)?fail(`owner-core-5e8a7c2d.js: ${name} ainda mistura ${k} no publicData`):ok(`owner-core-5e8a7c2d.js: ${name} sem ${k} no publicData`);
 }
 
-// Segredos e resíduos temporários.
 forbidText('cloudinary-upload.js?v=20260909-46','api_secret','Cloudinary API secret no frontend');
 for(const p of [
  '.github/workflows/social-read-caps-once.yml','.github/workflows/v11-core-hardening-once.yml',
