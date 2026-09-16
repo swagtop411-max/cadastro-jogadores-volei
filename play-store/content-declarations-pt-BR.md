@@ -7,7 +7,7 @@
 - App direcionado a crianças: **NÃO**.
 - App direcionado a adolescentes: **NÃO**.
 
-O cadastro dentro do serviço também exige data de nascimento e bloqueia novas contas quando a idade informada é inferior a 18 anos.
+O cadastro solicita data de nascimento e confirmação de maioridade e impede novos cadastros quando a idade informada é inferior a 18 anos.
 
 ## Conteúdo gerado pelo usuário (UGC)
 
@@ -23,16 +23,16 @@ Recursos existentes:
 - curtidas e seguidores.
 
 Salvaguardas existentes:
-- aceitação dos Termos de Uso no cadastro;
+- aceitação dos Termos de Uso e da Política de Privacidade;
 - definição de conteúdo e comportamento proibidos;
-- denúncia de conteúdo e usuários;
+- denúncia de conteúdo e usuários dentro do app;
 - bloqueio de usuários;
 - central administrativa de moderação;
 - possibilidade de remoção de conteúdo e suspensão/exclusão de contas.
 
 ## Classificação indicativa / IARC
 
-Responder o questionário conforme o conteúdo efetivamente presente no app. Pontos que precisam ser declarados com precisão:
+Responder conforme o conteúdo efetivamente presente na versão enviada:
 - usuários podem interagir entre si: SIM;
 - usuários podem compartilhar conteúdo: SIM;
 - mensagens privadas: SIM;
@@ -43,52 +43,42 @@ Responder o questionário conforme o conteúdo efetivamente presente no app. Pon
 - compras aleatórias / loot boxes: NÃO;
 - foco principal: esporte e rede social esportiva.
 
-A classificação final é emitida pela IARC/Google Play e não deve ser inventada no código ou na ficha da loja.
+A classificação final é emitida pela IARC/Google Play.
 
 ## Anúncios
 
-O projeto exibe espaços de apoiadores/parceiros. Se qualquer um desses espaços representar publicidade, promoção paga ou conteúdo patrocinado, preencher **"Contém anúncios: SIM"**. Esta é a opção conservadora recomendada para a primeira publicação.
-
-Não há SDK de anúncios Android declarado no manifesto atual.
+O projeto exibe espaços de apoiadores/parceiros. Se esses espaços representarem publicidade, promoção paga ou conteúdo patrocinado na versão publicada, declarar **"Contém anúncios: SIM"**. Não há SDK nativo de anúncios Android declarado no manifesto atual.
 
 ## Acesso ao app para revisão
 
-O app permite navegar por áreas públicas sem conta, mas recursos sociais completos dependem de autenticação.
+O conteúdo funcional do site/app exige autenticação. As páginas legais e de exclusão de conta permanecem públicas.
 
-Ao preencher "Acesso ao app" no Play Console:
-- explicar que o revisor pode criar uma conta diretamente pela tela "Minha conta";
-- informar que o cadastro é exclusivo para maiores de 18 anos;
-- se o Google solicitar credenciais prontas de teste, criar uma conta de revisão dedicada sem privilégios administrativos e fornecer apenas no campo seguro do Play Console.
-
-Nunca publicar credenciais de teste em arquivos públicos do GitHub.
+No Play Console:
+- declarar que o app possui conteúdo restrito por login;
+- fornecer uma **conta de revisão dedicada, comum e sem privilégios administrativos** no campo seguro "Acesso ao app";
+- informar que o app é exclusivo para maiores de 18 anos;
+- não publicar credenciais de teste no GitHub ou na ficha pública da loja.
 
 ## Exclusão de conta
 
 - Criação de conta dentro do app: SIM.
-- Exclusão iniciada dentro do app: SIM.
-- Recurso externo público para exclusão: SIM.
-- URL: https://cadastrodeatletas.com.br/exclusao-conta.html
+- Exclusão pode ser iniciada dentro do app: SIM.
+- Recurso externo público para iniciar a exclusão: SIM.
+- URL: `https://cadastrodeatletas.com.br/exclusao-conta.html`
+- O fluxo atual é uma solicitação de exclusão com verificação de titularidade, não uma promessa de exclusão instantânea automática.
 
 ## Política de Privacidade
 
 URL pública:
-https://cadastrodeatletas.com.br/politica-privacidade.html
+`https://cadastrodeatletas.com.br/politica-privacidade.html`
 
-A política informa:
-- dados tratados;
-- finalidade;
-- infraestrutura Firebase/Cloudinary;
-- mensagens privadas;
-- retenção e exclusão;
-- direitos LGPD;
-- restrição 18+;
-- contato para privacidade.
+A política cobre dados tratados, finalidades, infraestrutura, mensagens privadas, retenção e exclusão, direitos LGPD e restrição 18+.
 
 ## Pagamentos
 
-A versão Android distribuída pelo Google Play funciona em modo de consumo/gratuito para os planos digitais:
-- planos digitais pagos externos são ocultados/desativados no modo Play Store;
-- o app não conduz o usuário a pagamento externo para liberar funcionalidade digital;
-- inscrições ou serviços físicos relacionados a eventos esportivos devem ser analisados separadamente, pois não são equivalentes a recursos digitais do app.
+A versão Android distribuída pelo Google Play funciona em modo gratuito para recursos digitais:
+- planos digitais pagos externos ficam ocultos/desativados no modo Play Store;
+- o app não direciona o usuário a pagamento externo para liberar funcionalidade digital;
+- inscrições e serviços físicos relacionados a eventos esportivos devem ser avaliados separadamente conforme sua natureza real.
 
-Se no futuro forem vendidos recursos digitais diretamente no app, integrar o Google Play Billing antes de habilitar a compra.
+Se recursos digitais pagos forem habilitados futuramente dentro do app, o fluxo deverá ser revisado e, quando exigido, integrado ao Google Play Billing antes da publicação.
