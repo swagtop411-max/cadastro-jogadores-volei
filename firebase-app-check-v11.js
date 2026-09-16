@@ -1,3 +1,4 @@
+await import("./auth-gate-v53.js?v=20260915-53");
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getToken,initializeAppCheck,ReCaptchaEnterpriseProvider}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app-check.js";
 
