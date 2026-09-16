@@ -37,7 +37,7 @@ check("Storage restringe escrita ao dono",/function isOwner/.test(storage)&&/all
 check("Termos 18+ e UGC",/18 anos/.test(terms)&&/Denúncia|denúncia/.test(terms)&&/bloqueio|bloquear/i.test(terms));
 check("Privacidade cobre exclusão",/exclusao-conta\.html/.test(privacy));
 check("Página pública de exclusão existe",/deleteMyAccount/.test(deletion)&&/Excluir minha conta/i.test(deletion));
-check("Service Worker V47",/bd-atletas-v47/.test(sw)&&/terms-consent-v47\.js/.test(sw)&&/age-gate-v47\.js/.test(sw));
+check("Service Worker V47+",/bd-atletas-v(?:4[7-9]|[5-9]\d|\d{3,})/.test(sw)&&/terms-consent-v47\.js/.test(sw)&&/age-gate-v47\.js/.test(sw));
 
 const assetTemplate=exists("android-twa/assetlinks.template.json")?read("android-twa/assetlinks.template.json"):"";
 warn("Digital Asset Links final publicado",exists(".well-known/assetlinks.json")&&!/SUBSTITUIR|PLACEHOLDER/.test(exists(".well-known/assetlinks.json")?read(".well-known/assetlinks.json"):""),"Depende do SHA-256 do certificado App Signing fornecido pelo Google Play.");
