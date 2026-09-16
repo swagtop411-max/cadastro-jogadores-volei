@@ -16,22 +16,22 @@
   ],
   "icons": [
     {
-      "src": "/assets/app-icon-192.png",
+      "src": "/assets/app-icon-192.png?v=oficial-hd-20260916",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/app-icon-512.png",
+      "src": "/assets/app-icon-512.png?v=oficial-hd-20260916",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/assets/app-icon.svg",
+      "src": "/assets/app-icon.svg?v=oficial-hd-20260916",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [
