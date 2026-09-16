@@ -1,15 +1,15 @@
 # Segurança dos dados — preenchimento sugerido no Google Play Console
 
-Este documento descreve o comportamento atual do app Android/TWA e serve como roteiro para o formulário "Segurança dos dados". A declaração final precisa refletir exatamente a configuração publicada no Play Console.
+Este documento descreve o comportamento da versão Android/TWA preparada em setembro de 2026. A declaração enviada ao Google Play precisa refletir exatamente a versão publicada.
 
 ## Visão geral
 
-- O app coleta dados do usuário: SIM.
-- Os dados são criptografados em trânsito: SIM, por HTTPS/TLS.
-- O usuário pode solicitar exclusão da conta e dos dados: SIM.
-- Exclusão dentro do app: SIM, pela área "Minha conta".
-- Exclusão fora do app: SIM, em https://cadastrodeatletas.com.br/exclusao-conta.html
-- Analytics: opcional e condicionado ao consentimento de cookies/analytics no cliente.
+- O app coleta dados do usuário: **SIM**.
+- Os dados são criptografados em trânsito: **SIM**, por HTTPS/TLS.
+- O usuário pode solicitar exclusão da conta e dos dados: **SIM**.
+- Exclusão iniciada dentro do app: **SIM**, por Minha Conta → Excluir minha conta.
+- Recurso público fora do app: **SIM**, em `https://cadastrodeatletas.com.br/exclusao-conta.html`.
+- Analytics: condicionado ao consentimento aplicável no cliente.
 
 ## Tipos de dados usados pelo app
 
@@ -35,19 +35,18 @@ Este documento descreve o comportamento atual do app Android/TWA e serve como ro
 - Finalidade: confirmação de elegibilidade 18+ e gerenciamento do perfil privado.
 - A data de nascimento não é publicada no perfil público por padrão.
 
-### Localização
+### Localização aproximada informada pelo usuário
 
-**Localização aproximada informada pelo usuário**
 - O usuário pode informar cidade e estado no perfil.
-- Não há permissão Android para GPS no manifesto atual.
-- Se o formulário considerar cidade/estado como localização aproximada coletada, declarar: SIM.
+- O app Android não solicita permissão de localização GPS.
+- Se o formulário do Play enquadrar cidade/estado como localização aproximada coletada, declarar: SIM.
 - Finalidades: funcionalidade do perfil e descoberta de atletas.
 
 ### Fotos e vídeos
 
 **Fotos**
 - Coletado: SIM, quando o usuário escolhe publicar ou atualizar avatar/capa.
-- Finalidades: perfil, publicações, Stories, conteúdo social e funcionalidade do app.
+- Finalidades: perfil, publicações, Stories e funcionalidade social.
 - Opcional: SIM.
 
 **Vídeos**
@@ -57,9 +56,9 @@ Este documento descreve o comportamento atual do app Android/TWA e serve como ro
 
 ### Mensagens
 
-**Outras mensagens no app / mensagens privadas**
+**Mensagens privadas / outras mensagens no app**
 - Coletado: SIM.
-- Finalidades: comunicação entre usuários e funcionalidade social.
+- Finalidades: comunicação entre usuários, notificações e funcionalidade social.
 - Opcional: SIM.
 
 ### Atividade no app
@@ -74,54 +73,46 @@ Este documento descreve o comportamento atual do app Android/TWA e serve como ro
 - Exemplos: biografia, publicações, comentários, Stories, vídeos e histórico esportivo informado pelo usuário.
 - Finalidades: funcionalidade do app e recursos sociais.
 
-**Outras ações / analytics**
-- Coletado quando o usuário aceita analytics.
-- Exemplos: page view, cliques e eventos de navegação.
-- Finalidades: analytics e melhoria do serviço.
+**Analytics e eventos técnicos**
+- Coletados somente quando aplicável ao consentimento/configuração publicada.
+- Podem incluir páginas visitadas, cliques e identificadores técnicos/locais.
+- Finalidades: análise de uso, estabilidade e melhoria do serviço.
 
-### Identificadores de dispositivo ou outros IDs
+## Dados que o app Android atual não solicita por permissão nativa
 
-- O analytics pode utilizar identificadores técnicos/locais, incluindo um identificador aleatório de visitante e dados técnicos do navegador.
-- Declarar conforme a orientação atual dos SDKs/serviços usados na versão enviada, especialmente Google Analytics.
+O manifesto Android atual solicita apenas acesso à Internet. Não há permissões nativas declaradas para contatos, SMS, telefone, localização GPS, calendário, microfone, câmera ou leitura ampla de arquivos do aparelho.
 
-## Dados que não são coletados pelo app Android atual
+Uploads de mídia são iniciados pelo usuário através do seletor disponibilizado pelo navegador/TWA.
 
-Com base no manifesto Android atual, o app não solicita permissões nativas para:
-- contatos;
-- SMS;
-- telefone;
-- localização GPS precisa;
-- calendário;
-- microfone como permissão Android própria;
-- câmera como permissão Android própria;
-- arquivos gerais do dispositivo.
+## Prestadores e infraestrutura
 
-Uploads de mídia são iniciados pelo usuário através do seletor fornecido pelo navegador/TWA.
+Dados podem ser processados pelos serviços usados para operar o app:
+- Google Firebase Authentication e Cloud Firestore, para autenticação e dados estruturados;
+- Cloudinary, para armazenamento/processamento de fotos e vídeos;
+- Cloudflare Workers, como camada de API para operações seguras como autorização de upload de mídia;
+- Google Analytics, somente quando estiver habilitado de acordo com o consentimento/configuração aplicável.
 
-## Compartilhamento e prestadores de serviço
-
-Dados podem ser processados por prestadores usados para operar o serviço:
-- Google Firebase Authentication / Cloud Firestore;
-- Cloudinary para fotos e vídeos;
-- Google Analytics quando houver consentimento.
-
-No formulário do Google Play, verificar a definição vigente de "compartilhamento". Transferências a prestadores que processam dados somente em nome do desenvolvedor podem se enquadrar na exceção de prestador de serviço. Não marcar "não compartilhado" se qualquer fornecedor utilizar dados para finalidade própria fora dessa exceção.
+No formulário do Google Play, revisar a definição vigente de "compartilhamento". Processamento por prestadores de serviço em nome do desenvolvedor pode se enquadrar nas exceções do formulário, mas a resposta final deve considerar os termos e a configuração efetivamente usados no lançamento.
 
 ## Segurança
 
 - HTTPS/TLS em trânsito.
-- Firebase App Check configurado no cliente.
-- Firestore Security Rules para separação de dados públicos/privados.
-- Área de conta autenticada.
-- Exclusão de conta e dados associada a função backend autenticada.
-- Denúncia, bloqueio e moderação para conteúdo gerado por usuário.
+- Firebase Authentication para contas.
+- Firebase App Check configurado para o cliente Web/TWA.
+- Firestore Security Rules para separação de dados e autorização.
+- Storage Rules restritivas, quando Firebase Storage é utilizado.
+- Upload de mídia autorizado por API segura, sem expor o segredo do Cloudinary ao cliente.
+- Denúncia, bloqueio e moderação para conteúdo gerado por usuários.
+- Aplicativo Android com `usesCleartextTraffic=false` e backup Android desativado.
 
-## Exclusão
+## Exclusão de conta e dados
 
 Dentro do app:
-Minha conta → Excluir minha conta.
+`Minha Conta → Excluir minha conta`.
 
 Fora do app:
-https://cadastrodeatletas.com.br/exclusao-conta.html
+`https://cadastrodeatletas.com.br/exclusao-conta.html`
 
-A exclusão autenticada utiliza a função backend `deleteMyAccount`, que remove a conta Firebase Authentication, dados associados localizados no Firestore e mídias Cloudinary identificadas pelo sistema, respeitadas exceções legais de retenção declaradas na Política de Privacidade.
+A página pública permite iniciar a solicitação de exclusão mesmo sem login. O pedido é enviado ao canal oficial de atendimento e pode exigir verificação de titularidade antes da conclusão. A solicitação abrange a conta e os dados pessoais associados, observadas as hipóteses de retenção informadas na Política de Privacidade.
+
+O fluxo publicado não deve ser descrito no Play Console como exclusão instantânea automática. Ele é um **fluxo de solicitação de exclusão** com verificação de titularidade.
