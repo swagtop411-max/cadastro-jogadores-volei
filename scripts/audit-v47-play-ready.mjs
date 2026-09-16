@@ -13,6 +13,7 @@ const manifest=read("android-twa/app/src/main/AndroidManifest.xml");
 const strings=read("android-twa/app/src/main/res/values/strings.xml");
 const webManifest=read("manifest.webmanifest");
 const authGate=read("auth-gate-v53.js");
+const profileRequired=read("profile-required-v55.js");
 const appCheck=read("firebase-app-check-v11.js");
 const cloudinary=read("cloudinary-upload.js");
 const termsConsent=read("terms-consent-v47.js");
@@ -47,9 +48,13 @@ fail("TWA inicia em modo Play",/https:\/\/cadastrodeatletas\.com\.br\/\?app=1/.t
 fail("Manifest PWA standalone",/"display"\s*:\s*"standalone"/.test(webManifest)&&/"start_url"\s*:\s*"\/\?app=1"/.test(webManifest));
 fail("Ícone PWA 512 declarado",/512x512/.test(webManifest)&&exists("assets/app-icon-512.png"));
 
-// Acesso / 18+
+// Acesso / 18+ / onboarding obrigatório
 fail("Conteúdo protegido por login",/auth-gate-v53\.js/.test(read("site-v5.js"))&&/location\.replace\("conta\.html\?tab=register&gate=1"\)/.test(authGate));
 fail("Somente páginas legais/conta ficam públicas",/conta\.html/.test(authGate)&&/termos-de-uso\.html/.test(authGate)&&/politica-privacidade\.html/.test(authGate)&&/exclusao-conta\.html/.test(authGate));
+fail("Perfil obrigatório bloqueia acesso até conclusão",/profileComplete/.test(authGate)&&/meu-perfil\.html\?novo=1&obrigatorio=1/.test(authGate));
+fail("Cadastro final exige nome",/nome\.length>=2/.test(authGate)&&/nome\.length<2/.test(profileRequired));
+fail("Cadastro final exige contato",/contato\.length>=8/.test(authGate)&&/contato\.length<8/.test(profileRequired));
+fail("Cadastro final exige foto de perfil",/foto\.length>0/.test(authGate)&&/foto do perfil/.test(profileRequired)&&/avatarInput/.test(profileRequired));
 fail("Barreira 18+ carregada",/age-gate-v47\.js/.test(appCheck));
 fail("Termos indicam 18+",/18 anos/.test(terms));
 fail("Declaração Play indica público 18+",/Maiores de 18 anos/.test(declarations)&&/crianças:\s*\*\*NÃO\*\*/i.test(declarations));
@@ -84,7 +89,7 @@ fail("Planos digitais pagos ficam bloqueados no Play",/paid/.test(playMode)&&/in
 fail("Firestore exige autenticação em áreas privadas",/function signedIn/.test(rules));
 fail("Storage restringe escrita ao proprietário",/function isOwner/.test(storage)&&/allow create: if isOwner/.test(storage));
 fail("Keystore não deve ser versionado",/\.jks/.test(gitignore)&&/keystore\.properties/.test(gitignore));
-fail("Service Worker usa network-first para código crítico",/fetch\(request\)\.then/.test(sw)&&/catch\(\(\)=>caches\.match\(request\)/.test(sw)&&/terms-consent-v47\.js/.test(sw)&&/cloudinary-upload\.js/.test(sw));
+fail("Service Worker usa network-first para código crítico",/fetch\(request\)\.then/.test(sw)&&/catch\(\(\)=>caches\.match\(request\)/.test(sw)&&/terms-consent-v47\.js/.test(sw)&&/cloudinary-upload\.js/.test(sw)&&/profile-required-v55\.js/.test(sw));
 
 // Materiais de declaração
 fail("Roteiro Data Safety presente",/Cloudflare Workers/.test(dataSafety)&&/Cloudinary/.test(dataSafety)&&/Firebase/.test(dataSafety));
