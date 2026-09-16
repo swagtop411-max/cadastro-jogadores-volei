@@ -5,8 +5,8 @@ Wrapper Android oficial em Trusted Web Activity (TWA) para `https://cadastrodeat
 ## Identidade inicial
 
 - Application ID: `br.com.cadastrodeatletas.app`
-- Version code: `1`
-- Version name: `1.0.0`
+- Version code: `2`
+- Version name: `1.0.1`
 - Min SDK: 23
 - Compile SDK: 36
 - Target SDK: 36
@@ -73,7 +73,7 @@ Revise e publique `.well-known/assetlinks.json` no domínio.
 
 ## Antes de enviar para produção
 
-1. Implantar as Cloud Functions de produção e configurar os secrets Cloudinary.
+1. Validar a API de mídia no Cloudflare Workers e os secrets Cloudinary; o upload atual não depende de Cloud Functions.
 2. Validar login, perfil, feed, foto, vídeo, Story, Destaques, comentários, seguidores, bloqueios, denúncias, Direct e notificações em aparelho Android real.
 3. Validar exclusão de conta completa.
 4. Validar `assetlinks.json` com o certificado correto do Google Play.
