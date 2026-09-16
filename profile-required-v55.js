@@ -42,8 +42,8 @@ async function loadCurrentPhoto(){
 
 function selectedPhoto(){return !!$("avatarInput")?.files?.[0]}
 
-async function validateRequired(){
- if(!ready)await loadCurrentPhoto();
+function validateRequiredSync(){
+ if(!ready){status("Aguarde um instante enquanto verificamos seu perfil.");return false;}
  const nome=text($("name")?.value),contato=text($("contato")?.value),hasPhoto=selectedPhoto()||!!existingPhoto;
  const missing=[];
  if(nome.length<2)missing.push("name");
@@ -66,19 +66,18 @@ function installBanner(){
 function installGuard(){
  if(document.documentElement.dataset.profileRequiredV55==="1")return;
  document.documentElement.dataset.profileRequiredV55="1";
- document.addEventListener("click",async event=>{
+ document.addEventListener("click",event=>{
   const save=event.target.closest?.("#saveProfile");if(!save)return;
-  const ok=await validateRequired();
-  if(ok)return;
+  if(validateRequiredSync())return;
   event.preventDefault();event.stopPropagation();event.stopImmediatePropagation();
  },true);
- $("avatarInput")?.addEventListener("change",()=>{if(selectedPhoto()){$("avatar")?.classList.remove("v55-photo-required")}});
+ $("avatarInput")?.addEventListener("change",()=>{if(selectedPhoto())$("avatar")?.classList.remove("v55-photo-required")});
  $("name")?.addEventListener("input",()=>$("name")?.classList.remove("v55-required-missing"));
  $("contato")?.addEventListener("input",()=>$("contato")?.classList.remove("v55-required-missing"));
 }
 
 async function boot(){
- ensureStyles();installBanner();await loadCurrentPhoto();ready=true;installGuard();
+ ensureStyles();installBanner();installGuard();await loadCurrentPhoto();ready=true;
 }
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",boot,{once:true});else boot();
