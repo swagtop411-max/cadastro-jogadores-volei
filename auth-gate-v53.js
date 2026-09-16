@@ -10,6 +10,13 @@ const PUBLIC_PAGES=new Set([
   "exclusao-conta.html"
 ]);
 const page=location.pathname.split("/").pop()||"index.html";
+const params=new URLSearchParams(location.search);
+
+if(page==="conta.html"&&params.get("gate")==="1"){
+  const forceRegister=()=>document.querySelector('[data-account-tab="register"]')?.click();
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",forceRegister,{once:true});
+  for(const delay of[80,280,700,1400])setTimeout(forceRegister,delay);
+}
 
 if(!PUBLIC_PAGES.has(page)){
   document.documentElement.dataset.authGate="checking";
@@ -33,8 +40,7 @@ if(!PUBLIC_PAGES.has(page)){
         return;
       }
       document.documentElement.dataset.authGate="redirecting";
-      const target="conta.html?tab=register&gate=1";
-      location.replace(target);
+      location.replace("conta.html?tab=register&gate=1");
     };
     const stop=onAuthStateChanged(auth,user=>{stop();finish(user)},()=>finish(null));
     setTimeout(()=>finish(auth.currentUser),6500);
