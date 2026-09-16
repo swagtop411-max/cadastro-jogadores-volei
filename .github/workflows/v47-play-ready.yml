@@ -1,16 +1,19 @@
-name: V47 Play Ready
+name: V55 Play Ready
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "functions/**"
       - "android-twa/**"
       - "play-store/**"
+      - "auth-gate-v53.js"
       - "terms-consent-v47.js"
       - "age-gate-v47.js"
       - "firebase-app-check-v11.js"
+      - "cloudinary-upload.js"
+      - "play-store-mode-v44.js"
+      - "messaging-v50.js"
       - "admin-moderation-v42.js"
       - "ugc-safety-v41.js"
       - "firestore.rules"
@@ -18,6 +21,7 @@ on:
       - "termos-de-uso.html"
       - "politica-privacidade.html"
       - "exclusao-conta.html"
+      - "site-v5.js"
       - "sw.js"
       - "scripts/audit-v47-play-ready.mjs"
       - "tests/playwright/**"
@@ -36,25 +40,55 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Auditoria estática V47
+      - name: Auditoria estática V55 Play
         run: node scripts/audit-v47-play-ready.mjs
       - name: Validar JavaScript crítico
         run: |
-          node --check functions/index.js
+          node --check auth-gate-v53.js
           node --check terms-consent-v47.js
           node --check age-gate-v47.js
+          node --check cloudinary-upload.js
+          node --check play-store-mode-v44.js
+          node --check messaging-v50.js
           node --check admin-moderation-v42.js
+          node --check ugc-safety-v41.js
+
+  android-release-compile:
+    needs: static-release-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Instalar Android 16 SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.5.0"
+      - name: Compilar APK de teste e AAB release
+        working-directory: android-twa
+        run: gradle :app:assembleDebug :app:bundleRelease --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: v55-android-unsigned-builds
+          path: |
+            android-twa/app/build/outputs/apk/debug/app-debug.apk
+            android-twa/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
 
   live-browser-smoke:
     if: github.event_name == 'workflow_dispatch'
-    needs: static-release-audit
+    needs: [static-release-audit, android-release-compile]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Instalar Playwright
+      - name: Instalar dependências
         run: npm install
       - name: Instalar Chromium
         run: npx playwright install --with-deps chromium
@@ -67,6 +101,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: v47-playwright-report
+          name: v55-playwright-report
           path: playwright-report
           if-no-files-found: ignore
