@@ -9,9 +9,24 @@ const adminThread=x=>String(x?.sourceId||"").startsWith("admin:");
 
 async function readNotice(id){if(!user||!id)return null;try{const s=await getDoc(doc(db,"notificacoes",user.uid,"itens",id));return s.exists()?{id:s.id,...s.data()}:null}catch{return null}}
 async function markRead(item){if(!user||!item||item.lida===true)return;try{await updateDoc(doc(db,"notificacoes",user.uid,"itens",item.id),{lida:true})}catch{}}
+function messagePeer(item){
+ const direct=String(item?.actorUid||"").trim();
+ if(direct&&direct!==user?.uid)return direct;
+ const source=String(item?.sourceId||"").trim();
+ if(source&&user?.uid&&source.includes("__")){
+  const parts=source.split("__").filter(Boolean);
+  const other=parts.find(uid=>uid!==user.uid);
+  if(other)return other;
+ }
+ return "";
+}
 function go(item){
  if(adminThread(item)){location.href=`index.html?adminNotice=${encodeURIComponent(item.id)}`;return}
- if(item.type==="message"&&item.actorUid){location.href=`perfil-social.html?uid=${encodeURIComponent(item.actorUid)}`;return}
+ if(item.type==="message"){
+  const peer=messagePeer(item);
+  location.href=peer?`index.html?abrir=mensagens&uid=${encodeURIComponent(peer)}`:"index.html?abrir=mensagens";
+  return;
+ }
  if(["like","comment","mention"].includes(item.type)&&item.sourceId){location.href=`index.html?post=${encodeURIComponent(item.sourceId)}&activity=1#feed`;return}
  if(item.actorUid){location.href=`perfil-social.html?uid=${encodeURIComponent(item.actorUid)}`;return}
  location.href="index.html#feed";
