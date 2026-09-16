@@ -144,3 +144,18 @@ Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, 
 **Pronto no repositório para a etapa Play Console:** SIM, condicionado ao CI V55 concluir sem falhas.
 
 **Pronto para envio final à produção sem nenhuma ação externa:** NÃO. Restam itens que somente o Google Play/conta do desenvolvedor pode fornecer ou confirmar: assinatura da Play, SHA-256 de App Signing, Digital Asset Links final, formulários do Play Console, credenciais de revisão, materiais gráficos finais e teste interno instalado pela Play.
+
+## Atualização 1.0.1 — V57 (16/09/2026)
+
+- [x] Android versionCode 2 / versionName 1.0.1. Confirmar no Play Console que o código 2 ainda não foi utilizado antes de enviar.
+- [x] Validação de nome, contato e foto no salvamento do perfil.
+- [x] Correção do redirecionamento de perfis incompletos.
+- [x] Cache e referência do script de perfil atualizados.
+- [x] Roteiro Data Safety e aviso de privacidade alinhados à coleta obrigatória.
+- [x] Conta de revisão deve ter os três campos preenchidos.
+- [x] Testes de regressão do cadastro incluídos no CI Play.
+- [ ] Confirmar compilação do Android V57 no GitHub Actions.
+- [ ] Gerar AAB assinado com a chave de upload existente.
+- [ ] Preencher as declarações atualizadas no Play Console e executar teste interno.
+
+Esta atualização não envia o app à Google Play. As pendências de assinatura, Digital Asset Links, materiais da loja e testes em aparelho continuam válidas.
