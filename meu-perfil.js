@@ -289,6 +289,12 @@ function fill() {
 
 async function saveProfile() {
   const nome = $("name").value.trim();
+  const contatoObrigatorio = $("contato").value.trim();
+  const temFoto = Boolean($("avatarInput")?.files?.[0] || String(profile?.fotoUrl || "").trim());
+  if (nome.length < 2 || contatoObrigatorio.length < 8 || !temFoto) {
+    status("Para finalizar o cadastro, preencha nome, contato e foto do perfil.");
+    return;
+  }
   const rawCidade = $("city").value.trim();
   const selectedUf = $("uf").value;
   const loc = normalizeLocation(rawCidade, selectedUf);
@@ -935,8 +941,13 @@ onAuthStateChanged(auth, async currentUser => {
     await loadMedia();
 
     const params = new URLSearchParams(location.search);
-    const complete = Boolean(profile?.nome && profile?.cidade && validUf(profile?.uf));
-    if (complete && !params.has("editar")) {
+    const complete = Boolean(
+      String(privateData.nome || "").trim().length >= 2 &&
+      String(privateData.contato || "").trim().length >= 8 &&
+      String(privateData.fotoUrl || "").trim() &&
+      profile?.cidade && validUf(profile?.uf)
+    );
+    if (complete && !params.has("editar") && !params.has("obrigatorio")) {
       location.replace("perfil-social.html?uid=" + encodeURIComponent(user.uid));
     }
   } catch (error) {
