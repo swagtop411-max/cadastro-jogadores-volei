@@ -21,9 +21,9 @@ RECURSOS DO APP
 
 • Perfil esportivo com foto, capa, modalidade, posição, categoria, equipe, biografia e histórico de campeonatos.
 • Feed da comunidade com fotos, vídeos e publicações.
-• Visualização ampliada de mídias para acompanhar fotos com melhor qualidade.
+• Visualização ampliada de mídias.
 • Stories, Reels e conteúdos de atletas.
-• Curtidas, comentários, seguidores e perfis públicos.
+• Curtidas, comentários, seguidores e perfis esportivos.
 • Mensagens diretas entre usuários.
 • Notificações e central de atividades.
 • Busca e descoberta de atletas.
@@ -31,11 +31,11 @@ RECURSOS DO APP
 • Cadastro e consulta de equipes.
 • Divulgação e consulta de campeonatos.
 • Recursos para denunciar conteúdo ou usuários e bloquear perfis.
-• Exclusão de conta e dados diretamente pela área da conta.
+• Caminho dentro do app para solicitar exclusão da conta e dos dados associados.
 
 PRIVACIDADE E SEGURANÇA
 
-O app utiliza autenticação e regras de acesso para proteger dados privados. A Política de Privacidade, os Termos de Uso e a opção de exclusão de conta ficam disponíveis no próprio serviço.
+O app utiliza autenticação e regras de acesso para proteger dados privados. A Política de Privacidade, os Termos de Uso e o recurso público de exclusão de conta ficam disponíveis no serviço.
 
 O Cadastro de Atletas é destinado exclusivamente a pessoas com 18 anos ou mais. Novos cadastros exigem data de nascimento e confirmação de maioridade.
 
@@ -54,7 +54,8 @@ https://cadastrodeatletas.com.br/
 
 ## Observações para a publicação
 - Declarar público-alvo: somente "Maiores de 18 anos".
-- Ativar a opção do Play Console para restringir o acesso de usuários identificados pelo Google como menores de 18 anos.
+- Ativar a restrição de acesso para menores, quando apresentada pelo Play Console.
 - Categoria principal sugerida: Esportes.
-- Declarar que o app contém conteúdo gerado pelo usuário e recursos sociais.
-- Se os banners de apoiadores forem publicidade ou promoção paga, declarar "Contém anúncios: Sim".
+- Declarar conteúdo gerado pelo usuário e recursos sociais.
+- Declarar que o conteúdo principal exige login e fornecer credenciais de revisão em "Acesso ao app".
+- Se os espaços de apoiadores forem publicidade ou promoção paga na versão enviada, declarar "Contém anúncios: Sim".
