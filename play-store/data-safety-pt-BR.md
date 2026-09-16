@@ -25,6 +25,13 @@ Este documento descreve o comportamento da versão Android/TWA preparada em sete
 - Finalidades: autenticação, gerenciamento da conta, segurança, recuperação de acesso e comunicação relacionada à conta.
 - Obrigatório para criar conta: SIM.
 
+**Contato (telefone/WhatsApp ou outro contato informado)**
+- Coletado: SIM.
+- Obrigatório para concluir o cadastro: SIM.
+- Finalidades: gerenciamento da conta e contato relacionado ao serviço.
+- Não exige acesso à agenda do aparelho.
+- Declarar número de telefone quando o usuário fornecer telefone/WhatsApp; e-mail também é coletado na autenticação.
+
 **IDs do usuário**
 - Coletado: SIM.
 - Exemplos: UID do Firebase Authentication e identificadores internos de perfil.
@@ -45,9 +52,10 @@ Este documento descreve o comportamento da versão Android/TWA preparada em sete
 ### Fotos e vídeos
 
 **Fotos**
-- Coletado: SIM, quando o usuário escolhe publicar ou atualizar avatar/capa.
+- Coletado: SIM. A foto de perfil é obrigatória para concluir o cadastro.
 - Finalidades: perfil, publicações, Stories e funcionalidade social.
-- Opcional: SIM.
+- Opcional: NÃO para a foto de perfil. Capa, publicações e Stories continuam opcionais.
+- No formulário Data Safety, declarar a coleta de fotos como obrigatória, pois pelo menos um uso é necessário para acessar a rede.
 
 **Vídeos**
 - Coletado: SIM, quando o usuário escolhe publicar.
