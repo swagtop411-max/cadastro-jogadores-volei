@@ -43,7 +43,7 @@ fail("Somente INTERNET como permissão nativa",(manifest.match(/<uses-permission
 fail("Android sem cleartext",/android:usesCleartextTraffic="false"/.test(manifest));
 fail("Android sem backup",/android:allowBackup="false"/.test(manifest));
 fail("App Link autoVerify",/android:autoVerify="true"/.test(manifest)&&/android:host="cadastrodeatletas\.com\.br"/.test(manifest));
-fail("TWA inicia em modo Play",/https:\/\/cadastrodeatletas\.com\.br\/\?app=1/.test(manifest)&&/\?app=1/.test(strings));
+fail("TWA inicia em modo Play",/https:\/\/cadastrodeatletas\.com\.br\/\?app=1/.test(manifest)&&/delegate_permission\/common\.handle_all_urls/.test(strings));
 fail("Manifest PWA standalone",/"display"\s*:\s*"standalone"/.test(webManifest)&&/"start_url"\s*:\s*"\/\?app=1"/.test(webManifest));
 fail("Ícone PWA 512 declarado",/512x512/.test(webManifest)&&exists("assets/app-icon-512.png"));
 
@@ -62,7 +62,7 @@ fail("Mensagens possuem histórico e exclusão",/conversas/.test(messaging)&&/EX
 fail("Notificações de mensagens possuem alerta",/v53-notification-alarm/.test(messaging)&&/Nova mensagem recebida/.test(messaging));
 
 // Backend atual sem Blaze obrigatório
-fail("Upload usa Cloudflare Worker",/cadastro-atletas-api\.swagtop411\.workers\.dev/.test(cloudinary)&&/\/v1\/media\/sign/.test(cloudinary));
+fail("Upload usa Cloudflare Worker",/cadastro-atletas-api\.swagtop411\.workers\.dev/.test(cloudinary)&&/\/v1\/cloudinary\/sign-upload/.test(cloudinary));
 fail("Upload envia Firebase ID token",/Authorization/.test(cloudinary)&&/Bearer/.test(cloudinary));
 fail("Upload envia App Check",/X-Firebase-AppCheck/.test(cloudinary));
 fail("Upload não usa callable Firebase Functions",!/firebase-functions/.test(cloudinary)&&!/httpsCallable/.test(cloudinary));
@@ -84,7 +84,7 @@ fail("Planos digitais pagos ficam bloqueados no Play",/paid/.test(playMode)&&/in
 fail("Firestore exige autenticação em áreas privadas",/function signedIn/.test(rules));
 fail("Storage restringe escrita ao proprietário",/function isOwner/.test(storage)&&/allow create: if isOwner/.test(storage));
 fail("Keystore não deve ser versionado",/\.jks/.test(gitignore)&&/keystore\.properties/.test(gitignore));
-fail("Service Worker usa network-first para código crítico",/NETWORK_FIRST/.test(sw)&&/auth-gate-v53\.js/.test(sw)&&/terms-consent-v47\.js/.test(sw));
+fail("Service Worker usa network-first para código crítico",/fetch\(request\)\.then/.test(sw)&&/catch\(\(\)=>caches\.match\(request\)/.test(sw)&&/terms-consent-v47\.js/.test(sw)&&/cloudinary-upload\.js/.test(sw));
 
 // Materiais de declaração
 fail("Roteiro Data Safety presente",/Cloudflare Workers/.test(dataSafety)&&/Cloudinary/.test(dataSafety)&&/Firebase/.test(dataSafety));
