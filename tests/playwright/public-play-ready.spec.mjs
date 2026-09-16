@@ -1,8 +1,10 @@
 import {test,expect} from "@playwright/test";
 
-test("home e modo app carregam sem erro cru de permissão",async({page})=>{
+test("visitante sem login é direcionado ao cadastro",async({page})=>{
   const response=await page.goto("/?app=1",{waitUntil:"domcontentloaded"});
   expect(response?.ok()).toBeTruthy();
+  await page.waitForURL(url=>url.pathname.endsWith("/conta.html")&&url.searchParams.get("gate")==="1",{timeout:12_000});
+  await expect(page.locator("#registerForm")).toBeVisible({timeout:10_000});
   await expect(page.locator("body")).not.toContainText("Missing or insufficient permissions");
   await expect(page.locator("body")).not.toContainText("FirebaseError: [code=permission-denied]");
 });
@@ -21,12 +23,23 @@ test("cadastro exige maioridade e expõe Termos e Privacidade",async({page})=>{
   await expect(page.locator('a[href*="politica-privacidade"]')).toHaveCount(2);
 });
 
-test("recursos legais públicos estão acessíveis",async({page})=>{
+test("recursos legais e exclusão permanecem públicos",async({page})=>{
   for(const path of ["/termos-de-uso.html","/politica-privacidade.html","/exclusao-conta.html"]){
     const response=await page.goto(path,{waitUntil:"domcontentloaded"});
     expect(response?.ok(),path).toBeTruthy();
+    expect(new URL(page.url()).pathname).toBe(path);
   }
   await expect(page.getByRole("heading",{name:/Excluir minha conta/i})).toBeVisible();
+  await expect(page.getByRole("button",{name:/Solicitar exclusão da conta/i})).toBeVisible();
+});
+
+test("página de exclusão não depende de Cloud Functions",async({request})=>{
+  const response=await request.get("/exclusao-conta.html");
+  expect(response.ok()).toBeTruthy();
+  const html=await response.text();
+  expect(html).not.toContain("firebase-functions");
+  expect(html).not.toContain("deleteMyAccount");
+  expect(html).toContain("wa.me/");
 });
 
 test("manifesto PWA está pronto para experiência standalone",async({request})=>{
