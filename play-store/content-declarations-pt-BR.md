@@ -57,6 +57,8 @@ No Play Console:
 - declarar que o app possui conteúdo restrito por login;
 - fornecer uma **conta de revisão dedicada, comum e sem privilégios administrativos** no campo seguro "Acesso ao app";
 - informar que o app é exclusivo para maiores de 18 anos;
+- deixar a conta de revisão com nome, contato e foto de perfil já preenchidos e salvos, para que a equipe consiga acessar a rede;
+- explicar que novas contas passam pela conclusão obrigatória desses três campos;
 - não publicar credenciais de teste no GitHub ou na ficha pública da loja.
 
 ## Exclusão de conta
