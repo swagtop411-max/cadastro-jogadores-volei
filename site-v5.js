@@ -1,3 +1,4 @@
+await import("./auth-gate-v53.js?v=20260915-53");
 import("./firebase-app-check-v11.js?v=20260909-46").then(()=>import("./profile-autosync-v13.js?v=20260904-3")).catch(error=>console.warn("Inicialização segura do perfil:",error));
 import("./play-store-mode-v44.js?v=20260908-44").catch(error=>console.warn("Modo Google Play:",error));
 import("./public-beta-v19.js?v=20260907-21").catch(error=>console.warn("Beta Mobile:",error));
