@@ -1,0 +1,5 @@
+<pt-BR>
+Cadastro com nome, contato e foto de perfil obrigatórios.
+Correção na conclusão de perfis incompletos.
+Melhorias na atualização do app e nas informações de privacidade.
+</pt-BR>
