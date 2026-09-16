@@ -1,6 +1,6 @@
 # Checklist final de publicação — Cadastro de Atletas V55
 
-Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, autenticação, UGC, mensagens, exclusão de conta e documentação da Google Play.
+Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, autenticação, onboarding obrigatório, UGC, mensagens, exclusão de conta e documentação da Google Play.
 
 ## Código e Android
 
@@ -16,9 +16,9 @@ Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, 
 - [x] Manifesto Android solicita somente permissão `INTERNET`.
 - [x] Workflow compila APK de teste e AAB release sem assinatura.
 - [x] Workflow de release assinado preparado para secrets da chave de upload.
-- [x] Auditoria V55 também recompila Android em cada alteração relevante de release.
+- [x] Auditoria Play V55 cobre Android, autenticação, perfil obrigatório, UGC, privacidade, exclusão, pagamentos e materiais da loja.
 
-## Acesso e público 18+
+## Acesso, cadastro e público 18+
 
 - [x] Conteúdo funcional protegido por autenticação.
 - [x] Visitante sem login é redirecionado para cadastro/login.
@@ -27,7 +27,12 @@ Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, 
 - [x] Cadastro bloqueia menor de 18 anos.
 - [x] Confirmação explícita de maioridade.
 - [x] Termos e Privacidade indicam plataforma 18+.
-- [ ] Play Console: selecionar somente público 18+ e preencher as perguntas de público-alvo conforme a tela vigente.
+- [x] Após criar a conta, o usuário precisa concluir o perfil antes de acessar a rede.
+- [x] Nome é obrigatório para finalizar o cadastro.
+- [x] Contato é obrigatório para finalizar o cadastro.
+- [x] Foto do perfil é obrigatória para finalizar o cadastro.
+- [x] Usuário com perfil incompleto é redirecionado para `meu-perfil.html`.
+- [ ] Play Console: selecionar somente público 18+ e ativar a restrição de acesso de menores na tela vigente.
 
 ## UGC, mensagens e moderação
 
@@ -112,13 +117,15 @@ Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, 
 - [ ] Declarar UGC/interações sociais conforme a tela vigente.
 - [ ] Declarar anúncios conforme o uso real dos espaços de apoiadores.
 - [ ] Preencher "Acesso ao app" e fornecer conta de revisão dedicada, comum e sem privilégios administrativos.
-- [ ] Selecionar público-alvo 18+.
+- [ ] Selecionar público-alvo somente 18+ e ativar a restrição de acesso de menores.
 
 ## Testes finais antes de produção
 
 - [ ] Instalar o AAB pelo Teste interno do Google Play.
 - [ ] Confirmar login obrigatório na instalação da Play.
 - [ ] Criar conta 18+ e confirmar bloqueio de menor de 18.
+- [ ] Confirmar que nome, contato e foto são obrigatórios antes de liberar a rede.
+- [ ] Confirmar que perfil incompleto volta para a tela de conclusão do cadastro.
 - [ ] Aceitar Termos/Privacidade.
 - [ ] Completar e editar perfil.
 - [ ] Publicar foto, vídeo e Story.
@@ -136,4 +143,4 @@ Atualizado em 16/09/2026 após auditoria da versão atual do site, TWA Android, 
 
 **Pronto no repositório para a etapa Play Console:** SIM, condicionado ao CI V55 concluir sem falhas.
 
-**Pronto para envio final à produção sem nenhuma ação externa:** NÃO. Restam itens que somente o Google Play/conta do desenvolvedor pode fornecer ou confirmar: assinatura da Play, SHA-256 de App Signing, Digital Asset Links final, formulários do Play Console, credenciais de revisão e teste interno instalado pela Play.
+**Pronto para envio final à produção sem nenhuma ação externa:** NÃO. Restam itens que somente o Google Play/conta do desenvolvedor pode fornecer ou confirmar: assinatura da Play, SHA-256 de App Signing, Digital Asset Links final, formulários do Play Console, credenciais de revisão, materiais gráficos finais e teste interno instalado pela Play.
