@@ -1,4 +1,4 @@
-name: V55 Play Ready
+name: V57 Play Ready
 
 on:
   workflow_dispatch:
@@ -8,6 +8,12 @@ on:
       - "android-twa/**"
       - "play-store/**"
       - "auth-gate-v53.js"
+      - "profile-required-v55.js"
+      - "meu-perfil.js"
+      - "meu-perfil.html"
+      - "conta.js"
+      - "conta.html"
+      - "tests/profile-required.test.mjs"
       - "terms-consent-v47.js"
       - "age-gate-v47.js"
       - "firebase-app-check-v11.js"
@@ -42,9 +48,14 @@ jobs:
           node-version: "22"
       - name: Auditoria estática V55 Play
         run: node scripts/audit-v47-play-ready.mjs
+      - name: Testar campos obrigatórios e redirecionamento
+        run: node --test tests/profile-required.test.mjs
       - name: Validar JavaScript crítico
         run: |
           node --check auth-gate-v53.js
+          node --check profile-required-v55.js
+          node --check meu-perfil.js
+          node --check conta.js
           node --check terms-consent-v47.js
           node --check age-gate-v47.js
           node --check cloudinary-upload.js
@@ -75,7 +86,7 @@ jobs:
         run: gradle :app:assembleDebug :app:bundleRelease --stacktrace
       - uses: actions/upload-artifact@v4
         with:
-          name: v55-android-unsigned-builds
+          name: v57-android-unsigned-builds
           path: |
             android-twa/app/build/outputs/apk/debug/app-debug.apk
             android-twa/app/build/outputs/bundle/release/app-release.aab
