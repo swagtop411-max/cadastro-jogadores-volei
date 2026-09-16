@@ -13,12 +13,18 @@ on:
       - "conta.js"
       - "play-store-mode-v44.js"
       - "site-v5.js"
+      - "auth-gate-v53.js"
+      - "profile-required-v55.js"
+      - "sw.js"
       - "exclusao-conta.html"
       - "politica-privacidade.html"
       - "termos-de-uso.html"
       - "play-store/**"
       - "firebase.json"
+      - "firestore.rules"
+      - "storage.rules"
       - "scripts/audit-play-release.mjs"
+      - "scripts/audit-v47-play-ready.mjs"
       - ".github/workflows/play-release-check.yml"
   workflow_dispatch:
 
@@ -36,4 +42,4 @@ jobs:
       - name: Audit Play release code
         run: node scripts/audit-play-release.mjs
 
-# Final Google Play readiness audit: 2026-09-08
+# Google Play readiness audit V55: 2026-09-16
