@@ -2,9 +2,10 @@ import fs from "node:fs";
 
 const failures=[];
 const pass=[];
-const read=p=>fs.readFileSync(p,"utf8");
-const need=(p,s,label)=>{if(!fs.existsSync(p))return failures.push(`${p}: arquivo ausente`);read(p).includes(s)?pass.push(label):failures.push(`${p}: ${label}`)};
-const forbid=(p,s,label)=>{if(!fs.existsSync(p))return failures.push(`${p}: arquivo ausente`);read(p).includes(s)?failures.push(`${p}: ${label}`):pass.push(label)};
+const filePath=p=>String(p).split("?")[0];
+const read=p=>fs.readFileSync(filePath(p),"utf8");
+const need=(p,s,label)=>{const real=filePath(p);if(!fs.existsSync(real))return failures.push(`${real}: arquivo ausente`);read(real).includes(s)?pass.push(label):failures.push(`${real}: ${label}`)};
+const forbid=(p,s,label)=>{const real=filePath(p);if(!fs.existsSync(real))return failures.push(`${real}: arquivo ausente`);read(real).includes(s)?failures.push(`${real}: ${label}`):pass.push(label)};
 
 need("reivindicacao-v45.js",'status: "pendente"',"reivindicação cria pedido pendente");
 need("reivindicacao-v45.js",'text(profile.ownerUid) && text(profile.ownerUid) !== user.uid',"vínculo anterior segue para revisão");
@@ -23,7 +24,8 @@ forbid("perfil-social.html",'data-tab="archive">',"aba Stories Postados removida
 need("avatar-story-v36.js",'profile-story-access-v45.js?v=20260909-46',"avatar carrega controle seguro V45");
 forbid("avatar-story-v36.js",'profile-highlights-v37.js',"controle antigo de Destaques não é carregado");
 
-need("sw.js",'bd-atletas-v45-20260909-1',"cache atualizado para V45");
+const sw=read("sw.js");
+/const CACHE_NAME="bd-atletas-v(?:4[5-9]|[5-9]\d|\d{3,})-/.test(sw)?pass.push("cache V45 ou superior ativo"):failures.push("sw.js: cache V45 ou superior não encontrado");
 need("sw.js",'/profile-story-access-v45.js?v=20260909-46',"novo módulo de Stories está no cache");
 need("sw.js",'/reivindicacao-v45.js',"novo módulo de reivindicação está no cache");
 
