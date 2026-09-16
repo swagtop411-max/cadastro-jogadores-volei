@@ -27,6 +27,7 @@ if(!globalThis.__BD_APP_CHECK_PROMISE__){
  })();
 }
 
+await import("./notification-router-v49.js?v=20260915-49").catch(error=>console.warn("Roteamento de notificações V49:",error));
 await import("./admin-message-v49.js?v=20260915-49").catch(error=>console.warn("Mensagens administrativas V49:",error));
 import("./admin-shortcut-v34.js?v=20260909-47").catch(error=>console.warn("Atalho ADM:",error));
 import("./ugc-safety-v41.js?v=20260909-47").catch(error=>console.warn("Segurança persistente da comunidade:",error));
