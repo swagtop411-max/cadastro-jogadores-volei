@@ -1,0 +1,72 @@
+name: V56 One Time Privacy Hardening
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/v56-one-time-hardening.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Restringir leituras públicas e alinhar política
+        shell: python
+        run: |
+          from pathlib import Path
+
+          rules_path = Path("firestore.rules")
+          rules = rules_path.read_text(encoding="utf-8")
+          public_reads = rules.count("allow read: if true;")
+          if public_reads < 10:
+              raise SystemExit(f"Esperava ao menos 10 leituras públicas legadas, encontrei {public_reads}.")
+          rules = rules.replace("allow read: if true;", "allow read: if signedIn();")
+
+          old_helper = """function canReadSocialOwner(uid, visibility) {
+              return visibility == 'publico' || isAdmin() || isOwner(uid) || followsProfile(uid);
+            }"""
+          new_helper = """function canReadSocialOwner(uid, visibility) {
+              return signedIn() && (visibility == 'publico' || isAdmin() || isOwner(uid) || followsProfile(uid));
+            }"""
+          if old_helper not in rules:
+              raise SystemExit("Helper canReadSocialOwner esperado não foi encontrado.")
+          rules = rules.replace(old_helper, new_helper)
+          if "allow read: if true;" in rules:
+              raise SystemExit("Ainda existe leitura Firestore pública sem autenticação.")
+          rules_path.write_text(rules, encoding="utf-8")
+
+          privacy_path = Path("politica-privacidade.html")
+          privacy = privacy_path.read_text(encoding="utf-8")
+          privacy = privacy.replace(
+              "<strong>Última atualização: 09/09/2026 · Versão: 2026-09-09</strong>",
+              "<strong>Última atualização: 09/09/2026 · Versão: 2026-09-09 · Revisão operacional: 16/09/2026</strong>"
+          )
+          privacy = privacy.replace(
+              "Informações destinadas ao perfil público, como nome, cidade, modalidade, posição, categoria, equipe, foto, biografia, histórico de campeonatos e conteúdos publicados, podem ser exibidas para visitantes da plataforma.",
+              "Informações destinadas ao perfil público, como nome, cidade, modalidade, posição, categoria, equipe, foto, biografia, histórico de campeonatos e conteúdos publicados, podem ser exibidas para outros usuários autenticados da plataforma. A configuração atual exige autenticação para acessar o conteúdo funcional e social do serviço."
+          )
+          privacy = privacy.replace(
+              "Utilizamos Firebase Authentication e Cloud Firestore para autenticação, perfis, interações e dados estruturados. Mídias novas, como fotos e vídeos sociais, são enviadas ao Cloudinary. Também podemos utilizar serviços de analytics conforme as preferências de consentimento. Esses fornecedores atuam como prestadores de infraestrutura e podem processar dados em infraestrutura internacional conforme seus próprios termos e políticas.",
+              "Utilizamos Firebase Authentication e Cloud Firestore para autenticação, perfis, interações e dados estruturados. Mídias novas, como fotos e vídeos sociais, são enviadas ao Cloudinary. O Cloudflare Workers é utilizado como camada de API para operações seguras do aplicativo, incluindo autorização de uploads de mídia, sem expor segredos do serviço ao navegador. Também podemos utilizar serviços de analytics conforme as preferências de consentimento. Esses fornecedores atuam como prestadores de infraestrutura e podem processar dados em infraestrutura internacional conforme seus próprios termos e políticas."
+          )
+          privacy_path.write_text(privacy, encoding="utf-8")
+      - name: Validar hardening
+        run: |
+          ! grep -q "allow read: if true;" firestore.rules
+          grep -q "return signedIn() && (visibility == 'publico'" firestore.rules
+          grep -q "outros usuários autenticados" politica-privacidade.html
+          grep -q "Cloudflare Workers" politica-privacidade.html
+      - name: Aplicar alteração e remover workflow temporário
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/v56-one-time-hardening.yml
+          git add firestore.rules politica-privacidade.html
+          git commit -m "V56: fecha leituras públicas e alinha privacidade para Play Store"
+          git push origin HEAD:main
