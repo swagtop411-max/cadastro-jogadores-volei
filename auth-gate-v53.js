@@ -21,10 +21,10 @@ if(page==="conta.html"&&params.get("gate")==="1"){
   for(const delay of[80,280,700,1400])setTimeout(forceRegister,delay);
 }
 
-function profileComplete(data={}){
-  const nome=String(data.nome||"").trim();
+function profileComplete(data={},publicData={}){
+  const nome=String(data.nome||publicData.nome||"").trim();
   const contato=String(data.contato||"").trim();
-  const foto=String(data.fotoUrl||"").trim();
+  const foto=String(data.fotoUrl||publicData.fotoUrl||"").trim();
   return nome.length>=2&&contato.length>=8&&foto.length>0;
 }
 
@@ -36,7 +36,10 @@ async function ensureRequiredProfile(user,db){
   }
   try{
     const snap=await getDoc(doc(db,"usuarios",user.uid));
-    if(snap.exists()&&profileComplete(snap.data()))return true;
+    const data=snap.exists()?snap.data():{};
+    if(profileComplete(data))return true;
+    const publicSnap=await getDoc(doc(db,"perfis",user.uid));
+    if(profileComplete(data,publicSnap.exists()?publicSnap.data():{}))return true;
   }catch(error){
     console.warn("Verificação de perfil obrigatório:",error);
   }

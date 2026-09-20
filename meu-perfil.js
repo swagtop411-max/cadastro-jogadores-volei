@@ -287,6 +287,23 @@ function fill() {
   }
 }
 
+function completedProfileDestination(params = new URLSearchParams(location.search)) {
+  const fallback = "index.html";
+  try {
+    const target = new URL(params.get("return") || fallback, location.href);
+    const page = target.pathname.split("/").pop();
+    if (target.origin !== location.origin || ["meu-perfil.html", "conta.html"].includes(page)) return fallback;
+    return target.pathname + target.search + target.hash;
+  } catch { return fallback; }
+}
+
+function finishRequiredProfile() {
+  const params = new URLSearchParams(location.search);
+  if (!params.has("obrigatorio") && !params.has("novo")) return false;
+  location.replace(completedProfileDestination(params));
+  return true;
+}
+
 async function saveProfile() {
   const nome = $("name").value.trim();
   const contatoObrigatorio = $("contato").value.trim();
@@ -312,6 +329,7 @@ async function saveProfile() {
     return;
   }
 
+  let requiredProfileSaved = false;
   try {
     $("saveProfile").disabled = true;
     status("Salvando seu perfil com segurança...");
@@ -416,6 +434,10 @@ async function saveProfile() {
       await setDoc(perfilRef, perfilPublico);
     }
 
+    requiredProfileSaved = true;
+    profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
+    window.dispatchEvent(new CustomEvent("athlete-profile-saved", { detail: { fotoUrl } }));
+
     await setDoc(doc(db, "handles", handle), {
       uid: user.uid,
       handle,
@@ -476,8 +498,10 @@ async function saveProfile() {
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
     renderHistoricoCampeonatos();
     $("displayName").textContent = nome;
+    finishRequiredProfile();
   } catch (error) {
     console.error(error);
+    if (requiredProfileSaved && finishRequiredProfile()) return;
     status("Não foi possível salvar. Verifique sua conexão e tente novamente.");
   } finally {
     $("saveProfile").disabled = false;
@@ -845,6 +869,8 @@ onAuthStateChanged(auth, async currentUser => {
     if (profile) {
       profile = {
         ...profile,
+        nome: profile.nome || privateData.nome || "",
+        fotoUrl: profile.fotoUrl || privateData.fotoUrl || "",
         nascimento: profile.nascimento || privateData.nascimento || "",
         contato: profile.contato || privateData.contato || "",
         email: profile.email || privateData.email || currentUser.email || ""
@@ -937,17 +963,17 @@ onAuthStateChanged(auth, async currentUser => {
     }
 
     fill();
-    await loadClaimableProfiles();
-    await loadMedia();
-
     const params = new URLSearchParams(location.search);
     const complete = Boolean(
-      String(privateData.nome || "").trim().length >= 2 &&
+      String(privateData.nome || profile?.nome || "").trim().length >= 2 &&
       String(privateData.contato || "").trim().length >= 8 &&
-      String(privateData.fotoUrl || "").trim() &&
+      String(privateData.fotoUrl || profile?.fotoUrl || "").trim() &&
       profile?.cidade && validUf(profile?.uf)
     );
-    if (complete && !params.has("editar") && !params.has("obrigatorio")) {
+    if (complete && finishRequiredProfile()) return;
+    await loadClaimableProfiles();
+    await loadMedia();
+    if (complete && !params.has("editar")) {
       location.replace("perfil-social.html?uid=" + encodeURIComponent(user.uid));
     }
   } catch (error) {

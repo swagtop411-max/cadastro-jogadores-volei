@@ -37,24 +37,78 @@ for (const [label, nome, contato, foto, file, allowed] of [
   });
 }
 
-const redirectStart = source.lastIndexOf('    const complete = Boolean(');
-const redirectEnd = source.indexOf('  } catch (error)', redirectStart);
-assert.ok(redirectStart >= 0 && redirectEnd > redirectStart);
-const redirectCode = source.slice(redirectStart, redirectEnd);
-for (const [label, data, query, expected] of [
-  ['contato ausente', {nome:'Murilo', fotoUrl:'https://example.test/photo'}, '', false],
-  ['foto ausente', {nome:'Murilo', contato:'16988886327'}, '', false],
-  ['conclusão obrigatória aberta', {nome:'Murilo', contato:'16988886327', fotoUrl:'https://example.test/photo'}, '?obrigatorio=1', false],
-  ['edição aberta', {nome:'Murilo', contato:'16988886327', fotoUrl:'https://example.test/photo'}, '?editar=1', false],
-  ['perfil completo', {nome:'Murilo', contato:'16988886327', fotoUrl:'https://example.test/photo'}, '', true],
+
+const helpers = source.slice(source.indexOf('function completedProfileDestination('), saveStart);
+for (const [query, expected] of [
+  ['?obrigatorio=1', '/index.html'],
+  ['?novo=1&return=%2Fexplorar.html%3Fbeta%3D1%23feed', '/explorar.html?beta=1#feed'],
+  ['?obrigatorio=1&return=https%3A%2F%2Fevil.test', 'index.html'],
+  ['?obrigatorio=1&return=%2Fmeu-perfil.html', 'index.html'],
+  ['?editar=1', null],
 ]) {
-  test(`redirecionamento: ${label}`, () => {
-    let redirected = false;
-    vm.runInNewContext(redirectCode, {
-      privateData:data, profile:{cidade:'Sertãozinho', uf:'SP'}, validUf:()=>true,
-      params:new URLSearchParams(query), user:{uid:'test'},
-      location:{replace:()=>{redirected=true;}},
-    });
-    assert.equal(redirected, expected);
+  test(`destino após conclusão: ${query}`, () => {
+    let destination = null;
+    const context = vm.createContext({URL, URLSearchParams, location:{search:query, origin:'https://app.test', href:'https://app.test/meu-perfil.html'+query, replace:url=>{destination=url;}}});
+    vm.runInContext(helpers, context);
+    context.finishRequiredProfile();
+    assert.equal(destination, expected);
   });
 }
+
+for (const failWrite of ['', 'usuarios', 'perfis']) {
+  test(`cadastro completo: ${failWrite ? 'falha ao salvar '+failWrite : 'salva e libera acesso'}`, async () => {
+    const values = {name:'Murilo', contato:'16988886327', city:'Sertãozinho', uf:'SP'};
+    const elements = new Map();
+    const writes = [];
+    let destination = null;
+    const context = vm.createContext({
+      URL, URLSearchParams, console:{error:()=>{}}, CustomEvent:class {constructor(type, options){this.type=type;this.detail=options.detail;}},
+      window:{dispatchEvent:()=>{}},
+      location:{search:'?obrigatorio=1&return=%2Fexplorar.html',origin:'https://app.test',href:'https://app.test/meu-perfil.html',replace:url=>{destination=url;}},
+      $:id=>{if(!elements.has(id))elements.set(id,{value:values[id]||'',files:[],style:{},disabled:false});return elements.get(id);},
+      profile:{fotoUrl:'https://photo.test/avatar'}, user:{uid:'test',email:'test@example.test'},db:{},
+      normalizeLocation:()=>({cidade:'Sertãozinho',uf:'SP'}),validUf:()=>true,
+      getHistoricoCampeonatosFromForm:()=>[], profileHandle:()=> 'murilo-test',status:()=>{},
+      doc:(_db,collection)=>collection,
+      getDoc:async()=>({exists:()=>false}),
+      setDoc:async(ref)=>{if(ref===failWrite)throw new Error('write failed');writes.push(ref);},
+      serverTimestamp:()=>0,Timestamp:{now:()=>0},
+      getDocs:async()=>({empty:true}),query:()=>{},collection:()=>{},where:()=>{},
+      document:{querySelector:()=>null},renderHistoricoCampeonatos:()=>{},
+    });
+    vm.runInContext(helpers+saveCode,context);
+    await context.saveProfile();
+    assert.equal(destination, failWrite ? null : '/explorar.html');
+    if(!failWrite)assert.deepEqual(writes,['usuarios','perfis','handles']);
+    assert.equal(elements.get('saveProfile').disabled,false);
+  });
+}
+
+const gateSource=readFileSync(new URL('../auth-gate-v53.js',import.meta.url),'utf8');
+const validation=gateSource.slice(gateSource.indexOf('function profileComplete('),gateSource.indexOf('async function ensureRequiredProfile'));
+for(const [label,privateData,publicData,expected] of [
+ ['dados privados completos',{nome:'Murilo',contato:'16988886327',fotoUrl:'photo'},{},true],
+ ['foto pública existente',{nome:'Murilo',contato:'16988886327'},{fotoUrl:'photo'},true],
+ ['nome público existente',{contato:'16988886327'},{nome:'Murilo',fotoUrl:'photo'},true],
+ ['sem contato privado',{nome:'Murilo'},{fotoUrl:'photo'},false],
+ ['sem foto',{nome:'Murilo',contato:'16988886327'},{},false],
+])test(`barreira: ${label}`,()=>{
+ const context=vm.createContext({});vm.runInContext(validation,context);
+ assert.equal(context.profileComplete(privateData,publicData),expected);
+});
+
+const redirectStart = source.lastIndexOf('    const complete = Boolean(');
+const redirectEnd = source.indexOf('  } catch (error)', redirectStart);
+for (const complete of [true,false]) test(`reabrir cadastro obrigatório ${complete?'já completo':'incompleto'}`,async()=>{
+ let destination=null;
+ const context=vm.createContext({URL,URLSearchParams,
+  privateData:{nome:'Murilo',contato:'16988886327'},
+  profile:{nome:'Murilo',fotoUrl:complete?'photo':'',cidade:'Sertãozinho',uf:'SP'},
+  validUf:()=>true,params:new URLSearchParams('?obrigatorio=1'),user:{uid:'test'},
+  loadClaimableProfiles:async()=>{},loadMedia:async()=>{},
+  location:{search:'?obrigatorio=1',href:'https://app.test/meu-perfil.html',origin:'https://app.test',replace:url=>{destination=url;}}
+ });
+ vm.runInContext(helpers+'\nasync function check(){'+source.slice(redirectStart,redirectEnd)+'}',context);
+ await context.check();
+ assert.equal(destination,complete?'/index.html':null);
+});

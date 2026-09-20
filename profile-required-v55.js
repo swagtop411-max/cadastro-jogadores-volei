@@ -76,6 +76,8 @@ function installGuard(){
  $("contato")?.addEventListener("input",()=>$("contato")?.classList.remove("v55-required-missing"));
 }
 
+window.addEventListener("athlete-profile-saved", event=>{existingPhoto=text(event.detail?.fotoUrl);});
+
 async function boot(){
  ensureStyles();installBanner();installGuard();await loadCurrentPhoto();ready=true;
 }
