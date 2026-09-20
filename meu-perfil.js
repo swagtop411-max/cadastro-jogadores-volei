@@ -963,19 +963,10 @@ onAuthStateChanged(auth, async currentUser => {
     }
 
     fill();
-    const params = new URLSearchParams(location.search);
-    const complete = Boolean(
-      String(privateData.nome || profile?.nome || "").trim().length >= 2 &&
-      String(privateData.contato || "").trim().length >= 8 &&
-      String(privateData.fotoUrl || profile?.fotoUrl || "").trim() &&
-      profile?.cidade && validUf(profile?.uf)
-    );
-    if (complete && finishRequiredProfile()) return;
+    // Opening the editor must never trigger another automatic navigation.
+    // Only an explicit successful save completes the required registration flow.
     await loadClaimableProfiles();
     await loadMedia();
-    if (complete && !params.has("editar")) {
-      location.replace("perfil-social.html?uid=" + encodeURIComponent(user.uid));
-    }
   } catch (error) {
     console.error("Falha ao carregar/sincronizar perfil:", error);
     fill();

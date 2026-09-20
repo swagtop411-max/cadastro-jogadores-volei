@@ -1,3 +1,4 @@
+import appCheckReady from "./firebase-app-check-init-v60.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { doc, getDoc, getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
@@ -28,6 +29,24 @@ function profileComplete(data={},publicData={}){
   return nome.length>=2&&contato.length>=8&&foto.length>0;
 }
 
+function showProfileGateError(){
+  const show=()=>{
+    if(document.getElementById("profileGateError"))return;
+    const panel=document.createElement("section");panel.id="profileGateError";
+    panel.style.cssText="visibility:visible!important;position:fixed;inset:0;z-index:2147483647;display:grid;place-content:center;gap:20px;padding:24px;background:#020d4b;color:white;text-align:center;font:16px/1.5 Arial";
+    panel.innerHTML='<h1>Não foi possível confirmar seu cadastro agora</h1><p>Seus dados não foram apagados. Tente novamente ou abra seu perfil.</p><button type="button">Tentar novamente</button><a style="color:white" href="meu-perfil.html?editar=1">Abrir meu perfil</a>';
+    panel.querySelector("button").onclick=()=>location.reload();
+    document.body.appendChild(panel);
+  };
+  if(document.body)show();else document.addEventListener("DOMContentLoaded",show,{once:true});
+}
+
+async function profileRead(promise){
+  let timer;
+  try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("profile-read-timeout")),12000);})]);}
+  finally{clearTimeout(timer);}
+}
+
 async function ensureRequiredProfile(user,db){
   if(!user||PUBLIC_PAGES.has(page)||ADMIN_EXEMPT_PAGES.has(page))return true;
   if(PROFILE_SETUP_PAGES.has(page)){
@@ -35,13 +54,16 @@ async function ensureRequiredProfile(user,db){
     return true;
   }
   try{
-    const snap=await getDoc(doc(db,"usuarios",user.uid));
+    await profileRead(appCheckReady);
+    const snap=await profileRead(getDoc(doc(db,"usuarios",user.uid)));
     const data=snap.exists()?snap.data():{};
     if(profileComplete(data))return true;
-    const publicSnap=await getDoc(doc(db,"perfis",user.uid));
+    const publicSnap=await profileRead(getDoc(doc(db,"perfis",user.uid)));
     if(profileComplete(data,publicSnap.exists()?publicSnap.data():{}))return true;
   }catch(error){
     console.warn("Verificação de perfil obrigatório:",error);
+    showProfileGateError();
+    return false;
   }
   const returnTo=encodeURIComponent(`${location.pathname}${location.search}${location.hash}`);
   location.replace(`meu-perfil.html?novo=1&obrigatorio=1&return=${returnTo}`);
@@ -69,6 +91,7 @@ if(!PUBLIC_PAGES.has(page)){
         if(!allowed){resolve();return;}
         document.documentElement.dataset.authGate="authenticated";
         style.remove();
+        document.getElementById("profileGateError")?.remove();
         resolve();
         return;
       }
@@ -76,7 +99,8 @@ if(!PUBLIC_PAGES.has(page)){
       location.replace("conta.html?tab=register&gate=1");
       resolve();
     };
-    const stop=onAuthStateChanged(auth,user=>{stop();finish(user)},()=>finish(null));
-    setTimeout(()=>finish(auth.currentUser),6500);
+    const stop=onAuthStateChanged(auth,user=>{stop();finish(user)},()=>{showProfileGateError();resolve();});
+    setTimeout(()=>{if(settled)return;if(auth.currentUser)finish(auth.currentUser);else showProfileGateError();},12000);
   });
 }
+

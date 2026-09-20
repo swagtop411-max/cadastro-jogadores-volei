@@ -97,18 +97,23 @@ for(const [label,privateData,publicData,expected] of [
  assert.equal(context.profileComplete(privateData,publicData),expected);
 });
 
-const redirectStart = source.lastIndexOf('    const complete = Boolean(');
-const redirectEnd = source.indexOf('  } catch (error)', redirectStart);
-for (const complete of [true,false]) test(`reabrir cadastro obrigatório ${complete?'já completo':'incompleto'}`,async()=>{
- let destination=null;
- const context=vm.createContext({URL,URLSearchParams,
-  privateData:{nome:'Murilo',contato:'16988886327'},
-  profile:{nome:'Murilo',fotoUrl:complete?'photo':'',cidade:'Sertãozinho',uf:'SP'},
-  validUf:()=>true,params:new URLSearchParams('?obrigatorio=1'),user:{uid:'test'},
-  loadClaimableProfiles:async()=>{},loadMedia:async()=>{},
-  location:{search:'?obrigatorio=1',href:'https://app.test/meu-perfil.html',origin:'https://app.test',replace:url=>{destination=url;}}
+test('abrir perfil não redireciona automaticamente para a rede',()=>{
+ const authHandler=source.slice(source.indexOf('onAuthStateChanged(auth, async'));
+ assert.equal(authHandler.includes('finishRequiredProfile()'),false);
+ assert.equal(authHandler.includes('location.replace('),false);
+});
+
+const gateHandler=gateSource.slice(gateSource.indexOf('async function ensureRequiredProfile'),gateSource.indexOf('if(!PUBLIC_PAGES.has(page))'));
+for(const failure of [false,true])test(`consulta de perfil: ${failure?'erro mantém tela estável':'incompleto abre editor uma vez'}`,async()=>{
+ let redirects=0,errors=0;
+ const context=vm.createContext({
+  page:'index.html',PUBLIC_PAGES:new Set(),ADMIN_EXEMPT_PAGES:new Set(),PROFILE_SETUP_PAGES:new Set(),
+  appCheckReady:Promise.resolve(),profileRead:promise=>promise,doc:()=>({}),
+  getDoc:async()=>{if(failure)throw Error('permission-denied');return {exists:()=>false};},
+  profileComplete:()=>false,showProfileGateError:()=>{errors++;},console:{warn:()=>{}},
+  location:{pathname:'/index.html',search:'',hash:'',replace:()=>{redirects++;}},encodeURIComponent
  });
- vm.runInContext(helpers+'\nasync function check(){'+source.slice(redirectStart,redirectEnd)+'}',context);
- await context.check();
- assert.equal(destination,complete?'/index.html':null);
+ vm.runInContext(gateHandler,context);
+ assert.equal(await context.ensureRequiredProfile({uid:'test'},{}),false);
+ assert.equal(redirects,failure?0:1);assert.equal(errors,failure?1:0);
 });

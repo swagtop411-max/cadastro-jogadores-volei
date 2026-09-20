@@ -1,33 +1,5 @@
+import initializedAppCheck from "./firebase-app-check-init-v60.js";
 await import("./auth-gate-v53.js?v=20260915-53");
-import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import{getToken,initializeAppCheck,ReCaptchaEnterpriseProvider}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app-check.js";
-
-const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
-const SITE_KEY="6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR";
-const key=document.querySelector('meta[name="firebase-app-check-site-key"]')?.content?.trim()||window.BD_APP_CHECK_SITE_KEY||SITE_KEY;
-
-if(!globalThis.__BD_APP_CHECK_PROMISE__){
- globalThis.__BD_APP_CHECK_PROMISE__=(async()=>{
-  try{
-   const app=getApps().length?getApp():initializeApp(cfg);
-   const appCheck=initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(key),isTokenAutoRefreshEnabled:true});
-   document.documentElement.dataset.appCheck="initializing";
-   try{
-    const token=await getToken(appCheck,false);
-    document.documentElement.dataset.appCheck=token?.token?"active":"ready";
-   }catch(tokenError){
-    document.documentElement.dataset.appCheck="registered-client-pending";
-    console.warn("App Check ainda não emitiu token. Confirme o registro da chave Enterprise no Firebase Console:",tokenError);
-   }
-   return appCheck;
-  }catch(error){
-   document.documentElement.dataset.appCheck="error";
-   console.warn("App Check não inicializado:",error);
-   return null;
-  }
- })();
-}
-
 await import("./notification-router-v49.js?v=20260915-49").catch(error=>console.warn("Roteamento de notificações V49:",error));
 await import("./admin-message-v49.js?v=20260915-49").catch(error=>console.warn("Mensagens administrativas V49:",error));
 import("./admin-shortcut-v34.js?v=20260909-47").catch(error=>console.warn("Atalho ADM:",error));
@@ -35,4 +7,4 @@ import("./ugc-safety-v41.js?v=20260909-47").catch(error=>console.warn("Seguranç
 import("./age-gate-v47.js?v=20260909-47").catch(error=>console.warn("Barreira 18+ V47:",error));
 import("./terms-consent-v47.js?v=20260913-50").catch(error=>console.warn("Aceite legal V50:",error));
 
-export default globalThis.__BD_APP_CHECK_PROMISE__;
+export default initializedAppCheck;
