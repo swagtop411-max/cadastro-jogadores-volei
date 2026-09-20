@@ -1,3 +1,4 @@
+import "./app-branding-v58.js?v=20260916-58";
 const V8_THEME_ID="siteThemeV8Runtime";
 const V53_MESSAGING_EXEMPT=new Set(["conta.html","termos-de-uso.html","politica-privacidade.html","politica-cookies.html","exclusao-conta.html"]);
 function loadV8Theme(){let link=document.getElementById(V8_THEME_ID);if(!link){link=document.createElement("link");link.id=V8_THEME_ID;link.rel="stylesheet";document.head.appendChild(link)}link.href="site-v8.css?v=20260901-2";if(document.body?.classList.contains("profile-page")&&!document.getElementById("siteProfileV8Runtime")){const profile=document.createElement("link");profile.id="siteProfileV8Runtime";profile.rel="stylesheet";profile.href="site-v8-profile.css?v=20260901-1";document.head.appendChild(profile)}document.documentElement.classList.add("site-v8");document.body?.classList.add("site-v8")}

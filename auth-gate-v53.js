@@ -60,6 +60,7 @@ if(!PUBLIC_PAGES.has(page)){
     const finish=async user=>{
       if(settled)return;
       settled=true;
+      await (window.__athleteLaunchReady || Promise.resolve());
       if(user){
         const allowed=await ensureRequiredProfile(user,db);
         if(!allowed){resolve();return;}

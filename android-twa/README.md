@@ -5,8 +5,8 @@ Wrapper Android oficial em Trusted Web Activity (TWA) para `https://cadastrodeat
 ## Identidade inicial
 
 - Application ID: `br.com.cadastrodeatletas.app`
-- Version code: `2`
-- Version name: `1.0.1`
+- Version code: `3`
+- Version name: `1.0.2`
 - Min SDK: 23
 - Compile SDK: 36
 - Target SDK: 36
