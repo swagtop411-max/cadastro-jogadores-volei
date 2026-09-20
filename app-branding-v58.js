@@ -4,12 +4,13 @@
   let launchFinished;
   window.__athleteLaunchReady = new Promise(resolve => { launchFinished = resolve; });
   const version = '20260916-58';
+  const splashArt = '/assets/app-splash-portrait-v61.webp';
   const logo = '/assets/app-logo.webp?v=' + version;
   const style = document.createElement('style');
   style.textContent = `
     .header .header-brand{gap:10px!important;min-width:0!important}
     .header .header-brand .app-site-logo{display:block!important;width:46px!important;height:46px!important;max-width:none!important;flex:0 0 46px!important;object-fit:contain!important;border-radius:7px}
-    #appLaunch58{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:2147483647;background:#020d4b;display:grid;place-items:center;visibility:visible!important;opacity:1;transition:opacity .2s ease;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);box-sizing:border-box}
+    #appLaunch58{position:fixed;inset:0;width:100%;height:100vh;height:100dvh;z-index:2147483647;background:radial-gradient(ellipse at center,#034cff 0%,#001874 55%,#020d4b 100%);display:grid;place-items:center;visibility:visible!important;opacity:1;transition:opacity .2s ease;padding:0;box-sizing:border-box}
     #appLaunch58 img{display:block;width:100%;height:100%;max-width:100vw;max-height:100vh;max-height:100dvh;object-fit:contain}
     #appLaunch58 button{position:absolute;right:16px;bottom:calc(20px + env(safe-area-inset-bottom));border:1px solid #ffffff80;background:#020d4b;color:white;border-radius:24px;padding:10px 18px;font:600 14px Arial;cursor:pointer}
     @media(max-width:600px){.header .header-brand .app-site-logo{width:42px!important;height:42px!important;flex-basis:42px!important}.header .header-brand{gap:7px!important}}
@@ -40,7 +41,7 @@
     const app = params.get('app') === '1' || params.get('beta') === '1' || matchMedia('(display-mode: standalone)').matches || navigator.standalone === true || document.referrer.startsWith('android-app://');
     if (!app) { launchFinished(); return; }
     try {
-      const key = 'athleteLaunch58';
+      const key = 'athleteLaunch61';
       const previous = Number(sessionStorage.getItem(key) || 0);
       if (Date.now() - previous < 30 * 60 * 1000) { launchFinished(); return; }
       sessionStorage.setItem(key, String(Date.now()));
@@ -49,7 +50,7 @@
     splash.id = 'appLaunch58'; splash.setAttribute('role', 'status');
     splash.setAttribute('aria-label', 'Abrindo Cadastro de Atletas');
     const img = document.createElement('img');
-    img.alt = 'Cadastro de Atletas'; img.src = logo;
+    img.alt = 'Cadastro de Atletas'; img.src = splashArt;
     const skip = document.createElement('button'); skip.type = 'button'; skip.textContent = 'Continuar';
     let timer;
     const close = () => { clearTimeout(timer); splash.remove(); launchFinished(); };

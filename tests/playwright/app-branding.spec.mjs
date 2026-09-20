@@ -13,7 +13,7 @@ test.beforeEach(async ({page}) => {
   });
 });
 
-for (const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390}]) {
+for (const viewport of [{width:320,height:568},{width:390,height:844},{width:1080,height:2400},{width:844,height:390}]) {
   test(`logo completa na abertura ${viewport.width}x${viewport.height}`, async ({page}, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto('http://branding.test/?beta=1');
@@ -22,6 +22,7 @@ for (const viewport of [{width:320,height:568},{width:390,height:844},{width:844
     const box = await splash.boundingBox();
     expect(box.width).toBe(viewport.width);
     expect(box.height).toBe(viewport.height);
+    await expect(splash.locator('img')).toHaveAttribute('src','/assets/app-splash-portrait-v61.webp');
     await expect(splash.locator('img')).toHaveCSS('object-fit','contain');
     await expect(splash.locator('img')).toHaveJSProperty('complete',true);
     await page.screenshot({path:testInfo.outputPath('abertura.png')});
