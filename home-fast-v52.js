@@ -56,10 +56,10 @@ async function renderFeedFast(){
   const [photos,videos]=await Promise.all([fetchPublic("publicacoes",12),fetchPublic("videos",6)]);
   const items=[...photos.map(x=>({...x,_kind:"image"})),...videos.map(x=>({...x,_kind:"video"}))].sort((a,b)=>millis(b.criadoEm)-millis(a.criadoEm));
   if(!items.length){box.innerHTML='<div class="v52-rescue"><strong>Nenhuma publicação disponível agora.</strong></div>';return}
-  box.innerHTML=items.map(item=>`<article class="v52-feed-card" data-v52-owner="${esc(item.ownerUid||"")}"><div class="v52-head"><img data-v52-avatar src="${fallback}" alt=""><div><a href="perfil-social.html?uid=${encodeURIComponent(item.ownerUid||"")}" data-v52-name>${esc(item.nome||"Atleta")}</a><small>Rede esportiva</small></div><span class="v52-date">${esc(fmt(item.criadoEm))}</span></div>${mediaHtml(item)}${(item.texto||item.legenda)?`<div class="v52-body"><p>${esc(item.texto||item.legenda)}</p></div>`:""}</article>`).join("");
+  box.innerHTML=items.map(item=>`<article class="v52-feed-card" data-v52-owner="${esc(item.ownerUid||"")}" data-v52-post-name="${esc(item.nomePublicacao||"")}"><div class="v52-head"><img data-v52-avatar src="${fallback}" alt=""><div><a href="perfil-social.html?uid=${encodeURIComponent(item.ownerUid||"")}" data-v52-name>${esc(item.nomePublicacao||item.nome||"Atleta")}</a><small>Rede esportiva</small></div><span class="v52-date">${esc(fmt(item.criadoEm))}</span></div>${mediaHtml(item)}${(item.texto||item.legenda)?`<div class="v52-body"><p>${esc(item.texto||item.legenda)}</p></div>`:""}</article>`).join("");
   for(const card of box.querySelectorAll("[data-v52-owner]")){
    const uid=card.dataset.v52Owner;if(!uid)continue;
-   void profile(uid,card.querySelector("[data-v52-name]")?.textContent||"Atleta").then(p=>{const img=card.querySelector("[data-v52-avatar]"),name=card.querySelector("[data-v52-name]");if(img)img.src=p.fotoUrl;if(name)name.textContent=p.nome});
+   void profile(uid,card.querySelector("[data-v52-name]")?.textContent||"Atleta").then(p=>{const img=card.querySelector("[data-v52-avatar]"),name=card.querySelector("[data-v52-name]");if(img)img.src=p.fotoUrl;if(name&&!card.dataset.v52PostName)name.textContent=p.nome});
   }
  }catch(error){
   console.error("Home V52 feed:",error);
