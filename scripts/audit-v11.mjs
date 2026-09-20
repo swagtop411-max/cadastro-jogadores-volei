@@ -35,10 +35,10 @@ forbidText('auth-audit-v11.js','planoStatus','telemetria não altera plano');
 requireText('admin-commerce-v11.js?v=20260909-46','CONFIRMAR PAGAMENTO','pagamento confirmado pelo ADM');
 requireText('admin-data-migration-v11.js?v=20260909-46','migracao-v11','migração de legado disponível');
 
-requireText('firebase-app-check-v11.js?v=20260909-46','ReCaptchaEnterpriseProvider','provedor Enterprise');
-requireText('firebase-app-check-v11.js?v=20260909-46','isTokenAutoRefreshEnabled:true','renovação automática');
-requireText('firebase-app-check-v11.js?v=20260909-46','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR','site key pública configurada');
-forbidText('firebase-app-check-v11.js?v=20260909-46','ReCaptchaV3Provider','provedor V3 antigo');
+requireText('firebase-app-check-init-v60.js','ReCaptchaEnterpriseProvider','provedor Enterprise');
+requireText('firebase-app-check-init-v60.js','isTokenAutoRefreshEnabled:true','renovação automática');
+requireText('firebase-app-check-init-v60.js','6LcP2aUtAAAAAJL53RXsdE6UaoemgTexo5eoTmzR','site key pública configurada');
+forbidText('firebase-app-check-init-v60.js','ReCaptchaV3Provider','provedor V3 antigo');
 requireText('site-v5.js?v=20260909-46','firebase-app-check-v11.js?v=20260909-46','shell aguarda App Check');
 requireText('site-v7-autoload.js','await APP_CHECK_BOOT','autoload aguarda App Check');
 requireText('p4x7m9q2.html','firebase-app-check-v11.js?v=20260909-46','novo gateway privado inicializa App Check antes do acesso ADM');
@@ -70,7 +70,7 @@ requireText('social-network.js?v=20260909-46','Promise.all(otherUids.map(profile
 
 requireText('cadastro-direto.js','instagramUrl:instagram','Instagram estruturado');
 requireText('campeonatos-public.js','linkOrganizador: link','link de campeonato estruturado');
-requireText('firebase-app-check-v11.js?v=20260909-46','initializeAppCheck','cliente pronto para App Check');
+requireText('firebase-app-check-init-v60.js','initializeAppCheck','cliente pronto para App Check');
 requireText('manifest.webmanifest','app-icon.svg','ícone PWA');
 requireText('site-v8.js','og:image','Open Graph image');
 requireText('site-v8.js','twitter:image','Twitter image');
@@ -128,3 +128,4 @@ console.log(`\nAUDITORIA V11/V13: ${passes.length} verificações aprovadas`);
 for(const line of passes)console.log(`OK ${line}`);
 if(failures.length){console.error(`\nAUDITORIA V11/V13 FALHOU: ${failures.length} problema(s)`);for(const line of failures)console.error(`ERRO ${line}`);process.exit(1)}
 console.log('\nAUDITORIA V11/V13 APROVADA ✓');
+requireText('firebase-app-check-v11.js?v=20260909-46','firebase-app-check-init-v60.js','inicialização compartilhada do App Check');
