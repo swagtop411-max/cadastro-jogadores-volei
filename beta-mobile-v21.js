@@ -35,7 +35,38 @@ function mountGuestCta(){if(PAGE==='conta.html'||PAGE==='atividade.html'||curren
 function syncAccountState(user){currentUser=user||null;const profileNav=document.querySelector('[data-beta-profile-nav]');if(profileNav){profileNav.href=user?'/meu-perfil.html?beta=1':'/conta.html?tab=login&beta=1';profileNav.querySelector('span:last-child').textContent=user?'Perfil':'Conta'}mountGuestCta()}
 
 function cards(){return[...document.querySelectorAll('#homeFeed .social-post[data-post-id]')]}
-function enhanceCard(card){if(card.dataset.betaV21==='1')return;card.dataset.betaV21='1';const head=card.querySelector('.social-post-head'),date=card.querySelector('.social-date'),meta=card.querySelector('.feed-author-copy small');if(meta&&date?.textContent?.trim())meta.textContent=date.textContent.trim();if(date)date.remove();if(head&&!head.querySelector('.beta-post-pill')){const pill=document.createElement('span');pill.className='beta-post-pill';pill.textContent=card.querySelector('video')?'VÍDEO':'POST';head.appendChild(pill)}const media=card.querySelector('.social-media-frame');if(media&&!card.querySelector('.beta-card-actions')){const profile=card.querySelector('.social-author')?.getAttribute('href')||'/atletas.html';const actions=document.createElement('div');actions.className='beta-card-actions';actions.innerHTML=`<a class="beta-card-action primary" href="${profile}">${icons.search}<span>VER ATLETA</span></a><button class="beta-card-action share" type="button">${icons.share}<span>COMPARTILHAR</span></button>`;actions.querySelector('.share').onclick=()=>card.querySelector('.home-share')?.click();media.after(actions);const foot=document.createElement('div');foot.className='beta-card-foot';foot.innerHTML='<span></span>';actions.after(foot)}}
+function enhanceCard(card){
+ if(card.dataset.betaV21==='1')return;
+ card.dataset.betaV21='1';
+ const head=card.querySelector('.social-post-head'),date=card.querySelector('.social-date'),meta=card.querySelector('.feed-author-copy small'),media=card.querySelector('.social-media-frame');
+ if(meta&&date?.textContent?.trim())meta.textContent=date.textContent.trim();
+ if(date)date.remove();
+ if(head&&!head.querySelector('.beta-post-pill')){
+  const pill=document.createElement('span');
+  pill.className='beta-post-pill';
+  pill.textContent=card.querySelector('video')?'VÍDEO':'POST';
+  head.appendChild(pill);
+ }
+ const sourceCaption=card.querySelector('.social-text');
+ if(sourceCaption?.textContent?.trim()&&!card.querySelector('.beta-card-caption')){
+  const caption=document.createElement('p');
+  caption.className='beta-card-caption';
+  caption.textContent=sourceCaption.textContent.trim();
+  if(media)media.before(caption);else head?.after(caption);
+ }
+ if(media&&!card.querySelector('.beta-card-actions')){
+  const profile=card.querySelector('.social-author')?.getAttribute('href')||'/atletas.html';
+  const actions=document.createElement('div');
+  actions.className='beta-card-actions';
+  actions.innerHTML=`<a class="beta-card-action primary" href="${profile}">${icons.search}<span>VER ATLETA</span></a><button class="beta-card-action share" type="button">${icons.share}<span>COMPARTILHAR</span></button>`;
+  actions.querySelector('.share').onclick=()=>card.querySelector('.home-share')?.click();
+  media.after(actions);
+  const foot=document.createElement('div');
+  foot.className='beta-card-foot';
+  foot.innerHTML='<span></span>';
+  actions.after(foot);
+ }
+}
 
 function updateStats(){const all=cards();const photos=all.filter(c=>!c.querySelector('video')).length;const videos=all.length-photos;document.querySelector('[data-beta-stat="all"]')?.replaceChildren(document.createTextNode(String(all.length)));document.querySelector('[data-beta-stat="photo"]')?.replaceChildren(document.createTextNode(String(photos)));document.querySelector('[data-beta-stat="video"]')?.replaceChildren(document.createTextNode(String(videos)));const visible=all.filter(c=>!c.hidden&&!c.classList.contains('beta-search-hidden')).length;const r=document.querySelector('[data-beta-results]');if(r)r.textContent=`${visible} resultado${visible===1?'':'s'}`}
 function applySearch(){const q=(document.getElementById('betaMobileSearch')?.value||'').trim().toLocaleLowerCase('pt-BR');for(const card of cards()){const text=(card.textContent||'').toLocaleLowerCase('pt-BR');card.classList.toggle('beta-search-hidden',Boolean(q)&&!text.includes(q))}updateStats()}
