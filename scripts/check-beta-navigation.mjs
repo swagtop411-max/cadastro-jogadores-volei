@@ -31,4 +31,19 @@ if (!mobile.includes("nav.style.setProperty('display','grid','important')")) {
   throw new Error('beta-mobile-v21.js: fallback de visibilidade do menu ausente');
 }
 
+
+const themeBoot = fs.readFileSync('theme-boot-v65.js', 'utf8');
+if (!themeBoot.includes('html.beta-mobile-app body{transform:none!important')) {
+  throw new Error('theme-boot-v65.js: body transform pode quebrar position:fixed no Android');
+}
+
+const motion = fs.readFileSync('app-motion-v65.css', 'utf8');
+if (!motion.includes('html.beta-mobile-app #betaMobileNav{position:fixed!important;display:grid!important')) {
+  throw new Error('app-motion-v65.css: trava fixa/visível do menu ausente');
+}
+
+if (!mobile.includes('function installNavGuardian()') || !mobile.includes('function enforceNav()')) {
+  throw new Error('beta-mobile-v21.js: guardião persistente do menu ausente');
+}
+
 console.log('Beta navigation guard: OK');
