@@ -63,10 +63,59 @@ function isAdult18(value, reference = new Date()) {
 }
 
 const registerBirth = $("registerBirth");
-if (registerBirth) {
-  registerBirth.max = adultCutoffDate();
-  registerBirth.setAttribute("aria-describedby", "accountStatus");
+const registerBirthDay = $("registerBirthDay");
+const registerBirthMonth = $("registerBirthMonth");
+const registerBirthYear = $("registerBirthYear");
+
+function daysInMonth(year, month) {
+  if (!year || !month) return 31;
+  return new Date(Number(year), Number(month), 0).getDate();
 }
+
+function syncBirthValue() {
+  if (!registerBirth) return "";
+  const year = String(registerBirthYear?.value || "");
+  const month = String(registerBirthMonth?.value || "");
+  const day = String(registerBirthDay?.value || "");
+  const validDay = Number(day) >= 1 && Number(day) <= daysInMonth(year, month);
+  registerBirth.value = year && month && day && validDay
+    ? `${year}-${month.padStart(2,"0")}-${day.padStart(2,"0")}`
+    : "";
+  return registerBirth.value;
+}
+
+function rebuildBirthDays() {
+  if (!registerBirthDay) return;
+  const previous = Number(registerBirthDay.value || 0);
+  const total = daysInMonth(registerBirthYear?.value, registerBirthMonth?.value);
+  registerBirthDay.innerHTML = '<option value="">Dia</option>' +
+    Array.from({length: total}, (_,i) => {
+      const d = i + 1;
+      return `<option value="${d}"${d===previous?' selected':''}>${String(d).padStart(2,"0")}</option>`;
+    }).join("");
+  if (previous > total) registerBirthDay.value = "";
+  syncBirthValue();
+}
+
+function setupBirthSelectors() {
+  if (!registerBirthDay || !registerBirthMonth || !registerBirthYear) return;
+  const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  registerBirthMonth.innerHTML = '<option value="">Mês</option>' +
+    months.map((name,index)=>`<option value="${index+1}">${name}</option>`).join("");
+
+  const maxYear = new Date().getFullYear() - 18;
+  const minYear = 1900;
+  registerBirthYear.innerHTML = '<option value="">Ano</option>' +
+    Array.from({length:maxYear-minYear+1},(_,i)=>maxYear-i)
+      .map(year=>`<option value="${year}">${year}</option>`).join("");
+
+  rebuildBirthDays();
+  registerBirthDay.addEventListener("change", syncBirthValue);
+  registerBirthMonth.addEventListener("change", rebuildBirthDays);
+  registerBirthYear.addEventListener("change", rebuildBirthDays);
+}
+setupBirthSelectors();
+if (registerBirth) registerBirth.setAttribute("aria-describedby", "accountStatus");
 
 function safeReturnDestination(raw) {
   if (!raw) return "";
@@ -258,7 +307,7 @@ registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const name = $("registerName").value.trim();
-  const birth = $("registerBirth").value;
+  const birth = syncBirthValue();
   const email = $("registerEmail").value.trim().toLowerCase();
   const password = $("registerPassword").value;
   const confirm = $("registerPasswordConfirm").value;
@@ -317,11 +366,9 @@ registerForm.addEventListener("submit", async (event) => {
     }
 
     const usuarioRef = doc(db, "usuarios", user.uid);
-    const perfilRef = doc(db, "perfis", user.uid);
-    let accountBatchCommitted = false;
+    let accountWriteCommitted = false;
     const persistAccount = async () => {
-      const batch = writeBatch(db);
-      batch.set(usuarioRef, {
+      await setDoc(usuarioRef, {
         uid: user.uid,
         nome: name,
         email,
@@ -331,37 +378,14 @@ registerForm.addEventListener("submit", async (event) => {
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp()
       }, { merge: true });
-      batch.set(perfilRef, {
-        uid: user.uid,
-        nome: name,
-        cidade: "",
-        uf: "",
-        modalidade: "",
-        posicao: "",
-        categoria: "",
-        time: "",
-        bio: "",
-        fotoUrl: "",
-        fotoPath: "",
-        capaUrl: "",
-        capaPath: "",
-        historicoCampeonatos: [],
-        handle: "",
-        instagramUrl: "",
-        completo: false
-      }, { merge: true });
-      await batch.commit();
-      accountBatchCommitted = true;
+      accountWriteCommitted = true;
 
-      const [usuarioCheck, perfilCheck] = await Promise.all([
-        getDoc(usuarioRef),
-        getDoc(perfilRef)
-      ]);
-      if (!usuarioCheck.exists() || usuarioCheck.data()?.nome !== name || usuarioCheck.data()?.email !== email || String(usuarioCheck.data()?.nascimento || "") !== birth) {
+      const usuarioCheck = await getDoc(usuarioRef);
+      if (!usuarioCheck.exists() ||
+          usuarioCheck.data()?.nome !== name ||
+          usuarioCheck.data()?.email !== email ||
+          String(usuarioCheck.data()?.nascimento || "") !== birth) {
         throw new Error("ACCOUNT_WRITE_NOT_CONFIRMED");
-      }
-      if (!perfilCheck.exists() || String(perfilCheck.data()?.nome || "") !== name) {
-        throw new Error("PROFILE_WRITE_NOT_CONFIRMED");
       }
     };
 
@@ -378,7 +402,7 @@ registerForm.addEventListener("submit", async (event) => {
       }
     }
     if (persistError) {
-      if (!accountBatchCommitted) {
+      if (!accountWriteCommitted) {
         try { await deleteUser(user); } catch (rollbackError) { console.warn("Não foi possível desfazer a conta incompleta:", rollbackError); }
       }
       throw Object.assign(new Error("Não foi possível confirmar o salvamento dos seus dados. Tente novamente."), { code: persistError?.code || "profile/save-not-confirmed" });
