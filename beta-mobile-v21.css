@@ -2,7 +2,9 @@
 :root{--bm-bg:#031424;--bm-surface:#08243a;--bm-surface-2:#0a2b43;--bm-line:#0c5574;--bm-cyan:#18c7f1;--bm-gold:#f4c84d;--bm-text:#f7fbff;--bm-muted:#9bb1c2;--bm-green:#55d8a7}
 html.beta-mobile-app{background:var(--bm-bg)!important;scrollbar-color:#164862 var(--bm-bg)}
 html.beta-mobile-app body{margin:0!important;background:radial-gradient(circle at 50% -10%,#0a3651 0,#031424 38%,#031424 100%)!important;color:var(--bm-text)!important;padding-bottom:112px!important;min-height:100vh!important}
-html.beta-mobile-app body>.header,html.beta-mobile-app .site-menu-drawer,html.beta-mobile-app .public-layout,html.beta-mobile-app .home-social-head{display:none!important}
+html.beta-mobile-app body>.header,html.beta-mobile-app .site-menu-drawer,html.beta-mobile-app .home-social-head{display:none!important}
+html.beta-mobile-app[data-beta-page="index"] .public-layout{display:none!important}
+html.beta-mobile-app:not([data-beta-page="index"]) .public-layout{display:grid!important;visibility:visible!important;opacity:1!important}
 html.beta-mobile-app .container{width:100%!important;max-width:none!important;margin:0!important;padding:0!important}
 html.beta-mobile-app .home-social{width:min(100%,575px)!important;max-width:575px!important;margin:0 auto!important;padding:0 12px 18px!important;background:transparent!important;border:0!important;box-shadow:none!important}
 html.beta-mobile-app .social-stories-wrap{display:none!important}
@@ -65,4 +67,24 @@ html.beta-mobile-app .equipes-cadastrar-link{background:#f4c84d!important;color:
 
 @media(max-width:420px){
  .beta-mobile-sport-tools{grid-template-columns:1fr}
+}
+
+/* V79 • nunca esconder o conteúdo principal das páginas internas */
+html.beta-mobile-app[data-beta-page="meu-perfil"] main,
+html.beta-mobile-app[data-beta-page="meu-perfil"] .profile-page,
+html.beta-mobile-app[data-beta-page="meu-perfil"] .public-layout,
+html.beta-mobile-app[data-beta-page="conta"] main,
+html.beta-mobile-app[data-beta-page="explorar"] main,
+html.beta-mobile-app[data-beta-page="comunidade"] main,
+html.beta-mobile-app[data-beta-page="proximos-campeonatos"] main{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+html.beta-mobile-app[data-beta-page="meu-perfil"] .public-layout{
+  width:min(100%,575px)!important;
+  max-width:575px!important;
+  margin:0 auto!important;
+  padding:0 12px 120px!important;
+  box-sizing:border-box!important;
 }
