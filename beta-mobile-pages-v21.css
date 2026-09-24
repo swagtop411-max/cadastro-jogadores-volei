@@ -106,3 +106,101 @@ html.beta-mobile-app .account-form label.account-check a{
     -webkit-appearance:none;
   }
 }
+
+
+/* V76 • cadastro mobile unificado: Android + iPhone */
+@media(max-width:900px){
+  html.beta-mobile-app .account-shell{
+    width:100%!important;
+    max-width:575px!important;
+    padding-left:max(12px,env(safe-area-inset-left))!important;
+    padding-right:max(12px,env(safe-area-inset-right))!important;
+    overflow-x:hidden!important;
+  }
+  html.beta-mobile-app .account-card,
+  html.beta-mobile-app .account-form{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    overflow-x:hidden!important;
+  }
+  html.beta-mobile-app .account-form input:not([type="checkbox"]),
+  html.beta-mobile-app .account-form select,
+  html.beta-mobile-app .account-form textarea{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  html.beta-mobile-app .account-form label.account-check{
+    display:grid!important;
+    grid-template-columns:22px minmax(0,1fr)!important;
+    align-items:start!important;
+    gap:12px!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  html.beta-mobile-app .account-form label.account-check>input[type="checkbox"]{
+    -webkit-appearance:none!important;
+    appearance:none!important;
+    width:22px!important;
+    min-width:22px!important;
+    max-width:22px!important;
+    height:22px!important;
+    min-height:22px!important;
+    max-height:22px!important;
+    margin:1px 0 0!important;
+    padding:0!important;
+  }
+  html.beta-mobile-app .account-form label.account-check>span{
+    min-width:0!important;
+    max-width:100%!important;
+    white-space:normal!important;
+    overflow-wrap:anywhere!important;
+  }
+  html.beta-mobile-app .account-birth-grid{
+    display:grid!important;
+    grid-template-columns:.72fr 1.25fr 1fr!important;
+    gap:9px!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  html.beta-mobile-app .account-birth-grid select,
+  html.beta-mobile-app .account-birth-grid input{
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    min-height:50px!important;
+    box-sizing:border-box!important;
+    border:1px solid #164a66!important;
+    border-radius:13px!important;
+    background:#031b2c!important;
+    color:#f7fbff!important;
+    padding:0 10px!important;
+    font:700 14px/1 Montserrat,Arial,sans-serif!important;
+  }
+  html.beta-mobile-app .account-birth-grid input[type="number"]{
+    -moz-appearance:textfield;
+    appearance:textfield;
+  }
+  html.beta-mobile-app .account-birth-grid input[type="number"]::-webkit-inner-spin-button,
+  html.beta-mobile-app .account-birth-grid input[type="number"]::-webkit-outer-spin-button{
+    -webkit-appearance:none;
+    margin:0;
+  }
+}
+@media(max-width:380px){
+  html.beta-mobile-app .account-birth-grid{
+    grid-template-columns:.64fr 1.16fr .92fr!important;
+    gap:7px!important;
+  }
+  html.beta-mobile-app .account-birth-grid select,
+  html.beta-mobile-app .account-birth-grid input{
+    padding:0 7px!important;
+    font-size:13px!important;
+  }
+}
