@@ -46,7 +46,11 @@ async function carregarEquipes(){if(!listaEquipes)return;listaEquipes.innerHTML=
 [buscaEquipe,filtroModalidadeEquipe,filtroCategoriaEquipe].filter(Boolean).forEach(el=>{el.addEventListener("input",renderEquipes);el.addEventListener("change",renderEquipes)});
 const btnEquipes=$("btnAbrirEquipes"),btnFecharEquipes=$("btnFecharEquipes"),equipesDrawer=$("equipesDrawer");
 function abrirEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.add("aberto");equipesDrawer.setAttribute("aria-hidden","false");btnEquipes?.setAttribute("aria-expanded","true");document.body.classList.add("equipes-open");if(!equipes.length)void carregarEquipes()}
-function fecharEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.remove("aberto");equipesDrawer.setAttribute("aria-hidden","true");btnEquipes?.setAttribute("aria-expanded","false");document.body.classList.remove("equipes-open")}
+function limparUrlEquipes(){try{const url=new URL(location.href);let mudou=false;if(url.searchParams.get("abrir")==="equipes"){url.searchParams.delete("abrir");mudou=true}if(url.hash==="#equipes"){url.hash="";mudou=true}if(mudou)history.replaceState(history.state,"",url.pathname+url.search+url.hash)}catch{}}
+function fecharEquipes(){if(!equipesDrawer)return;equipesDrawer.classList.remove("aberto");equipesDrawer.setAttribute("aria-hidden","true");btnEquipes?.setAttribute("aria-expanded","false");document.body.classList.remove("equipes-open");limparUrlEquipes()}
 btnEquipes?.addEventListener("click",abrirEquipes);btnFecharEquipes?.addEventListener("click",fecharEquipes);equipesDrawer?.addEventListener("click",e=>{if(e.target.matches("[data-fechar-equipes]"))fecharEquipes()});window.abrirEquipes=abrirEquipes;window.fecharEquipes=fecharEquipes;document.addEventListener("keydown",e=>{if(e.key==="Escape")fecharEquipes()});
+function abrirEquipesSolicitadas(){const p=new URLSearchParams(location.search);if(p.get("abrir")==="equipes"||location.hash==="#equipes")abrirEquipes()}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",abrirEquipesSolicitadas,{once:true});else abrirEquipesSolicitadas();
+window.addEventListener("popstate",()=>{const p=new URLSearchParams(location.search);if(p.get("abrir")==="equipes"||location.hash==="#equipes")abrirEquipes();else if(equipesDrawer?.classList.contains("aberto"))fecharEquipes()});
 
 void carregarApoiadores();if(document.body.classList.contains("athletes-page"))void carregarAtletas();
