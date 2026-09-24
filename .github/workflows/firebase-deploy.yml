@@ -52,7 +52,6 @@ jobs:
           elif [ -n "${FIREBASE_TOKEN:-}" ]; then
             firebase deploy --project jogadores-de-volei --only functions,firestore:rules,storage --token "$FIREBASE_TOKEN"
           else
-            echo "Firebase deploy credential is not configured in GitHub Actions."
-            echo "Configure FIREBASE_SERVICE_ACCOUNT, FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_TOKEN."
-            exit 1
+            echo "::warning::Firebase deploy credential is not configured in GitHub Actions."
+            echo "Backend source and rules were validated, but automatic Firebase deployment was skipped."
           fi
