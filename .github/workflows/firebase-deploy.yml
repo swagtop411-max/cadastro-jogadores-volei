@@ -1,0 +1,58 @@
+name: Deploy Firebase backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+      - "firestore.rules"
+      - "storage.rules"
+      - "firebase.json"
+      - ".github/workflows/firebase-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-backend-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Functions dependencies
+        working-directory: functions
+        run: npm install
+      - name: Validate Functions
+        working-directory: functions
+        run: npm run lint
+      - name: Install Firebase CLI
+        run: npm install --global firebase-tools@15.1.0
+      - name: Deploy Functions and rules
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SA="${FIREBASE_SERVICE_ACCOUNT:-}"
+          if [ -z "$SA" ]; then SA="${FIREBASE_SERVICE_ACCOUNT_JSON:-}"; fi
+
+          if [ -n "$SA" ]; then
+            printf '%s' "$SA" > "$RUNNER_TEMP/firebase-service-account.json"
+            export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-service-account.json"
+            firebase deploy --project jogadores-de-volei --only functions,firestore:rules,storage
+          elif [ -n "${FIREBASE_TOKEN:-}" ]; then
+            firebase deploy --project jogadores-de-volei --only functions,firestore:rules,storage --token "$FIREBASE_TOKEN"
+          else
+            echo "Firebase deploy credential is not configured in GitHub Actions."
+            echo "Configure FIREBASE_SERVICE_ACCOUNT, FIREBASE_SERVICE_ACCOUNT_JSON or FIREBASE_TOKEN."
+            exit 1
+          fi
