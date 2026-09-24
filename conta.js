@@ -318,6 +318,7 @@ registerForm.addEventListener("submit", async (event) => {
 
     const usuarioRef = doc(db, "usuarios", user.uid);
     const perfilRef = doc(db, "perfis", user.uid);
+    let accountBatchCommitted = false;
     const persistAccount = async () => {
       const batch = writeBatch(db);
       batch.set(usuarioRef, {
@@ -350,12 +351,13 @@ registerForm.addEventListener("submit", async (event) => {
         completo: false
       }, { merge: true });
       await batch.commit();
+      accountBatchCommitted = true;
 
       const [usuarioCheck, perfilCheck] = await Promise.all([
         getDoc(usuarioRef),
         getDoc(perfilRef)
       ]);
-      if (!usuarioCheck.exists() || usuarioCheck.data()?.nome !== name || usuarioCheck.data()?.email !== email) {
+      if (!usuarioCheck.exists() || usuarioCheck.data()?.nome !== name || usuarioCheck.data()?.email !== email || String(usuarioCheck.data()?.nascimento || "") !== birth) {
         throw new Error("ACCOUNT_WRITE_NOT_CONFIRMED");
       }
       if (!perfilCheck.exists() || String(perfilCheck.data()?.nome || "") !== name) {
@@ -376,7 +378,9 @@ registerForm.addEventListener("submit", async (event) => {
       }
     }
     if (persistError) {
-      try { await deleteUser(user); } catch (rollbackError) { console.warn("Não foi possível desfazer a conta incompleta:", rollbackError); }
+      if (!accountBatchCommitted) {
+        try { await deleteUser(user); } catch (rollbackError) { console.warn("Não foi possível desfazer a conta incompleta:", rollbackError); }
+      }
       throw Object.assign(new Error("Não foi possível confirmar o salvamento dos seus dados. Tente novamente."), { code: persistError?.code || "profile/save-not-confirmed" });
     }
 
