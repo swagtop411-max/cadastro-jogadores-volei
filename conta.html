@@ -12,21 +12,21 @@
 .account-shell{max-width:1050px!important;margin:0 auto!important;padding:35px 18px 55px!important;display:grid!important;grid-template-columns:minmax(0,.85fr) minmax(360px,1fr)!important;gap:28px!important;align-items:center!important}.account-intro{padding:18px!important}.account-kicker{color:#2563eb!important}.account-intro h1{color:#172033!important;font-family:'Montserrat',Arial,sans-serif!important;font-size:38px!important;line-height:1.05!important;letter-spacing:-1.5px!important}.account-intro p{color:#667085!important}.account-promise{background:#fff!important;border:1px solid #e4e7ec!important;border-radius:13px!important;color:#344054!important;box-shadow:0 5px 20px rgba(15,23,42,.04)!important}.account-promise span{color:#2563eb!important}.account-card{background:#fff!important;border:1px solid #e4e7ec!important;border-radius:20px!important;box-shadow:0 15px 40px rgba(15,23,42,.08)!important}.account-card-head h2,.account-logged h3{color:#172033!important}.account-mark{color:#2563eb!important}.account-primary{background:#2563eb!important;color:#fff!important;border:1px solid #2563eb!important}.account-secondary,.account-link{color:#1d4ed8!important}.account-footnote,.account-logged p{color:#667085!important}.account-danger{display:flex!important;align-items:center!important;justify-content:center!important;min-height:42px!important;padding:0 12px!important;border:1px solid #f3b7b7!important;border-radius:10px!important;background:#fff7f7!important;color:#b42318!important;text-decoration:none!important;font-size:10px!important;font-weight:900!important;text-align:center!important}.account-legal-links{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px}.account-legal-links a{color:#667085;font-size:9px;font-weight:700}.account-age-notice{margin:0 0 12px;padding:10px 12px;border:1px solid #d7e4ff;border-radius:10px;background:#f4f7ff;color:#1d4ed8;font-size:10px;font-weight:900;line-height:1.45}@media(max-width:800px){.account-shell{grid-template-columns:1fr!important;max-width:620px!important}.account-intro{padding:5px!important}.account-intro h1{font-size:31px!important}}
 </style>
 <script defer src="app-branding-v58.js?v=20260916-58"></script>
-<script src="theme-boot-v65.js?v=20260924-70"></script>
+<script src="theme-boot-v65.js?v=20260924-77"></script>
 <link id="siteThemeV5Runtime" rel="stylesheet" href="site-theme.css?v=20260924-70">
 <link id="siteThemeV8Runtime" rel="stylesheet" href="site-v8.css?v=20260924-70">
 <link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-70">
-<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-76">
+<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-77">
 <link id="betaMobileActivityV28Css" rel="stylesheet" href="/beta-mobile-activity-v28.css?v=20260907-28">
 <link id="betaAccountV23Css" rel="stylesheet" href="/beta-account-v23.css?v=20260908-40">
-<link rel="stylesheet" href="app-motion-v65.css?v=20260924-70">
-<script defer src="app-motion-v65.js?v=20260924-70"></script>
+<link rel="stylesheet" href="app-motion-v65.css?v=20260924-77">
+<script defer src="app-motion-v65.js?v=20260924-77"></script>
 <style id="accountBirthV75">
 .account-birth-grid{display:grid;grid-template-columns:.72fr 1.25fr 1fr;gap:9px;width:100%;max-width:100%;box-sizing:border-box}
-.account-birth-grid select,.account-birth-grid input{width:100%;min-width:0;min-height:50px;box-sizing:border-box;border:1px solid #164a66;border-radius:13px;background:#031b2c;color:#f7fbff;padding:0 12px;font:700 14px/1 Montserrat,Arial,sans-serif;outline:none}
-.account-birth-grid select:focus,.account-birth-grid input:focus{border-color:#18c7f1;box-shadow:0 0 0 3px rgba(24,199,241,.12)}
-.account-birth-grid select:invalid,.account-birth-grid input::placeholder{color:#8094a4}
-@media(max-width:380px){.account-birth-grid{grid-template-columns:.65fr 1.18fr .9fr;gap:7px}.account-birth-grid select,.account-birth-grid input{padding:0 8px;font-size:13px}}
+.account-birth-grid input{width:100%;min-width:0;min-height:50px;box-sizing:border-box;border:1px solid #164a66;border-radius:13px;background:#031b2c;color:#f7fbff;padding:0 12px;text-align:center;font:800 15px/1 Montserrat,Arial,sans-serif;letter-spacing:.5px;outline:none}
+.account-birth-grid input:focus{border-color:#18c7f1;box-shadow:0 0 0 3px rgba(24,199,241,.12)}
+.account-birth-grid input::placeholder{color:#8094a4}.account-birth-help{display:block;margin:7px 2px 0;color:#8197a8;font:600 10px/1.4 Montserrat,Arial,sans-serif}
+@media(max-width:380px){.account-birth-grid{grid-template-columns:.65fr 1.18fr .9fr;gap:7px}.account-birth-grid input{padding:0 8px;font-size:13px}}
 </style></head>
 <body class="site-v5 site-v8 account-page">
 <header class="header account-header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html" aria-label="Voltar ao Cadastro de Atletas"><div><strong>CADASTRO DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a></header>
@@ -40,16 +40,17 @@
 <form id="loginForm" class="account-form" novalidate><label for="loginEmail">E-mail</label><input id="loginEmail" type="email" autocomplete="email" required><label for="loginPassword">Senha</label><input id="loginPassword" type="password" autocomplete="current-password" minlength="6" required><button class="account-primary" type="submit">ENTRAR <span>→</span></button><button class="account-link" type="button" id="forgotPassword">Esqueci minha senha</button></form>
 <form id="registerForm" class="account-form hidden" novalidate><label for="registerName">Nome ou nome esportivo</label><input id="registerName" type="text" autocomplete="name" maxlength="80" required><label for="registerBirthDay">Data de nascimento</label>
 <div class="account-birth-grid" role="group" aria-label="Data de nascimento">
-  <select id="registerBirthDay" autocomplete="bday-day" required aria-label="Dia"><option value="">Dia</option></select>
-  <select id="registerBirthMonth" autocomplete="bday-month" required aria-label="Mês"><option value="">Mês</option></select>
-  <input id="registerBirthYear" type="number" inputmode="numeric" autocomplete="bday-year" min="1900" max="2008" step="1" placeholder="AAAA" required aria-label="Ano">
+  <input id="registerBirthDay" type="text" inputmode="numeric" autocomplete="bday-day" maxlength="2" placeholder="DD" required aria-label="Dia">
+  <input id="registerBirthMonth" type="text" inputmode="numeric" autocomplete="bday-month" maxlength="2" placeholder="MM" required aria-label="Mês">
+  <input id="registerBirthYear" type="text" inputmode="numeric" autocomplete="bday-year" maxlength="4" placeholder="AAAA" required aria-label="Ano">
 </div>
+<small class="account-birth-help">Digite a data diretamente. Ex.: 26 / 08 / 1988</small>
 <input id="registerBirth" type="hidden" autocomplete="bday"><label for="registerEmail">E-mail</label><input id="registerEmail" type="email" autocomplete="email" required><label for="registerPassword">Senha</label><input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required><label for="registerPasswordConfirm">Confirme a senha</label><input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required><label class="account-check"><input id="confirmAdult" type="checkbox" required><span>Declaro que tenho 18 anos ou mais e que as informações fornecidas são verdadeiras.</span></label><label class="account-check"><input id="acceptTerms" type="checkbox" required><span>Concordo com os <a href="termos-de-uso.html">Termos de Uso</a> e a <a href="politica-privacidade.html">Política de Privacidade</a>.</span></label><button class="account-primary" type="submit">CRIAR MINHA CONTA <span>→</span></button></form>
 <section id="accountLogged" class="account-logged hidden" aria-live="polite"><span class="account-kicker">ACESSO CONFIRMADO</span><h3 id="loggedName">Olá!</h3><p id="loggedEmail"></p><div class="account-logged-actions"><a class="account-primary" href="meu-perfil.html">VER MEU PERFIL <span>→</span></a><a class="account-secondary" href="comunidade.html">IR PARA A COMUNIDADE</a><button id="logoutButton" class="account-link" type="button">Sair da conta</button><a class="account-danger" href="exclusao-conta.html?app=1">EXCLUIR MINHA CONTA</a></div></section>
 <p class="account-footnote">Nunca compartilhe sua senha. A administração não solicita códigos de acesso por mensagem.</p><div class="account-legal-links"><a href="politica-privacidade.html">Privacidade</a><a href="termos-de-uso.html">Termos</a><a href="exclusao-conta.html">Exclusão de conta</a></div>
 </section>
 </main>
-<script type="module" src="site-v5.js?v=20260924-70"></script>
+<script type="module" src="site-v5.js?v=20260924-77"></script>
 <script type="module" src="conta.js?v=20260924-76"></script>
 </body>
 </html>
