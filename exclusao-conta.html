@@ -10,15 +10,15 @@
 :root{color-scheme:dark}.delete-page{min-height:100vh;background:#031424;color:#eef7fb;padding:32px 14px 60px;box-sizing:border-box;font-family:Montserrat,Arial,sans-serif}.delete-shell{width:min(760px,100%);margin:0 auto}.delete-back{display:inline-flex;align-items:center;min-height:42px;margin-bottom:16px;padding:0 13px;border:1px solid #17536f;border-radius:11px;color:#bcefff;text-decoration:none;font-size:11px;font-weight:900}.delete-card{padding:clamp(20px,5vw,36px);border:1px solid #15516d;border-radius:24px;background:linear-gradient(145deg,#08243a,#061b2d);box-shadow:0 20px 60px rgba(0,0,0,.25)}.delete-kicker{display:block;color:#18c7f1;font-size:10px;font-weight:900;letter-spacing:1.6px}.delete-card h1{margin:8px 0 12px;color:#fff;font-size:clamp(30px,8vw,46px);line-height:1}.delete-card p,.delete-card li{color:#b8cad6;font-size:13px;line-height:1.65}.delete-card h2{margin:26px 0 8px;color:#fff;font-size:18px}.delete-list{padding-left:20px}.delete-form{display:grid;gap:10px;margin-top:20px;padding:18px;border:1px solid #174e68;border-radius:17px;background:#041a2a}.delete-form label{color:#d9edf6;font-size:10px;font-weight:900;letter-spacing:.7px}.delete-form input[type=email]{width:100%;min-height:48px;padding:0 13px;box-sizing:border-box;border:1px solid #25627e;border-radius:12px;background:#031523;color:#fff;font-size:14px;outline:none}.delete-form input[type=email]:focus{border-color:#18c7f1;box-shadow:0 0 0 3px rgba(24,199,241,.12)}.delete-check{display:flex;gap:9px;align-items:flex-start;margin-top:4px;color:#c6d7e0;font-size:11px;line-height:1.45}.delete-check input{width:18px;height:18px;margin:0;flex:0 0 auto}.delete-action{min-height:52px;border:0;border-radius:14px;background:#f4c84d;color:#102333;font-weight:900;font-size:12px;cursor:pointer}.delete-action:disabled{opacity:.45;cursor:not-allowed}.delete-secondary{display:flex;align-items:center;justify-content:center;min-height:46px;border:1px solid #205b77;border-radius:13px;color:#c8eff9;text-decoration:none;font-size:10px;font-weight:900}.delete-status{min-height:20px;color:#7ed9ef;font-size:11px;line-height:1.45}.delete-note{margin-top:18px;padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}.delete-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}.delete-links a{color:#82ddf2;font-size:10px;font-weight:800}.delete-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10px;color:#8ca7b6;overflow-wrap:anywhere}@media(max-width:520px){.delete-page{padding:20px 10px 42px}.delete-card{border-radius:19px}.delete-form{padding:14px}}
 </style>
 
-<script src="theme-boot-v65.js?v=20260924-79"></script>
+<script src="theme-boot-v65.js?v=20260924-80"></script>
 <link id="siteThemeV5Runtime" rel="stylesheet" href="site-theme.css?v=20260924-65">
 <link id="siteThemeV8Runtime" rel="stylesheet" href="site-v8.css?v=20260924-65">
 <link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-79">
 <link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-79">
 <link id="betaMobileActivityV28Css" rel="stylesheet" href="/beta-mobile-activity-v28.css?v=20260907-28">
 <link id="betaAccountV23Css" rel="stylesheet" href="/beta-account-v23.css?v=20260908-40">
-<link rel="stylesheet" href="app-motion-v65.css?v=20260924-79">
-<script defer src="app-motion-v65.js?v=20260924-79"></script>
+<link rel="stylesheet" href="app-motion-v65.css?v=20260924-80">
+<script defer src="app-motion-v65.js?v=20260924-80"></script>
 </head>
 <body class="site-v5 site-v8">
 <main class="delete-page"><div class="delete-shell"><a class="delete-back" href="conta.html?app=1">← VOLTAR À CONTA</a><article class="delete-card">
@@ -28,7 +28,7 @@
 <h2>O que a solicitação abrange</h2>
 <ul class="delete-list"><li>Conta de acesso e perfil esportivo.</li><li>Publicações, vídeos, Stories e mídias associadas ao perfil.</li><li>Interações, seguidores, bloqueios, notificações e conversas vinculadas à conta, quando aplicável.</li><li>Dados pessoais mantidos pela plataforma, exceto informações que precisem ser conservadas por obrigação legal, segurança, prevenção de fraude ou exercício regular de direitos.</li></ul>
 <h2>Como solicitar</h2>
-<p>Informe o e-mail da conta, confirme o pedido e toque no botão abaixo. O canal oficial será aberto com a solicitação pronta para envio. A titularidade poderá ser verificada antes da conclusão da exclusão.</p>
+<p>Entre na sua conta, confirme o pedido e toque no botão abaixo. Quando autenticado, o sistema tenta excluir automaticamente a conta, o perfil, publicações, mídias e dados vinculados. Se a exclusão automática não concluir, o pedido fica registrado no painel administrativo.</p>
 <div class="delete-form">
 <label for="deleteEmail">E-MAIL DA CONTA</label>
 <input id="deleteEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" required>
@@ -37,21 +37,96 @@
 <a class="delete-secondary" href="conta.html?tab=login&app=1">ENTRAR NA MINHA CONTA</a>
 <div id="deleteStatus" class="delete-status" role="status" aria-live="polite"></div>
 </div>
-<div class="delete-note"><p><strong>Importante:</strong> desinstalar o aplicativo ou sair da conta não exclui seus dados. O pedido precisa ser iniciado por esta página ou pelo caminho disponível dentro de Minha Conta.</p><p class="delete-id">Após a verificação de titularidade, a equipe processará a exclusão dos dados aplicáveis e confirmará a conclusão pelo canal de atendimento.</p></div>
+<div class="delete-note"><p><strong>Importante:</strong> desinstalar o aplicativo ou sair da conta não exclui seus dados. O pedido precisa ser iniciado por esta página ou pelo caminho disponível dentro de Minha Conta.</p><p class="delete-id">Quando a conta estiver autenticada, a titularidade já estará confirmada. Pedidos que precisarem de intervenção administrativa aparecerão automaticamente na fila de exclusões do painel.</p></div>
 <div class="delete-links"><a href="politica-privacidade.html">Política de Privacidade</a><a href="termos-de-uso.html">Termos de Uso</a><a href="politica-cookies.html">Política de Cookies</a></div>
 </article></div></main>
 <script type="module">
+import "./firebase-app-check-init-v60.js?v=20260924-80";
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import{doc,getFirestore,serverTimestamp,setDoc}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import{getFunctions,httpsCallable}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
-const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app);
+const app=getApps().length?getApp():initializeApp(cfg),auth=getAuth(app),db=getFirestore(app),functions=getFunctions(app,"southamerica-east1");
+const deleteMyAccount=httpsCallable(functions,"deleteMyAccount");
 const email=document.getElementById("deleteEmail"),confirmBox=document.getElementById("deleteConfirm"),button=document.getElementById("deleteRequest"),status=document.getElementById("deleteStatus");
-let signedUser=null;
-function setStatus(message){status.textContent=message}
-function valid(){button.disabled=!(confirmBox.checked&&email.value.trim()&&email.checkValidity())}
-email.addEventListener("input",valid);confirmBox.addEventListener("change",valid);
-onAuthStateChanged(auth,user=>{signedUser=user||null;if(user?.email){email.value=user.email;email.readOnly=true;setStatus("Conta autenticada. Seu e-mail foi preenchido automaticamente.")}else{email.readOnly=false;setStatus("Você também pode solicitar a exclusão sem estar conectado. A titularidade será verificada antes da conclusão.")}valid()});
-button.addEventListener("click",()=>{if(button.disabled)return;const accountEmail=email.value.trim();const origin=new URLSearchParams(location.search).get("app")==="1"?"aplicativo Android":"site";const lines=["Olá! Solicito a EXCLUSÃO DA MINHA CONTA no Cadastro de Atletas.",`E-mail da conta: ${accountEmail}`,`Origem do pedido: ${origin}`,"Confirmo que desejo excluir a conta e os dados pessoais associados.","Estou ciente de que poderá ser necessária a verificação de titularidade antes da conclusão."];if(signedUser?.uid)lines.push("Estou autenticado na conta ao iniciar este pedido.");setStatus("Abrindo o canal oficial para enviar sua solicitação...");location.href=`https://wa.me/5516988586327?text=${encodeURIComponent(lines.join("\n"))}`});
+let signedUser=null,busy=false;
+
+function setStatus(message,error=false){status.textContent=message;status.style.color=error?"#ff9c9c":"#7ed9ef"}
+function valid(){
+ if(busy){button.disabled=true;return}
+ const emailOk=email.value.trim()&&email.checkValidity();
+ button.disabled=!(confirmBox.checked&&emailOk);
+}
+email.addEventListener("input",valid);
+confirmBox.addEventListener("change",valid);
+
+async function registerPendingRequest(error){
+ if(!signedUser?.uid)return false;
+ try{
+  await setDoc(doc(db,"solicitacoes_exclusao",signedUser.uid),{
+   uid:signedUser.uid,
+   email:(signedUser.email||email.value||"").trim().toLowerCase(),
+   nome:(signedUser.displayName||"").trim(),
+   status:"pendente",
+   origem:new URLSearchParams(location.search).get("app")==="1"?"app":"site",
+   erroAutomatico:String(error?.code||error?.message||"").slice(0,180),
+   criadoEm:serverTimestamp(),
+   atualizadoEm:serverTimestamp()
+  },{merge:true});
+  return true;
+ }catch(requestError){
+  console.error("Pedido de exclusão:",requestError);
+  return false;
+ }
+}
+
+onAuthStateChanged(auth,user=>{
+ signedUser=user||null;
+ if(user?.email){
+  email.value=user.email;
+  email.readOnly=true;
+  button.textContent="EXCLUIR MINHA CONTA AGORA";
+  setStatus("Conta autenticada. A exclusão será processada automaticamente após a confirmação.");
+ }else{
+  email.readOnly=false;
+  button.textContent="ENTRAR PARA EXCLUIR MINHA CONTA";
+  setStatus("Para excluir automaticamente e com segurança, entre na própria conta antes de continuar.");
+ }
+ valid();
+});
+
+button.addEventListener("click",async()=>{
+ if(button.disabled||busy)return;
+ if(!signedUser){
+  const ret=encodeURIComponent("/exclusao-conta.html?app=1");
+  location.href=`/conta.html?tab=login&return=${ret}`;
+  return;
+ }
+ if(!confirm("Esta ação é definitiva. Deseja excluir sua conta, perfil, publicações e dados vinculados?"))return;
+
+ busy=true;valid();button.textContent="EXCLUINDO CONTA...";
+ setStatus("Processando a exclusão completa. Não feche esta tela.");
+ try{
+  const result=await deleteMyAccount({confirmation:"EXCLUIR"});
+  if(result?.data?.deleted!==true)throw new Error("DELETE_NOT_CONFIRMED");
+  try{localStorage.clear();sessionStorage.clear()}catch{}
+  setStatus("Conta e dados excluídos com sucesso.");
+  setTimeout(()=>location.replace("/conta.html?tab=login&deleted=1"),700);
+ }catch(error){
+  console.error("Exclusão automática:",error);
+  const queued=await registerPendingRequest(error);
+  if(queued){
+   setStatus("A exclusão automática não terminou, mas o pedido foi registrado no painel administrativo para conclusão.",true);
+   button.textContent="PEDIDO REGISTRADO";
+  }else{
+   setStatus("Não foi possível concluir nem registrar o pedido agora. Entre em contato com o suporte informando o e-mail da conta.",true);
+   button.textContent="TENTAR NOVAMENTE";
+  }
+  busy=false;valid();
+ }
+});
 </script>
 </body>
 </html>
