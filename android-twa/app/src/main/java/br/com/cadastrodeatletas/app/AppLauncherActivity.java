@@ -11,7 +11,7 @@ import com.google.androidbrowserhelper.trusted.LauncherActivity;
 public class AppLauncherActivity extends LauncherActivity {
     private static final String TAG = "CadastroAtletas";
     private static final Uri START_URI =
-            Uri.parse("https://cadastrodeatletas.com.br/?app=1");
+            Uri.parse("https://cadastrodeatletas.com.br/?app=1&build=77");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
