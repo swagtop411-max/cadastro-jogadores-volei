@@ -35,12 +35,13 @@
     }
     html.app-ready body{opacity:1}
     html.app-ready::after{content:"";position:fixed;inset:0;z-index:2147483646;pointer-events:none;background:${appBg};opacity:0;visibility:hidden}
-    html.app-leaving body{opacity:.985!important}
+    html.app-leaving body{opacity:.985!important;transform:none!important}
+    html.beta-mobile-app body{transform:none!important;will-change:auto!important}
     @media(prefers-reduced-motion:no-preference){
-      html.app-ready body{animation:appBootRevealV65 180ms cubic-bezier(.2,.72,.2,1) both}
+      html.app-ready body{animation:none!important;transform:none!important}
       html.app-ready::after{transition:opacity 160ms ease-out,visibility 0s linear 160ms}
-      html.app-leaving body{transition:opacity 100ms ease-out,transform 100ms ease-out;transform:translateY(1px)}
-      @keyframes appBootRevealV65{from{opacity:.82;transform:translateY(2px)}to{opacity:1;transform:none}}
+      html.app-leaving body{transition:opacity 100ms ease-out;transform:none!important}
+      @keyframes appBootRevealV65{from{opacity:.82}to{opacity:1}}
     }
   `;
   document.head.appendChild(critical);
