@@ -13,3 +13,56 @@ html.beta-mobile-app .home-feed{display:grid!important;gap:18px!important;margin
 html.beta-mobile-app .beta-mirror-trigger{display:none!important}html.beta-mobile-app .beta-mirror-panel{z-index:30010!important;bottom:104px!important}
 html.beta-mobile-app .explore-page,html.beta-mobile-app main.community-page,html.beta-mobile-app .profile-page,html.beta-mobile-app .championships-page{max-width:575px!important;margin:0 auto!important;padding-left:12px!important;padding-right:12px!important;background:transparent!important}html.beta-mobile-app .explore-hero h1,html.beta-mobile-app .explore-section-head h2{color:#fff!important}html.beta-mobile-app .explore-hero p,html.beta-mobile-app .explore-count{color:#9eb0bd!important}html.beta-mobile-app .explore-search{top:8px!important;border-color:#164a66!important;background:rgba(8,36,58,.96)!important}html.beta-mobile-app .profile-card,html.beta-mobile-app .explore-empty{border-color:#164a66!important;background:#08243a!important;color:#fff!important}html.beta-mobile-app .profile-card small{color:#9eb0bd!important}
 @media(min-width:700px){html.beta-mobile-app body{background:#01101d!important}.beta-mobile-top,html.beta-mobile-app .home-social{box-shadow:0 0 0 1px rgba(24,199,241,.04);background:linear-gradient(180deg,#031424,#031424)!important}.beta-mobile-top{padding-top:26px}.beta-mobile-nav{bottom:12px;border-bottom:1px solid #123e58;border-radius:28px}}
+
+
+/* V72 • acesso nativo a ranking e equipes */
+.beta-mobile-sport-tools{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 2px 16px}
+.beta-mobile-sport-tools button{min-width:0;display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:9px;padding:12px 11px;border:1px solid rgba(24,199,241,.2);border-radius:16px;background:linear-gradient(145deg,#08243a,#071d31);color:#f7fbff;text-align:left;box-shadow:0 9px 24px rgba(0,0,0,.12);cursor:pointer}
+.beta-mobile-sport-tools button:active{transform:scale(.985)}
+.beta-mobile-sport-tools .beta-tool-icon{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#0b334e;color:#18c7f1}
+.beta-mobile-sport-tools .beta-tool-icon svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.beta-mobile-sport-tools b{display:block;color:#fff;font:900 10px/1 Montserrat,Arial,sans-serif;letter-spacing:.7px}
+.beta-mobile-sport-tools small{display:block;margin-top:5px;color:#8fa5b5;font:650 8px/1.25 Montserrat,Arial,sans-serif}
+.beta-mobile-sport-tools i{color:#f4c84d;font:900 16px/1 Arial,sans-serif;font-style:normal}
+
+/* Drawers do site passam a funcionar como telas do app */
+html.beta-mobile-app .ranking-drawer,
+html.beta-mobile-app .equipes-drawer{z-index:2147483646!important}
+html.beta-mobile-app .ranking-overlay,
+html.beta-mobile-app .equipes-overlay{background:rgba(1,12,22,.76)!important;backdrop-filter:blur(8px)!important;-webkit-backdrop-filter:blur(8px)!important}
+html.beta-mobile-app .ranking-panel,
+html.beta-mobile-app .equipes-panel{width:100%!important;max-width:575px!important;height:100%!important;background:#031424!important;color:#f7fbff!important;border-left:1px solid #0c5574!important;box-shadow:none!important}
+html.beta-mobile-app .ranking-panel-head,
+html.beta-mobile-app .equipes-panel-head{background:rgba(3,20,36,.97)!important;border-color:#164a66!important}
+html.beta-mobile-app .ranking-panel-head h2,
+html.beta-mobile-app .equipes-panel-head h2,
+html.beta-mobile-app .teams-head h2{color:#fff!important}
+html.beta-mobile-app .ranking-panel-head span,
+html.beta-mobile-app .equipes-panel-head span,
+html.beta-mobile-app .teams-head span{color:#18c7f1!important}
+html.beta-mobile-app .ranking-intro,
+html.beta-mobile-app .equipes-panel-head p,
+html.beta-mobile-app .teams-head p{color:#9bb1c2!important}
+html.beta-mobile-app .ranking-item,
+html.beta-mobile-app .ranking-podio,
+html.beta-mobile-app .ranking-regras,
+html.beta-mobile-app .ranking-loading,
+html.beta-mobile-app .ranking-vazio,
+html.beta-mobile-app .equipes-panel .team-card,
+html.beta-mobile-app .equipes-panel .team-athletes,
+html.beta-mobile-app .equipes-panel .teams-results-bar{background:#08243a!important;border-color:#164a66!important;color:#c9d8e2!important}
+html.beta-mobile-app .ranking-atleta strong,
+html.beta-mobile-app .podio-nome,
+html.beta-mobile-app .equipes-panel .team-card-title h3{color:#fff!important}
+html.beta-mobile-app .ranking-pontos,
+html.beta-mobile-app .podio-lugar{color:#f4c84d!important}
+html.beta-mobile-app .ranking-close,
+html.beta-mobile-app .equipes-close{background:#08243a!important;border-color:#164a66!important;color:#f4c84d!important}
+html.beta-mobile-app .ranking-filtros select,
+html.beta-mobile-app .teams-filters input,
+html.beta-mobile-app .teams-filters select{background:#031b2c!important;color:#fff!important;border-color:#164a66!important}
+html.beta-mobile-app .equipes-cadastrar-link{background:#f4c84d!important;color:#102333!important;border-color:#f4c84d!important}
+
+@media(max-width:420px){
+ .beta-mobile-sport-tools{grid-template-columns:1fr}
+}
