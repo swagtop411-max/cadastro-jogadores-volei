@@ -37,6 +37,40 @@ document.documentElement.dataset.canonicalProfileSave = "1";
 const $ = id => document.getElementById(id);
 let user = null;
 let profile = null;
+const PENDING_ACCOUNT_KEY = "bd_pending_account_v83";
+
+function pendingAccount(uid = "") {
+  try {
+    const raw = localStorage.getItem(PENDING_ACCOUNT_KEY);
+    if (!raw) return {};
+    const data = JSON.parse(raw) || {};
+    if (uid && data.uid && data.uid !== uid) return {};
+    return data;
+  } catch {
+    return {};
+  }
+}
+
+function savePendingPrivate(uid, data = {}) {
+  try {
+    localStorage.setItem(PENDING_ACCOUNT_KEY, JSON.stringify({
+      uid,
+      nome: String(data.nome || "").trim(),
+      email: String(data.email || "").trim().toLowerCase(),
+      nascimento: String(data.nascimento || "").trim(),
+      contato: String(data.contato || "").trim(),
+      atualizadoEm: Date.now()
+    }));
+  } catch {}
+}
+
+function clearPendingPrivate(uid = "") {
+  try {
+    const data = pendingAccount(uid);
+    if (!uid || !data.uid || data.uid === uid) localStorage.removeItem(PENDING_ACCOUNT_KEY);
+  } catch {}
+}
+
 
 const status = (message, media = false) => {
   const el = $(media ? "mediaStatus" : "profileStatus");
@@ -488,6 +522,7 @@ async function saveProfile() {
         if (!saved || String(saved.nome || "") !== nome) {
           throw new Error("PRIVATE_PROFILE_WRITE_NOT_CONFIRMED");
         }
+        clearPendingPrivate(user.uid);
       });
     } catch (privateError) {
       console.warn("Falha ao salvar todos os campos privados; tentando compatibilidade com conta antiga:", privateError);
@@ -523,7 +558,13 @@ async function saveProfile() {
         privateSaveWarning = " Alguns dados privados antigos serão sincronizados automaticamente quando a conta for atualizada.";
       } catch (legacyPrivateError) {
         console.warn("Perfil público salvo; dados privados não puderam ser sincronizados nesta conta antiga:", legacyPrivateError);
-        privateSaveWarning = " O perfil esportivo foi salvo. Alguns dados privados da conta antiga não puderam ser atualizados.";
+        savePendingPrivate(user.uid, {
+          nome,
+          email: user.email || "",
+          nascimento,
+          contato
+        });
+        privateSaveWarning = " O perfil esportivo foi salvo e está liberado. Alguns dados privados ficaram guardados neste aparelho para nova sincronização.";
       }
     }
 
@@ -985,7 +1026,16 @@ onAuthStateChanged(auth, async currentUser => {
     ]);
 
     profile = profileSnap.exists() ? profileSnap.data() : null;
-    const privateData = userSnap.exists() ? userSnap.data() : {};
+    const pending = pendingAccount(currentUser.uid);
+    const storedPrivate = userSnap.exists() ? userSnap.data() : {};
+    const privateData = {
+      ...pending,
+      ...storedPrivate,
+      nome: storedPrivate.nome || pending.nome || currentUser.displayName || "",
+      email: storedPrivate.email || pending.email || currentUser.email || "",
+      nascimento: storedPrivate.nascimento || pending.nascimento || "",
+      contato: storedPrivate.contato || pending.contato || ""
+    };
     if (profile) {
       profile = {
         ...profile,
