@@ -1,7 +1,7 @@
 import "./firebase-app-check-v11.js?v=20260909-46";
 import{getApp,getApps,initializeApp}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
 import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-import{collection,deleteDoc,doc,getDoc,getDocs,getFirestore,onSnapshot,query,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import{collection,deleteDoc,doc,getDoc,getDocs,getFirestore,onSnapshot,query,serverTimestamp,setDoc,where}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import{getFunctions,httpsCallable}from"https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
@@ -139,6 +139,35 @@ async function manualLookup(){
  }catch(error){console.error("Localizar exclusão:",error);setStatus("Não foi possível localizar a conta agora.",true)}
 }
 
+async function purgeVisibleAccountData(uid){
+ const accountSnap=await getDoc(doc(db,"usuarios",uid));
+ const account=accountSnap.exists()?accountSnap.data():{};
+ const ownerCollections=["publicacoes","videos","stories","atletas","atletas_pendentes","equipes","equipes_pendentes","comentarios_publicacoes","comentarios"];
+ for(const name of ownerCollections){
+  const snap=await getDocs(query(collection(db,name),where("ownerUid","==",uid))).catch(()=>null);
+  for(const item of snap?.docs||[])await deleteDoc(item.ref).catch(error=>console.warn("Remoção",name,item.id,error));
+ }
+ const handles=await getDocs(query(collection(db,"handles"),where("uid","==",uid))).catch(()=>null);
+ for(const item of handles?.docs||[])await deleteDoc(item.ref).catch(()=>{});
+ for(const ref of [
+  doc(db,"perfis",uid),
+  doc(db,"config_perfis",uid),
+  doc(db,"solicitacoes_planos",uid)
+ ])await deleteDoc(ref).catch(()=>{});
+
+ if(accountSnap.exists()){
+  await setDoc(doc(db,"usuarios",uid),{
+   uid,
+   email:text(account.email||""),
+   nome:"Conta em exclusão",
+   papel:text(account.papel||"usuario")||"usuario",
+   status:"exclusao_pendente",
+   atualizadoEm:serverTimestamp()
+  });
+ }
+ return true;
+}
+
 async function deleteAccount(uid,requestId=""){
  if(busy||!uid)return;
  const phrase=prompt("Esta ação é irreversível. Digite EXCLUIR para remover a conta, perfil, publicações, mídias e dados vinculados.");
@@ -155,7 +184,19 @@ async function deleteAccount(uid,requestId=""){
  }catch(error){
   console.error("Exclusão administrativa:",error);
   const code=String(error?.code||"");
-  setStatus(code.includes("not-found")?"O backend de exclusão administrativa ainda não está publicado no Firebase.":"Não foi possível concluir a exclusão. Nenhuma confirmação de sucesso foi exibida.",true);
+  if(code.includes("not-found")||code.includes("unavailable")||code.includes("internal")){
+   try{
+    setStatus("Backend completo indisponível. Removendo o perfil público e bloqueando o acesso agora...");
+    await purgeVisibleAccountData(uid);
+    setStatus("Perfil removido do app e acesso bloqueado. A remoção final do Firebase Authentication e das mídias do provedor externo continua pendente no backend.",true);
+    document.getElementById("deletionLookupResultV80")?.replaceChildren();
+   }catch(fallbackError){
+    console.error("Fallback de exclusão:",fallbackError);
+    setStatus("Não foi possível concluir a exclusão nem o bloqueio de segurança.",true);
+   }
+  }else{
+   setStatus("Não foi possível concluir a exclusão. Nenhuma confirmação falsa de sucesso foi exibida.",true);
+  }
  }finally{
   busy=false;document.querySelectorAll("[data-del-account],#deletionManualDeleteV80").forEach(btn=>btn.disabled=false);
  }
