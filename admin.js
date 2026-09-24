@@ -44,7 +44,7 @@ async function bootPrivateConsole(){
       import("./admin-commerce-v11.js?v=20260909-46"),
       import("./admin-profile-browser-v13.js?v=20260909-46"),
       import("./admin-moderation-v42.js?v=20260908-42"),
-      import("./admin-account-deletion-v80.js?v=20260924-80")
+      import("./admin-account-deletion-v80.js?v=20260924-82")
     ]);
   }catch(error){
     console.error("Falha ao carregar console privado:",error);
