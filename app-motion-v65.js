@@ -7,7 +7,7 @@
     if (!root.classList.contains('beta-mobile-app')) return;
 
     try {
-      await import('./public-beta-v19.js?v=20260924-68');
+      await import('./public-beta-v19.js?v=20260924-69');
     } catch (error) {
       console.warn('Mobile shell bootstrap:', error);
     }
