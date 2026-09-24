@@ -2,7 +2,7 @@ import "./app-branding-v58.js?v=20260916-58";
 await import("./auth-gate-v53.js?v=20260915-53");
 import("./firebase-app-check-v11.js?v=20260909-46").then(()=>import("./profile-autosync-v13.js?v=20260904-3")).catch(error=>console.warn("Inicialização segura do perfil:",error));
 import("./play-store-mode-v44.js?v=20260908-44").catch(error=>console.warn("Modo Google Play:",error));
-import("./public-beta-v19.js?v=20260924-69").catch(error=>console.warn("Beta Mobile:",error));
+import("./public-beta-v19.js?v=20260924-70").catch(error=>console.warn("Beta Mobile:",error));
 if((location.pathname.split("/").pop()||"index.html")==="meu-perfil.html")import("./owner-publish-v35.js?v=20260908-35b").catch(error=>console.warn("Publicação do proprietário V35:",error));
 const THEME_VERSION="20260924-65";
 const MENU_ID="siteMenuDrawer";
