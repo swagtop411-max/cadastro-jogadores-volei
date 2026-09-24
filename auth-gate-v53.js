@@ -1,6 +1,6 @@
 import appCheckReady from "./firebase-app-check-init-v60.js";
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import { doc, getDoc, getFirestore } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const cfg={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
@@ -41,6 +41,18 @@ function showProfileGateError(){
   if(document.body)show();else document.addEventListener("DOMContentLoaded",show,{once:true});
 }
 
+function showDeletionGate(){
+  const show=()=>{
+    if(document.getElementById("accountDeletionGate"))return;
+    const panel=document.createElement("section");
+    panel.id="accountDeletionGate";
+    panel.style.cssText="visibility:visible!important;position:fixed;inset:0;z-index:2147483647;display:grid;place-content:center;gap:14px;padding:24px;background:#031424;color:white;text-align:center;font:15px/1.5 Arial";
+    panel.innerHTML='<h1>Conta em processo de exclusão</h1><p style="max-width:460px;color:#a9bdc9">O perfil público foi removido e o acesso a esta conta está bloqueado enquanto a exclusão é concluída.</p><a style="color:#18c7f1" href="politica-privacidade.html">Política de Privacidade</a>';
+    document.body.appendChild(panel);
+  };
+  if(document.body)show();else document.addEventListener("DOMContentLoaded",show,{once:true});
+}
+
 async function profileRead(promise){
   let timer;
   try{return await Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error("profile-read-timeout")),12000);})]);}
@@ -57,6 +69,11 @@ async function ensureRequiredProfile(user,db){
     await profileRead(appCheckReady);
     const snap=await profileRead(getDoc(doc(db,"usuarios",user.uid)));
     const data=snap.exists()?snap.data():{};
+    if(["exclusao_pendente","excluido"].includes(String(data.status||"").toLowerCase())){
+      try{await signOut(getAuth())}catch{}
+      showDeletionGate();
+      return false;
+    }
     if(profileComplete(data))return true;
     const publicSnap=await profileRead(getDoc(doc(db,"perfis",user.uid)));
     if(profileComplete(data,publicSnap.exists()?publicSnap.data():{}))return true;
