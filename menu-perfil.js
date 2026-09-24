@@ -49,14 +49,18 @@ async function secureSaveProfile(){
   const avatarFile=$("avatarInput")?.files?.[0],coverFile=$("coverInput")?.files?.[0];
   const avatarUp=avatarFile?await uploadFile(avatarFile,"perfil",5*1024*1024):null,coverUp=coverFile?await uploadFile(coverFile,"capa",8*1024*1024):null;
   const fotoUrl=avatarUp?.url||oldPublic.fotoUrl||"",fotoPath=avatarUp?.path||oldPublic.fotoPath||"",capaUrl=coverUp?.url||oldPublic.capaUrl||"",capaPath=coverUp?.path||oldPublic.capaPath||"";
-  const modalidade=text($("modalidade")?.value),posicao=text($("posicao")?.value),time=text($("time")?.value),bio=text($("bio")?.value),plan=planData(userData);
-  const publicProfile={uid:currentUser.uid,nome,cidade,uf,modalidade,posicao,categoria,time,bio,fotoUrl,fotoPath,capaUrl,capaPath,historicoCampeonatos:historico};
-  const privateProfile={uid:currentUser.uid,nome,email:currentUser.email||userData.email||"",papel:userData.papel||"usuario",status:"ativo",nascimento:text($("birth")?.value),cidade,uf,modalidade,posicao,categoria,time,contato:text($("contato")?.value),bio,historicoCampeonatos:historico,fotoUrl,fotoPath,capaUrl,capaPath,...plan,atualizadoEm:serverTimestamp()};
-  if(!userSnap.exists())privateProfile.criadoEm=serverTimestamp();if(userData.legadoAtletaId)privateProfile.legadoAtletaId=userData.legadoAtletaId;
-  await setDoc(doc(db,"usuarios",currentUser.uid),privateProfile,{merge:true});await setDoc(doc(db,"perfis",currentUser.uid),publicProfile,{merge:false});
+  const modalidade=text($("modalidade")?.value),posicao=text($("posicao")?.value),time=text($("time")?.value),bio=text($("bio")?.value);
+  const publicProfile={uid:currentUser.uid,nome,cidade,uf,modalidade,posicao,categoria,time,bio,fotoUrl,fotoPath,capaUrl,capaPath,historicoCampeonatos:historico,handle:text(oldPublic.handle||""),instagramUrl:text(oldPublic.instagramUrl||"")};
+  const mutablePrivate={nome,nascimento:text($("birth")?.value),cidade,uf,modalidade,posicao,categoria,time,contato:text($("contato")?.value),bio,historicoCampeonatos:historico,fotoUrl,fotoPath,capaUrl,capaPath,instagramUrl:text(userData.instagramUrl||""),atualizadoEm:serverTimestamp()};
+  if(userSnap.exists()){
+    await setDoc(doc(db,"usuarios",currentUser.uid),mutablePrivate,{merge:true});
+  }else{
+    await setDoc(doc(db,"usuarios",currentUser.uid),{uid:currentUser.uid,...mutablePrivate,email:currentUser.email||"",papel:"usuario",status:"ativo",criadoEm:serverTimestamp()});
+  }
+  await setDoc(doc(db,"perfis",currentUser.uid),publicProfile);
   const legacy=await getDocs(query(collection(db,"atletas"),where("ownerUid","==",currentUser.uid)));if(!legacy.empty)await updateDoc(legacy.docs[0].ref,{nome,cidade,uf,modalidade,posicao,categoria,time,historicoCampeonatos:historico,foto:fotoUrl,nascimento:deleteField(),ownerEmail:deleteField(),atualizadoEm:serverTimestamp()});
   if($("avatar")&&fotoUrl)$("avatar").src=fotoUrl;if($("coverPreview")&&capaUrl)$("coverPreview").style.backgroundImage=`url("${capaUrl.replace(/"/g,"%22")}")`;if($("displayName"))$("displayName").textContent=nome;status("profileStatus","Perfil salvo com segurança.")
- }catch(error){console.error("Perfil Cloudinary:",error);status("profileStatus",error?.message||"Não foi possível salvar o perfil.",true)}finally{button.disabled=false}
+ }catch(error){console.error("Perfil Cloudinary:",error);const code=String(error?.code||"").toLowerCase();const msg=code.includes("permission-denied")?"Não foi possível salvar por uma regra de segurança do banco. Atualize o app e tente novamente.":"Não foi possível salvar o perfil agora.";status("profileStatus",msg,true)}finally{button.disabled=false}
 }
 
 async function publishMedia(file,kind){
@@ -74,6 +78,7 @@ async function publishMedia(file,kind){
 }
 
 function installProfileV3(){
+ if((location.pathname.split("/").pop()||"")==="meu-perfil.html")return;
  const save=$("saveProfile");if(save)save.onclick=secureSaveProfile;
  const photo=$("photoInput"),video=$("videoInput"),story=$("storyInput");
  if(photo)photo.onchange=async()=>{const file=photo.files?.[0];photo.value="";if(file)await publishMedia(file,"photo")};
