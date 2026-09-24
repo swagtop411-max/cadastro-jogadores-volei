@@ -7,7 +7,7 @@
     if (!root.classList.contains('beta-mobile-app')) return;
 
     try {
-      await import('./public-beta-v19.js?v=20260924-70');
+      await import('./public-beta-v19.js?v=20260924-72');
     } catch (error) {
       console.warn('Mobile shell bootstrap:', error);
     }
@@ -44,7 +44,7 @@
 
     if (!document.getElementById('betaMobileNav')) {
       try {
-        await import('./beta-mobile-v21.js?v=20260924-71');
+        await import('./beta-mobile-v21.js?v=20260924-72');
       } catch (error) {
         console.warn('Mobile navigation:', error);
       }
