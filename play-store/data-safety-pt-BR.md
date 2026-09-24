@@ -121,6 +121,6 @@ Dentro do app:
 Fora do app:
 `https://cadastrodeatletas.com.br/exclusao-conta.html`
 
-A página pública permite iniciar a solicitação de exclusão mesmo sem login. O pedido é enviado ao canal oficial de atendimento e pode exigir verificação de titularidade antes da conclusão. A solicitação abrange a conta e os dados pessoais associados, observadas as hipóteses de retenção informadas na Política de Privacidade.
+A página pública orienta o titular a entrar na própria conta para confirmar a identidade. Quando autenticado, o aplicativo executa a **exclusão automática** da conta e dos dados associados pelo backend seguro, incluindo o registro de autenticação, perfil, publicações, vídeos, Stories, mídias e demais dados vinculados que não precisem ser preservados por obrigação legal.
 
-O fluxo publicado não deve ser descrito no Play Console como exclusão instantânea automática. Ele é um **fluxo de solicitação de exclusão** com verificação de titularidade.
+Se a exclusão automática não puder ser concluída, o aplicativo registra uma solicitação pendente no **painel administrativo**. A administração pode localizar a conta pelo e-mail ou UID e concluir a exclusão integral pelo console privado.
