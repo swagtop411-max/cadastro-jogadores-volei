@@ -11,7 +11,7 @@ let installPrompt=null;
 
 function ensureManifest(){if(privateConsoleContext()||document.querySelector('link[rel="manifest"]'))return;const link=document.createElement("link");link.rel="manifest";link.href="/manifest.webmanifest?v=20260908-40";document.head.appendChild(link)}
 function ensureMobileMeta(){if(privateConsoleContext())return;for(const[name,content]of[["theme-color","#031424"],["apple-mobile-web-app-capable","yes"],["apple-mobile-web-app-status-bar-style","black-translucent"],["apple-mobile-web-app-title","Banco de Atletas"]]){if(document.querySelector(`meta[name="${name}"]`))continue;const meta=document.createElement("meta");meta.name=name;meta.content=content;document.head.appendChild(meta)}}
-async function registerServiceWorker(){if(privateConsoleContext()||!("serviceWorker"in navigator)||!window.isSecureContext)return;try{await navigator.serviceWorker.register("/sw.js?v=20260924-75",{scope:"/"})}catch(error){console.warn("PWA/App:",error)}}
+async function registerServiceWorker(){if(privateConsoleContext()||!("serviceWorker"in navigator)||!window.isSecureContext)return;try{await navigator.serviceWorker.register("/sw.js?v=20260924-76",{scope:"/"})}catch(error){console.warn("PWA/App:",error)}}
 function mobileShellAllowed(){return appRequested||isStandalone()||window.matchMedia?.("(max-width: 900px)")?.matches===true}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)}
 function toast(message){let el=document.getElementById("betaMirrorToast");if(!el){el=document.createElement("div");el.id="betaMirrorToast";el.className="beta-mirror-toast";document.body.appendChild(el)}el.textContent=message;el.classList.add("show");clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),2600)}
@@ -28,7 +28,7 @@ if(!privateConsoleContext()){ensureManifest();ensureMobileMeta();registerService
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
 window.BDBetaV20={install:installApp,feedback,toggle:togglePanel,isActive:()=>betaActive,isStandalone,isAppMode:()=>appRequested};
 if(betaActive&&!privateConsoleContext()&&mobileShellAllowed()){
- import("./beta-mobile-v21.js?v=20260924-72").catch(error=>console.warn("App Mobile:",error));
+ import("./beta-mobile-v21.js?v=20260924-76").catch(error=>console.warn("App Mobile:",error));
  import("./beta-account-v23.js?v=20260908-40").catch(error=>console.warn("Conta Mobile:",error));
  import("./beta-mobile-activity-v28.js?v=20260908-40").catch(error=>console.warn("Atividades Mobile:",error));
 }
