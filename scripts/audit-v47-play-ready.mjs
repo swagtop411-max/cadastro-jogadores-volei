@@ -47,7 +47,7 @@ fail("Android sem cleartext",/android:usesCleartextTraffic="false"/.test(manifes
 fail("Android sem backup",/android:allowBackup="false"/.test(manifest));
 fail("App Link autoVerify",/android:autoVerify="true"/.test(manifest)&&/android:host="cadastrodeatletas\.com\.br"/.test(manifest));
 fail("TWA inicia em modo Play",/https:\/\/cadastrodeatletas\.com\.br\/\?app=1/.test(manifest)&&/delegate_permission\/common\.handle_all_urls/.test(strings));
-fail("Manifest PWA standalone",/"display"\s*:\s*"standalone"/.test(webManifest)&&/"start_url"\s*:\s*"\/\?app=1"/.test(webManifest));
+fail("Manifest PWA standalone",/"display"\s*:\s*"standalone"/.test(webManifest)&&/"start_url"\s*:\s*"\/\?app=1(?:&build=\d+)?"/.test(webManifest));
 fail("Ícone PWA 512 declarado",/512x512/.test(webManifest)&&exists("assets/app-icon-512.png"));
 
 // Acesso / 18+ / onboarding obrigatório
