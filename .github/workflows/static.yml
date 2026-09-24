@@ -49,6 +49,13 @@ jobs:
           set -euo pipefail
           node scripts/audit-v8.mjs
 
+      - name: Guard Beta bottom navigation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/check-beta-navigation.mjs
+
+
       - name: Run V11 security and performance audit
         shell: bash
         run: |
