@@ -16,49 +16,63 @@
 <link rel="stylesheet" href="app-motion-v65.css?v=20260924-69">
 <script defer src="app-motion-v65.js?v=20260924-69"></script>
 <style id="bottomNavRescueV67">
-#betaMobileNav.bottom-nav-v67{display:none}
-html.beta-mobile-app #betaMobileNav.bottom-nav-v67{
- display:grid!important;position:fixed!important;z-index:2147483000!important;left:50%!important;right:auto!important;bottom:0!important;
+#betaMobileNav.bottom-nav-v67{display:none!important}
+@media(max-width:900px){#betaMobileNav.bottom-nav-v67{display:grid!important;position:fixed!important;z-index:2147483000!important;left:50%!important;right:auto!important;bottom:0!important;
  transform:translateX(-50%)!important;width:min(575px,100%)!important;height:94px!important;
  padding:10px 15px max(8px,env(safe-area-inset-bottom))!important;
  grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;
  border:1px solid #123e58!important;border-bottom:0!important;border-radius:28px 28px 0 0!important;
  background:rgba(8,36,58,.985)!important;box-shadow:0 -14px 36px rgba(0,0,0,.28)!important;
  backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
- visibility:visible!important;opacity:1!important;pointer-events:auto!important
-}
-html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a{
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important}}\n@media(max-width:900px){#betaMobileNav.bottom-nav-v67 a{
  display:grid!important;place-items:center!important;gap:5px!important;min-width:0!important;
  color:#a8b9c6!important;text-decoration:none!important;font:700 10px/1 Montserrat,Arial,sans-serif!important;
- visibility:visible!important;opacity:1!important;pointer-events:auto!important
-}
-html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a svg{
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important}}\n@media(max-width:900px){#betaMobileNav.bottom-nav-v67 a svg{
  display:block!important;width:27px!important;height:27px!important;fill:none!important;stroke:currentColor!important;
  stroke-width:2.4!important;stroke-linecap:round!important;stroke-linejoin:round!important
 }
-html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a.publish{transform:translateY(-15px)!important}
-html.beta-mobile-app #betaMobileNav.bottom-nav-v67 .beta-publish-circle{
+@media(max-width:900px){#betaMobileNav.bottom-nav-v67 a.publish{transform:translateY(-15px)!important}
+@media(max-width:900px){#betaMobileNav.bottom-nav-v67 .beta-publish-circle{
  display:grid!important;place-items:center!important;width:58px!important;height:58px!important;border-radius:50%!important;
  background:#f4c84d!important;color:#102333!important;border:4px solid #0b2940!important;box-shadow:0 7px 18px rgba(0,0,0,.26)!important
 }
-html.beta-mobile-app[data-beta-page="index"] #betaMobileNav [data-nav="feed"],
-html.beta-mobile-app[data-beta-page="explorar"] #betaMobileNav [data-nav="explorar"],
-html.beta-mobile-app[data-beta-page="comunidade"] #betaMobileNav [data-nav="publicar"],
-html.beta-mobile-app[data-beta-page="proximos-campeonatos"] #betaMobileNav [data-nav="torneios"],
-html.beta-mobile-app[data-beta-page="meu-perfil"] #betaMobileNav [data-nav="perfil"]{color:#f4c84d!important}
+html[data-beta-page="index"] #betaMobileNav [data-nav="feed"],
+html[data-beta-page="explorar"] #betaMobileNav [data-nav="explorar"],
+html[data-beta-page="comunidade"] #betaMobileNav [data-nav="publicar"],
+html[data-beta-page="proximos-campeonatos"] #betaMobileNav [data-nav="torneios"],
+html[data-beta-page="meu-perfil"] #betaMobileNav [data-nav="perfil"]{color:#f4c84d!important}
 html.beta-mobile-app body{padding-bottom:max(112px,calc(96px + env(safe-area-inset-bottom)))!important}
+</style>
+<style id="bottomNavColdStartV70">
+@media(max-width:900px){
+  #betaMobileNav.bottom-nav-v67{
+    display:grid!important;position:fixed!important;z-index:2147483640!important;
+    left:50%!important;right:auto!important;bottom:0!important;transform:translateX(-50%) translateZ(0)!important;
+    width:min(575px,100%)!important;height:94px!important;padding:10px 15px max(8px,env(safe-area-inset-bottom))!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;
+    visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+    border:1px solid #123e58!important;border-bottom:0!important;border-radius:28px 28px 0 0!important;
+    background:rgba(8,36,58,.985)!important;box-shadow:0 -14px 36px rgba(0,0,0,.28)!important
+  }
+  #betaMobileNav.bottom-nav-v67 a{display:grid!important;place-items:center!important;gap:5px!important;color:#a8b9c6!important;text-decoration:none!important;font:700 10px/1 Montserrat,Arial,sans-serif!important}
+  #betaMobileNav.bottom-nav-v67 a svg{display:block!important;width:27px!important;height:27px!important;fill:none!important;stroke:currentColor!important;stroke-width:2.4!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+  #betaMobileNav.bottom-nav-v67 a.publish{transform:translateY(-15px)!important}
+  #betaMobileNav.bottom-nav-v67 .beta-publish-circle{display:grid!important;place-items:center!important;width:58px!important;height:58px!important;border-radius:50%!important;background:#f4c84d!important;color:#102333!important;border:4px solid #0b2940!important}
+  body{padding-bottom:max(112px,calc(96px + env(safe-area-inset-bottom)))!important}
+}
+@media(min-width:901px){#betaMobileNav.bottom-nav-v67{display:none!important}}
 </style></head>
-<body class="site-v5 site-v8 community-page"><header class="header community-header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a><a id="accountLink" href="conta.html" hidden>ENTRAR</a></header>
+<body class="site-v5 site-v8 community-page"><nav id="betaMobileNav" class="beta-mobile-nav bottom-nav-v67" aria-label="Navegação principal do app">
+<a href="/index.html?beta=1" data-nav="feed"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Feed</span></a>
+<a href="/explorar.html?beta=1" data-nav="explorar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span>Explorar</span></a>
+<a class="publish" href="/comunidade.html?beta=1#publicar" data-nav="publicar"><span class="beta-publish-circle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Publicar</span></a>
+<a href="/proximos-campeonatos.html?beta=1" data-nav="torneios"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0zM12 12v5M8 21h8M10 17h4M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4"/></svg><span>Torneios</span></a>
+<a href="/meu-perfil.html?beta=1" data-nav="perfil" data-beta-profile-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"/></svg><span>Perfil</span></a>
+</nav><header class="header community-header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>VÔLEI DE PRAIA</span></div></a><a id="accountLink" href="conta.html" hidden>ENTRAR</a></header>
 <main class="community-shell"><section class="community-hero" aria-labelledby="community-title"><div class="community-hero-copy"><span class="community-kicker">A REDE ESTÁ EM MOVIMENTO</span><h1 id="community-title">Comunidade do <em>vôlei</em></h1><p>O que o atleta publica no feed do próprio perfil também aparece aqui e na página principal da rede.</p><div class="community-hero-pills"><span>📸 Mídia em alta qualidade</span><span>⚡ Publicação imediata</span><span>🤝 Novas conexões</span></div></div></section>
 <section class="community-layout" aria-label="Feed e publicação"><div class="community-main-column"><section class="publish-card" aria-labelledby="publish-title"><div class="section-eyebrow">FAÇA PARTE DA CONVERSA</div><div class="publish-heading"><div><h2 id="publish-title">Compartilhe seu momento</h2><p>Use sua conta para publicar fotos, vídeos, conquistas ou uma atualização da sua rotina esportiva.</p></div><span class="publish-badge">● REDE AO VIVO</span></div><form id="publishForm" class="publish-form"><div class="publish-form-grid"><label class="field-group"><span>Nome esportivo <small>(opcional)</small></span><input id="postName" name="nome" type="text" maxlength="80" placeholder="Usaremos o nome do seu perfil quando disponível" autocomplete="name"></label><label class="field-group"><span>Foto ou vídeo <small>(opcional)</small></span><input id="postPhoto" name="foto" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"></label></div><label class="field-group"><span>Legenda <small>(opcional se houver mídia)</small></span><textarea id="postText" name="texto" maxlength="1000" rows="4" placeholder="Conte uma novidade, conquista ou dica..."></textarea><small class="field-hint"><span id="postCounter">0</span>/1000 caracteres</small></label><div id="photoPreview" class="photo-preview hidden" aria-live="polite"></div><div class="publish-form-footer"><p class="form-note">A mídia original é enviada ao Cloudinary. O site usa versões derivadas para carregar rápido sem destruir a qualidade original.</p><button class="community-gold-button" type="submit"><span>PUBLICAR</span><strong>→</strong></button></div><div id="publishStatus" class="inline-status" role="status" aria-live="polite"></div></form></section>
 <div class="feed-toolbar"><div><span class="section-eyebrow">CONVERSAS RECENTES</span><h2>Feed da comunidade</h2></div><button id="refreshFeed" class="refresh-button" type="button">↻ ATUALIZAR</button></div><div id="feedStatus" class="feed-status" role="status" aria-live="polite">Carregando publicações...</div><section id="communityFeed" class="community-feed" aria-label="Publicações da comunidade"></section></div>
 <aside class="community-sidebar" aria-label="Informações da comunidade"><section class="community-info-card"><span class="section-eyebrow">COMO FUNCIONA</span><h2>Uma rede feita para jogar junto</h2><p>Atletas publicam, seguem perfis, curtem, comentam, salvam conteúdos e conversam pelo Direct.</p><div class="info-steps"><div><b>01</b><span>Compartilhe</span></div><div><b>02</b><span>Conecte-se</span></div><div><b>03</b><span>Jogue mais</span></div></div></section><section class="community-rules-card"><span class="section-eyebrow">BOA CONVIVÊNCIA</span><h3>Antes de publicar</h3><ul><li>Respeite atletas, equipes e organizadores.</li><li>Publique apenas fotos e vídeos que você pode compartilhar.</li><li>Não divulgue dados privados de terceiros.</li><li>Conteúdo impróprio pode ser denunciado e removido.</li></ul><a href="termos-de-uso.html">Ler termos de uso →</a></section></aside></section></main>
 <footer class="site-footer community-footer"><strong>🏐 BANCO DE DADOS DE ATLETAS</strong><span>Comunidade esportiva • <a href="index.html">Voltar ao feed</a></span></footer>
 <script type="module" src="site-v5.js?v=20260909-46"></script><script type="module" src="comunidade.js?v=20260920-61"></script>
-<nav id="betaMobileNav" class="beta-mobile-nav bottom-nav-v67" aria-label="Navegação principal do app">
-<a href="/index.html?beta=1" data-nav="feed"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Feed</span></a>
-<a href="/explorar.html?beta=1" data-nav="explorar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span>Explorar</span></a>
-<a class="publish" href="/comunidade.html?beta=1#publicar" data-nav="publicar"><span class="beta-publish-circle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Publicar</span></a>
-<a href="/proximos-campeonatos.html?beta=1" data-nav="torneios"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0zM12 12v5M8 21h8M10 17h4M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4"/></svg><span>Torneios</span></a>
-<a href="/meu-perfil.html?beta=1" data-nav="perfil" data-beta-profile-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"/></svg><span>Perfil</span></a>
-</nav></body></html>
+</body></html>
