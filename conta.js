@@ -66,66 +66,65 @@ const registerBirthDay = $("registerBirthDay");
 const registerBirthMonth = $("registerBirthMonth");
 const registerBirthYear = $("registerBirthYear");
 
-function daysInMonth(year, month) {
-  if (!year || !month) return 31;
-  return new Date(Number(year), Number(month), 0).getDate();
+function onlyDigits(input, maxLength) {
+  if (!input) return "";
+  input.value = String(input.value || "").replace(/\D+/g, "").slice(0, maxLength);
+  return input.value;
 }
 
 function syncBirthValue() {
   if (!registerBirth) return "";
-  const year = String(registerBirthYear?.value || "");
-  const month = String(registerBirthMonth?.value || "");
-  const day = String(registerBirthDay?.value || "");
-  const validDay = Number(day) >= 1 && Number(day) <= daysInMonth(year, month);
-  registerBirth.value = year && month && day && validDay
-    ? `${year}-${month.padStart(2,"0")}-${day.padStart(2,"0")}`
+  const dayRaw = onlyDigits(registerBirthDay, 2);
+  const monthRaw = onlyDigits(registerBirthMonth, 2);
+  const yearRaw = onlyDigits(registerBirthYear, 4);
+  const day = Number(dayRaw);
+  const month = Number(monthRaw);
+  const year = Number(yearRaw);
+  const maxYear = new Date().getFullYear() - 18;
+
+  const candidate = yearRaw.length === 4 && monthRaw.length >= 1 && dayRaw.length >= 1
+    ? new Date(year, month - 1, day)
+    : null;
+  const valid = candidate &&
+    year >= 1900 && year <= maxYear &&
+    month >= 1 && month <= 12 &&
+    day >= 1 &&
+    candidate.getFullYear() === year &&
+    candidate.getMonth() === month - 1 &&
+    candidate.getDate() === day;
+
+  registerBirth.value = valid
+    ? `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`
     : "";
   return registerBirth.value;
 }
 
-function rebuildBirthDays() {
-  if (!registerBirthDay) return;
-  const previous = Number(registerBirthDay.value || 0);
-  const total = daysInMonth(registerBirthYear?.value, registerBirthMonth?.value);
-  registerBirthDay.innerHTML = '<option value="">Dia</option>' +
-    Array.from({length: total}, (_,i) => {
-      const d = i + 1;
-      return `<option value="${d}"${d===previous?' selected':''}>${String(d).padStart(2,"0")}</option>`;
-    }).join("");
-  if (previous > total) registerBirthDay.value = "";
-  syncBirthValue();
-}
-
-function setupBirthSelectors() {
+function setupBirthInputs() {
   if (!registerBirthDay || !registerBirthMonth || !registerBirthYear) return;
-  const months = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-  registerBirthMonth.innerHTML = '<option value="">Mês</option>' +
-    months.map((name,index)=>`<option value="${index+1}">${name}</option>`).join("");
-
   const maxYear = new Date().getFullYear() - 18;
-  registerBirthYear.min = "1900";
-  registerBirthYear.max = String(maxYear);
+  registerBirthYear.setAttribute("aria-label", `Ano de nascimento, de 1900 até ${maxYear}`);
 
-  rebuildBirthDays();
-  registerBirthDay.addEventListener("change", syncBirthValue);
-  registerBirthMonth.addEventListener("change", rebuildBirthDays);
-  registerBirthYear.addEventListener("input", () => {
-    const year = Number(registerBirthYear.value || 0);
-    if (year && (year < 1900 || year > maxYear)) {
-      registerBirth.value = "";
-      return;
-    }
-    rebuildBirthDays();
+  registerBirthDay.addEventListener("input", () => {
+    const v = onlyDigits(registerBirthDay, 2);
+    if (v.length === 2 && Number(v) >= 1 && Number(v) <= 31) registerBirthMonth.focus();
+    syncBirthValue();
   });
-  registerBirthYear.addEventListener("blur", () => {
-    const year = Number(registerBirthYear.value || 0);
-    if (year && (year < 1900 || year > maxYear)) {
-      registerBirthYear.value = "";
-      registerBirth.value = "";
-    }
+  registerBirthMonth.addEventListener("input", () => {
+    const v = onlyDigits(registerBirthMonth, 2);
+    if (v.length === 2 && Number(v) >= 1 && Number(v) <= 12) registerBirthYear.focus();
+    syncBirthValue();
+  });
+  registerBirthYear.addEventListener("input", () => {
+    onlyDigits(registerBirthYear, 4);
+    syncBirthValue();
+  });
+
+  [registerBirthDay,registerBirthMonth,registerBirthYear].forEach(input => {
+    input.addEventListener("blur", syncBirthValue);
+    input.addEventListener("paste", () => setTimeout(syncBirthValue, 0));
   });
 }
-setupBirthSelectors();
+setupBirthInputs();
 if (registerBirth) registerBirth.setAttribute("aria-describedby", "accountStatus");
 
 function safeReturnDestination(raw) {
