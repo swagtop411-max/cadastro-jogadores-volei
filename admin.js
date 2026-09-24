@@ -16,7 +16,7 @@ function installAdminPrivateStyles(){
     const link=document.createElement("link");
     link.id="adminCommandV33Css";
     link.rel="stylesheet";
-    link.href="./admin-command-center-v33.css?v=20260908-42";
+    link.href="./admin-command-center-v33.css?v=20260924-84";
     document.head.appendChild(link);
   }
   if(!document.getElementById("adminMobileV40Css")){
@@ -39,12 +39,12 @@ async function bootPrivateConsole(){
       import("./admin-claims-v9.js?v=20260909-46"),
       import("./admin-profile-link-v10.js?v=20260909-46"),
       import("./admin-control-center-v32.js?v=20260908-42"),
-      import("./admin-command-center-v33.js?v=20260908-42"),
+      import("./admin-command-center-v33.js?v=20260924-84"),
       import("./admin-data-migration-v11.js?v=20260909-46"),
       import("./admin-commerce-v11.js?v=20260909-46"),
       import("./admin-profile-browser-v13.js?v=20260909-46"),
       import("./admin-moderation-v42.js?v=20260908-42"),
-      import("./admin-account-deletion-v80.js?v=20260924-82")
+      import("./admin-account-deletion-v80.js?v=20260924-84")
     ]);
   }catch(error){
     console.error("Falha ao carregar console privado:",error);
