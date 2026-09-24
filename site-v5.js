@@ -1,5 +1,5 @@
 import "./app-branding-v58.js?v=20260916-58";
-await import("./auth-gate-v53.js?v=20260915-53");
+await import("./auth-gate-v53.js?v=20260924-82");
 import("./firebase-app-check-v11.js?v=20260909-46").then(()=>import("./profile-autosync-v13.js?v=20260904-3")).catch(error=>console.warn("Inicialização segura do perfil:",error));
 import("./play-store-mode-v44.js?v=20260908-44").catch(error=>console.warn("Modo Google Play:",error));
 import("./public-beta-v19.js?v=20260924-79").catch(error=>console.warn("Beta Mobile:",error));
