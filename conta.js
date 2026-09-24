@@ -10,14 +10,16 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile
+  updateProfile,
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   doc,
   getDoc,
   getFirestore,
   serverTimestamp,
-  setDoc
+  setDoc,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -314,8 +316,11 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Não foi possível salvar o nome no perfil de autenticação:", profileError);
     }
 
-    try {
-      await setDoc(doc(db, "usuarios", user.uid), {
+    const usuarioRef = doc(db, "usuarios", user.uid);
+    const perfilRef = doc(db, "perfis", user.uid);
+    const persistAccount = async () => {
+      const batch = writeBatch(db);
+      batch.set(usuarioRef, {
         uid: user.uid,
         nome: name,
         email,
@@ -325,8 +330,54 @@ registerForm.addEventListener("submit", async (event) => {
         criadoEm: serverTimestamp(),
         atualizadoEm: serverTimestamp()
       }, { merge: true });
-    } catch (profileDocError) {
-      console.error("Conta criada, mas falhou a sincronização do perfil no Firestore:", { code: profileDocError?.code, message: profileDocError?.message });
+      batch.set(perfilRef, {
+        uid: user.uid,
+        nome: name,
+        cidade: "",
+        uf: "",
+        modalidade: "",
+        posicao: "",
+        categoria: "",
+        time: "",
+        bio: "",
+        fotoUrl: "",
+        fotoPath: "",
+        capaUrl: "",
+        capaPath: "",
+        historicoCampeonatos: [],
+        handle: "",
+        instagramUrl: "",
+        completo: false
+      }, { merge: true });
+      await batch.commit();
+
+      const [usuarioCheck, perfilCheck] = await Promise.all([
+        getDoc(usuarioRef),
+        getDoc(perfilRef)
+      ]);
+      if (!usuarioCheck.exists() || usuarioCheck.data()?.nome !== name || usuarioCheck.data()?.email !== email) {
+        throw new Error("ACCOUNT_WRITE_NOT_CONFIRMED");
+      }
+      if (!perfilCheck.exists() || String(perfilCheck.data()?.nome || "") !== name) {
+        throw new Error("PROFILE_WRITE_NOT_CONFIRMED");
+      }
+    };
+
+    let persistError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        await persistAccount();
+        persistError = null;
+        break;
+      } catch (error) {
+        persistError = error;
+        console.warn(`Tentativa ${attempt} de salvar cadastro falhou:`, error);
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 450 * attempt));
+      }
+    }
+    if (persistError) {
+      try { await deleteUser(user); } catch (rollbackError) { console.warn("Não foi possível desfazer a conta incompleta:", rollbackError); }
+      throw Object.assign(new Error("Não foi possível confirmar o salvamento dos seus dados. Tente novamente."), { code: persistError?.code || "profile/save-not-confirmed" });
     }
 
     try {
@@ -335,7 +386,11 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Não foi possível enviar o e-mail de verificação agora:", verificationError);
     }
 
-    await recordAuthEvent(user, "cadastro");
+    try {
+      await recordAuthEvent(user, "cadastro");
+    } catch (auditError) {
+      console.warn("Cadastro salvo; auditoria será ignorada nesta tentativa:", auditError);
+    }
     showLogged(user);
     if (safeReturnDestination(returnTarget)) {
       setStatus("Conta criada! Voltando ao perfil para concluir sua reivindicação...", "success");
