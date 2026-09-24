@@ -426,55 +426,90 @@ async function saveProfile() {
       instagramUrl
     };
 
-    const persistProfile = async () => {
-      const batch = writeBatch(db);
-      if (usuarioSnap.exists()) {
-        batch.set(usuarioRef, usuarioMutablePayload, { merge: true });
-      } else {
-        batch.set(usuarioRef, usuarioCreatePayload);
+    const retryWrite = async (label, action) => {
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          await action();
+          return;
+        } catch (error) {
+          lastError = error;
+          console.warn(`${label}: tentativa ${attempt} falhou`, error);
+          if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 450 * attempt));
+        }
       }
-
-      // Perfil concluído usa apenas o schema público clássico, compatível inclusive
-      // com regras de produção anteriores à introdução do campo "completo".
-      batch.set(perfilRef, perfilPublico);
-      await batch.commit();
-
-      const [usuarioCheck, perfilCheck] = await Promise.all([
-        getDoc(usuarioRef),
-        getDoc(perfilRef)
-      ]);
-      const savedPrivate = usuarioCheck.exists() ? usuarioCheck.data() : null;
-      const savedPublic = perfilCheck.exists() ? perfilCheck.data() : null;
-      const confirmed = Boolean(
-        savedPrivate &&
-        savedPublic &&
-        String(savedPrivate.nome || "") === nome &&
-        String(savedPrivate.contato || "") === contato &&
-        String(savedPrivate.cidade || "") === cidade &&
-        String(savedPrivate.uf || "") === uf &&
-        String(savedPrivate.fotoUrl || "") === fotoUrl &&
-        String(savedPublic.nome || "") === nome &&
-        String(savedPublic.cidade || "") === cidade &&
-        String(savedPublic.uf || "") === uf &&
-        String(savedPublic.categoria || "") === categoria &&
-        String(savedPublic.fotoUrl || "") === fotoUrl
-      );
-      if (!confirmed) throw new Error("PROFILE_WRITE_NOT_CONFIRMED");
+      throw lastError || new Error(`${label}_FAILED`);
     };
 
-    let persistError = null;
-    for (let attempt = 1; attempt <= 3; attempt += 1) {
+    // 1. Salva primeiro o perfil público. Ele é o núcleo do cadastro esportivo.
+    await retryWrite("perfil-publico", async () => {
+      await setDoc(perfilRef, perfilPublico);
+      const check = await getDoc(perfilRef);
+      const saved = check.exists() ? check.data() : null;
+      const confirmed = Boolean(
+        saved &&
+        String(saved.nome || "") === nome &&
+        String(saved.cidade || "") === cidade &&
+        String(saved.uf || "") === uf &&
+        String(saved.categoria || "") === categoria &&
+        String(saved.fotoUrl || "") === fotoUrl
+      );
+      if (!confirmed) throw new Error("PUBLIC_PROFILE_WRITE_NOT_CONFIRMED");
+    });
+
+    // 2. Sincroniza dados privados da conta separadamente.
+    // Regras antigas podem não aceitar nascimento/contato em update de contas legadas.
+    let privateSaveWarning = "";
+    try {
+      await retryWrite("perfil-privado", async () => {
+        if (usuarioSnap.exists()) {
+          await setDoc(usuarioRef, usuarioMutablePayload, { merge: true });
+        } else {
+          await setDoc(usuarioRef, usuarioCreatePayload);
+        }
+        const check = await getDoc(usuarioRef);
+        const saved = check.exists() ? check.data() : null;
+        if (!saved || String(saved.nome || "") !== nome) {
+          throw new Error("PRIVATE_PROFILE_WRITE_NOT_CONFIRMED");
+        }
+      });
+    } catch (privateError) {
+      console.warn("Falha ao salvar todos os campos privados; tentando compatibilidade com conta antiga:", privateError);
+      const legacySafePayload = {
+        nome,
+        atualizadoEm: serverTimestamp(),
+        cidade,
+        uf,
+        modalidade,
+        posicao,
+        categoria,
+        time,
+        bio,
+        historicoCampeonatos,
+        fotoUrl,
+        fotoPath,
+        capaUrl,
+        capaPath,
+        instagramUrl
+      };
       try {
-        await persistProfile();
-        persistError = null;
-        break;
-      } catch (error) {
-        persistError = error;
-        console.warn(`Tentativa ${attempt} de salvar o perfil falhou:`, error);
-        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+        await retryWrite("perfil-privado-legado", async () => {
+          if (usuarioSnap.exists()) {
+            await setDoc(usuarioRef, legacySafePayload, { merge: true });
+          } else {
+            await setDoc(usuarioRef, usuarioCreatePayload);
+          }
+          const check = await getDoc(usuarioRef);
+          if (!check.exists() || String(check.data()?.nome || "") !== nome) {
+            throw new Error("LEGACY_PRIVATE_WRITE_NOT_CONFIRMED");
+          }
+        });
+        privateSaveWarning = " Alguns dados privados antigos serão sincronizados automaticamente quando a conta for atualizada.";
+      } catch (legacyPrivateError) {
+        console.warn("Perfil público salvo; dados privados não puderam ser sincronizados nesta conta antiga:", legacyPrivateError);
+        privateSaveWarning = " O perfil esportivo foi salvo. Alguns dados privados da conta antiga não puderam ser atualizados.";
       }
     }
-    if (persistError) throw persistError;
 
     requiredProfileSaved = true;
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
@@ -556,7 +591,7 @@ async function saveProfile() {
       }
     }
 
-    status(`Perfil salvo e confirmado no banco de dados.${planMessage}`);
+    status(`Perfil salvo e confirmado no banco de dados.${privateSaveWarning}${planMessage}`);
 
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
     renderHistoricoCampeonatos();
