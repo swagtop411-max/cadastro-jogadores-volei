@@ -10,27 +10,30 @@ const pages = [
 
 for (const page of pages) {
   const html = fs.readFileSync(page, 'utf8');
-  if (!html.includes('id="betaMobileNav"')) {
-    throw new Error(`${page}: betaMobileNav ausente`);
-  }
-  if (!html.includes('html.beta-mobile-app #betaMobileNav.bottom-nav-v67{') ||
+  const body = html.search(/<body[^>]*>/i);
+  const nav = html.indexOf('id="betaMobileNav"');
+  if (body < 0 || nav < 0) throw new Error(`${page}: betaMobileNav ausente`);
+  if (nav - body > 1800) throw new Error(`${page}: menu não está no início do body para cold start`);
+  if (!html.includes('id="bottomNavColdStartV70"')) throw new Error(`${page}: CSS crítico V70 ausente`);
+  if (!html.includes('@media(max-width:900px){') ||
+      !html.includes('#betaMobileNav.bottom-nav-v67{') ||
       !html.includes('display:grid!important;position:fixed!important')) {
-    throw new Error(`${page}: regra de exibição persistente do menu ausente`);
+    throw new Error(`${page}: menu não está fixo/visível no mobile antes do JavaScript`);
+  }
+  if (html.includes('id="bottomNavRescueV67"')) {
+    throw new Error(`${page}: CSS legado do menu voltou para a página`);
   }
   const items = (html.match(/data-nav="(?:feed|explorar|publicar|torneios|perfil)"/g) || []).length;
-  if (items < 5) {
-    throw new Error(`${page}: menu inferior incompleto (${items}/5)`);
-  }
-  if (html.includes('#betaMobileNav.bottom-nav-v67{display:none!important}')) {
-    throw new Error(`${page}: regra crítica voltou a esconder o menu`);
-  }
+  if (items !== 5) throw new Error(`${page}: menu inferior deve ter exatamente 5 itens, encontrou ${items}`);
 }
 
 const mobile = fs.readFileSync('beta-mobile-v21.js', 'utf8');
 if (!mobile.includes("nav.style.setProperty('display','grid','important')")) {
   throw new Error('beta-mobile-v21.js: fallback de visibilidade do menu ausente');
 }
-
+if (!mobile.includes('function installNavGuardian()') || !mobile.includes('function enforceNav()')) {
+  throw new Error('beta-mobile-v21.js: guardião persistente do menu ausente');
+}
 
 const themeBoot = fs.readFileSync('theme-boot-v65.js', 'utf8');
 if (!themeBoot.includes('html.beta-mobile-app body{transform:none!important')) {
@@ -42,8 +45,4 @@ if (!motion.includes('html.beta-mobile-app #betaMobileNav{position:fixed!importa
   throw new Error('app-motion-v65.css: trava fixa/visível do menu ausente');
 }
 
-if (!mobile.includes('function installNavGuardian()') || !mobile.includes('function enforceNav()')) {
-  throw new Error('beta-mobile-v21.js: guardião persistente do menu ausente');
-}
-
-console.log('Beta navigation guard: OK');
+console.log('Beta navigation cold-start guard: OK');
