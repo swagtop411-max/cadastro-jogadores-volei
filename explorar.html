@@ -17,8 +17,8 @@
 <script src="theme-boot-v65.js?v=20260924-70"></script>
 <link id="siteThemeV5Runtime" rel="stylesheet" href="site-theme.css?v=20260924-65">
 <link id="siteThemeV8Runtime" rel="stylesheet" href="site-v8.css?v=20260924-65">
-<link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-65">
-<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-65">
+<link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-72">
+<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-72">
 <link id="betaMobileActivityV28Css" rel="stylesheet" href="/beta-mobile-activity-v28.css?v=20260907-28">
 <link id="betaAccountV23Css" rel="stylesheet" href="/beta-account-v23.css?v=20260908-40">
 <link rel="stylesheet" href="app-motion-v65.css?v=20260924-70">
@@ -42,7 +42,23 @@
   body{padding-bottom:max(112px,calc(96px + env(safe-area-inset-bottom)))!important}
 }
 @media(min-width:901px){#betaMobileNav.bottom-nav-v67{display:none!important}}
-</style></head>
+</style>
+<style id="exploreNetworkAccessV72">
+.explore-network-access{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 18px}
+.explore-network-card{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center;gap:12px;min-width:0;padding:15px 16px;border:1px solid #d6e4ee;border-radius:16px;background:#fff;color:#172033;text-decoration:none;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+.explore-network-card:hover{transform:translateY(-1px);border-color:#8fd4e7}
+.explore-network-icon{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;background:#e8f7fb;font-size:23px}
+.explore-network-card b{display:block;font-size:11px;font-weight:900;letter-spacing:.5px}
+.explore-network-card small{display:block;margin-top:5px;color:#667085;font-size:9px;line-height:1.35}
+.explore-network-card i{color:#d5a52f;font-size:20px;font-weight:900;font-style:normal}
+html.beta-mobile-app .explore-network-access{width:min(100%,575px);margin:0 auto 16px;padding:0 12px;box-sizing:border-box}
+html.beta-mobile-app .explore-network-card{background:linear-gradient(145deg,#08243a,#071d31);border-color:#164a66;color:#fff;box-shadow:none}
+html.beta-mobile-app .explore-network-icon{background:#0b334e}
+html.beta-mobile-app .explore-network-card small{color:#9bb1c2}
+html.beta-mobile-app .explore-network-card i{color:#f4c84d}
+@media(max-width:520px){.explore-network-access{grid-template-columns:1fr}}
+</style>
+</head>
 <body class="site-v5 site-v8"><nav id="betaMobileNav" class="beta-mobile-nav bottom-nav-v67" aria-label="Navegação principal do app">
 <a href="/index.html?beta=1" data-nav="feed"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Feed</span></a>
 <a href="/explorar.html?beta=1" data-nav="explorar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span>Explorar</span></a>
@@ -53,6 +69,19 @@
 <header class="header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>REDE ESPORTIVA</span></div></a></header>
 <main class="explore-page">
 <section class="explore-hero"><div><span class="explore-kicker">DESCOBRIR • CONECTAR • JOGAR</span><h1>EXPLORAR</h1><p>Seu radar esportivo para encontrar atletas por nome, cidade, posição, modalidade, categoria ou equipe e descobrir novos perfis da rede.</p></div><a class="explore-back" href="index.html">← VOLTAR AO FEED</a></section>
+
+<section class="explore-network-access" aria-label="Ranking e equipes">
+  <a class="explore-network-card ranking" href="/index.html?beta=1&abrir=ranking">
+    <span class="explore-network-icon">🏆</span>
+    <span><b>RANKING DOS ATLETAS</b><small>Veja a pontuação e a classificação geral dos atletas</small></span>
+    <i>→</i>
+  </a>
+  <a class="explore-network-card teams" href="/index.html?beta=1&abrir=equipes">
+    <span class="explore-network-icon">👥</span>
+    <span><b>EQUIPES CADASTRADAS</b><small>Conheça os times, cidades, modalidades e atletas</small></span>
+    <i>→</i>
+  </a>
+</section>
 
 <div class="explore-search" role="search">
   <div class="explore-searchbox">
@@ -89,7 +118,7 @@
 <section class="explore-section" id="profilesSection"><div class="explore-section-head"><div><span>PERFIS</span><h2>ATLETAS PARA CONHECER</h2></div><div id="profilesCount" class="explore-count"></div></div><div id="exploreProfiles" class="profile-strip"><div class="explore-empty">Carregando atletas...</div></div></section>
 <section class="explore-section" id="mediaSection"><div class="explore-section-head"><div><span>COMUNIDADE</span><h2>PUBLICAÇÕES RECENTES</h2></div><div id="mediaCount" class="explore-count"></div></div><div id="exploreGrid" class="explore-grid"><div class="explore-empty">Carregando publicações...</div></div></section>
 </main>
-<script type="module" src="site-v5.js?v=20260909-46"></script>
+<script type="module" src="site-v5.js?v=20260924-72"></script>
 <script type="module" src="explorar.js?v=20260907-26"></script>
 </body>
 </html>
