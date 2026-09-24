@@ -16,7 +16,8 @@ import {
   deleteField,
   deleteDoc,
   Timestamp,
-  limit
+  limit,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 import { uploadCloudinary } from "./cloudinary-upload.js?v=20260909-46";
 
@@ -323,6 +324,11 @@ async function saveProfile() {
     return;
   }
 
+  if (!["Iniciante", "Intermediário", "Avançado"].includes($("categoria").value)) {
+    status("Selecione uma categoria válida antes de salvar.");
+    return;
+  }
+
   const historicoCampeonatos = getHistoricoCampeonatosFromForm();
   if (historicoCampeonatos.some(item => !item.campeonato || !item.colocacao || !item.ano)) {
     status("Complete nome, colocação e ano de todos os campeonatos adicionados.");
@@ -366,7 +372,11 @@ async function saveProfile() {
     const instagramUrl = String(profile?.instagramUrl || "").slice(0, 300);
 
     const usuarioRef = doc(db, "usuarios", user.uid);
-    const usuarioSnap = await getDoc(usuarioRef);
+    const perfilRef = doc(db, "perfis", user.uid);
+    const [usuarioSnap, perfilSnap] = await Promise.all([
+      getDoc(usuarioRef),
+      getDoc(perfilRef)
+    ]);
     const base = usuarioSnap.exists() ? usuarioSnap.data() : {};
     const usuarioPayload = {
       uid: user.uid,
@@ -392,7 +402,6 @@ async function saveProfile() {
       instagramUrl
     };
     if (!usuarioSnap.exists()) usuarioPayload.criadoEm = serverTimestamp();
-    await setDoc(usuarioRef, usuarioPayload, { merge: true });
 
     const antigoHandle = String(profile?.handle || "");
     const perfilPublico = {
@@ -415,56 +424,104 @@ async function saveProfile() {
       completo: true
     };
 
-    const perfilRef = doc(db, "perfis", user.uid);
-    const perfilSnap = await getDoc(perfilRef);
-    if (perfilSnap.exists()) {
-      await setDoc(perfilRef, {
-        ...perfilPublico,
-        plano: deleteField(),
-        planoId: deleteField(),
-        valorPlano: deleteField(),
-        planoStatus: deleteField(),
-        pagamentoConfirmado: deleteField(),
-        status: deleteField(),
-        nascimento: deleteField(),
-        contato: deleteField(),
-        email: deleteField()
-      }, { merge: true });
-    } else {
-      await setDoc(perfilRef, perfilPublico);
+    const persistProfile = async () => {
+      const batch = writeBatch(db);
+      batch.set(usuarioRef, usuarioPayload, { merge: true });
+      if (perfilSnap.exists()) {
+        batch.set(perfilRef, {
+          ...perfilPublico,
+          plano: deleteField(),
+          planoId: deleteField(),
+          valorPlano: deleteField(),
+          planoStatus: deleteField(),
+          pagamentoConfirmado: deleteField(),
+          status: deleteField(),
+          nascimento: deleteField(),
+          contato: deleteField(),
+          email: deleteField()
+        }, { merge: true });
+      } else {
+        batch.set(perfilRef, perfilPublico);
+      }
+      await batch.commit();
+
+      const [usuarioCheck, perfilCheck] = await Promise.all([
+        getDoc(usuarioRef),
+        getDoc(perfilRef)
+      ]);
+      const savedPrivate = usuarioCheck.exists() ? usuarioCheck.data() : null;
+      const savedPublic = perfilCheck.exists() ? perfilCheck.data() : null;
+      const confirmed = Boolean(
+        savedPrivate &&
+        savedPublic &&
+        String(savedPrivate.nome || "") === nome &&
+        String(savedPrivate.contato || "") === contato &&
+        String(savedPrivate.cidade || "") === cidade &&
+        String(savedPrivate.uf || "") === uf &&
+        String(savedPrivate.fotoUrl || "") === fotoUrl &&
+        String(savedPublic.nome || "") === nome &&
+        String(savedPublic.cidade || "") === cidade &&
+        String(savedPublic.uf || "") === uf &&
+        String(savedPublic.categoria || "") === categoria &&
+        String(savedPublic.fotoUrl || "") === fotoUrl &&
+        savedPublic.completo === true
+      );
+      if (!confirmed) throw new Error("PROFILE_WRITE_NOT_CONFIRMED");
+    };
+
+    let persistError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      try {
+        await persistProfile();
+        persistError = null;
+        break;
+      } catch (error) {
+        persistError = error;
+        console.warn(`Tentativa ${attempt} de salvar o perfil falhou:`, error);
+        if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 500 * attempt));
+      }
     }
+    if (persistError) throw persistError;
 
     requiredProfileSaved = true;
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
     window.dispatchEvent(new CustomEvent("athlete-profile-saved", { detail: { fotoUrl } }));
 
-    await setDoc(doc(db, "handles", handle), {
-      uid: user.uid,
-      handle,
-      atualizadoEm: Timestamp.now()
-    }, { merge: true });
+    try {
+      await setDoc(doc(db, "handles", handle), {
+        uid: user.uid,
+        handle,
+        atualizadoEm: Timestamp.now()
+      }, { merge: true });
 
-    if (antigoHandle && antigoHandle !== handle) {
-      try {
-        const old = await getDoc(doc(db, "handles", antigoHandle));
-        if (old.exists() && old.data()?.uid === user.uid) await deleteDoc(old.ref);
-      } catch {}
+      if (antigoHandle && antigoHandle !== handle) {
+        try {
+          const old = await getDoc(doc(db, "handles", antigoHandle));
+          if (old.exists() && old.data()?.uid === user.uid) await deleteDoc(old.ref);
+        } catch {}
+      }
+    } catch (handleError) {
+      console.warn("Perfil salvo; não foi possível sincronizar o handle agora:", handleError);
     }
 
-    const legadoOwned = await getDocs(query(collection(db, "atletas"), where("ownerUid", "==", user.uid)));
-    if (!legadoOwned.empty) {
-      await setDoc(legadoOwned.docs[0].ref, {
-        ownerUid: user.uid,
-        nome,
-        cidade,
-        uf,
-        modalidade,
-        posicao,
-        categoria,
-        time,
-        historicoCampeonatos,
-        atualizadoEm: serverTimestamp()
-      }, { merge: true });
+    try {
+      const legadoOwned = await getDocs(query(collection(db, "atletas"), where("ownerUid", "==", user.uid)));
+      if (!legadoOwned.empty) {
+        await setDoc(legadoOwned.docs[0].ref, {
+          ownerUid: user.uid,
+          nome,
+          cidade,
+          uf,
+          modalidade,
+          posicao,
+          categoria,
+          time,
+          historicoCampeonatos,
+          atualizadoEm: serverTimestamp()
+        }, { merge: true });
+      }
+    } catch (legacyError) {
+      console.warn("Perfil salvo; sincronização do cadastro legado ficou para depois:", legacyError);
     }
 
     const planInput = document.querySelector('input[name="profilePlano"]:checked');
@@ -478,22 +535,28 @@ async function saveProfile() {
     };
     const [planName, planValue] = planMap[planId] || planMap.gratuito;
     const currentPlan = String(base.planoId || "gratuito");
+    let planMessage = "";
 
     if (planId !== currentPlan) {
-      const now = Timestamp.now();
-      await setDoc(doc(db, "solicitacoes_planos", user.uid), {
-        uid: user.uid,
-        plano: planName,
-        planoId: planId,
-        valor: planValue,
-        status: "pendente",
-        criadoEm: now,
-        atualizadoEm: now
-      });
-      status(`Perfil salvo. A alteração para o plano ${planName} ficou aguardando confirmação administrativa.`);
-    } else {
-      status("Perfil salvo com segurança. Seu histórico também foi atualizado no ranking.");
+      try {
+        const now = Timestamp.now();
+        await setDoc(doc(db, "solicitacoes_planos", user.uid), {
+          uid: user.uid,
+          plano: planName,
+          planoId: planId,
+          valor: planValue,
+          status: "pendente",
+          criadoEm: now,
+          atualizadoEm: now
+        });
+        planMessage = ` A alteração para o plano ${planName} ficou aguardando confirmação administrativa.`;
+      } catch (planError) {
+        console.warn("Perfil salvo; solicitação de plano não foi registrada:", planError);
+        planMessage = " O perfil foi salvo, mas a solicitação de plano deverá ser tentada novamente.";
+      }
     }
+
+    status(`Perfil salvo e confirmado no banco de dados.${planMessage}`);
 
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
     renderHistoricoCampeonatos();
@@ -502,7 +565,13 @@ async function saveProfile() {
   } catch (error) {
     console.error(error);
     if (requiredProfileSaved && finishRequiredProfile()) return;
-    status("Não foi possível salvar. Verifique sua conexão e tente novamente.");
+    const code = error?.code || "";
+    const detail = code === "permission-denied"
+      ? "O banco recusou a gravação dos dados."
+      : code === "unavailable"
+        ? "O banco está temporariamente indisponível."
+        : "O salvamento não foi confirmado pelo banco de dados.";
+    status(`${detail} Nenhuma confirmação falsa será exibida. Tente novamente.`);
   } finally {
     $("saveProfile").disabled = false;
   }
