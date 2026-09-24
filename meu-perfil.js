@@ -33,6 +33,7 @@ const cfg = {
 const app = getApps().length ? getApp() : initializeApp(cfg);
 const auth = getAuth(app);
 const db = getFirestore(app);
+document.documentElement.dataset.canonicalProfileSave = "1";
 const $ = id => document.getElementById(id);
 let user = null;
 let profile = null;
