@@ -105,6 +105,10 @@ requireText('conta.html','id="registerBirthMonth"','cadastro usa mês separado')
 requireText('conta.html','id="registerBirthYear"','cadastro usa ano separado');
 forbidText('conta.html','id="registerBirth" type="date"','seletor nativo de data removido');
 requireText('conta.js','function syncBirthValue()','data digitada é validada antes do cadastro');
+requireText('conta.js','bd_pending_account_v83','cadastro preserva metadados pendentes sem apagar a conta autenticada');
+forbidText('conta.js','deleteUser(user)','cadastro não apaga a conta quando o Firestore complementar falha');
+requireText('meu-perfil.js','pendingAccount(currentUser.uid)','Meu Perfil recupera dados pendentes do cadastro');
+requireText('auth-gate-v53.js','perfil esportivo público completo continua liberando o app','gate aceita perfil público completo sem depender do documento privado');
 requireText('meu-perfil.js','perfil-publico','salvamento público isolado');
 requireText('meu-perfil.js','perfil-privado-legado','fallback para contas antigas');
 requireText('meu-perfil.js','await setDoc(perfilRef, perfilPublico)','perfil concluído salvo no schema público compatível');
