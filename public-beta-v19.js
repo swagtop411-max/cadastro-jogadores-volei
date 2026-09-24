@@ -28,7 +28,7 @@ if(!privateConsoleContext()){ensureManifest();ensureMobileMeta();registerService
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mount,{once:true});else mount();
 window.BDBetaV20={install:installApp,feedback,toggle:togglePanel,isActive:()=>betaActive,isStandalone,isAppMode:()=>appRequested};
 if(betaActive&&!privateConsoleContext()&&mobileShellAllowed()){
- import("./beta-mobile-v21.js?v=20260924-70").catch(error=>console.warn("App Mobile:",error));
+ import("./beta-mobile-v21.js?v=20260924-71").catch(error=>console.warn("App Mobile:",error));
  import("./beta-account-v23.js?v=20260908-40").catch(error=>console.warn("Conta Mobile:",error));
  import("./beta-mobile-activity-v28.js?v=20260908-40").catch(error=>console.warn("Atividades Mobile:",error));
 }
