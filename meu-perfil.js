@@ -423,22 +423,19 @@ async function saveProfile() {
       capaPath,
       historicoCampeonatos,
       handle,
-      instagramUrl,
-      completo: true
+      instagramUrl
     };
 
     const persistProfile = async () => {
       const batch = writeBatch(db);
       if (usuarioSnap.exists()) {
-        // Em contas antigas, campos imutáveis podem estar ausentes ou em formato legado.
-        // Atualizamos somente os campos que as regras permitem alterar.
         batch.set(usuarioRef, usuarioMutablePayload, { merge: true });
       } else {
         batch.set(usuarioRef, usuarioCreatePayload);
       }
 
-      // Substitui o perfil público por uma estrutura limpa e compatível com as regras.
-      // Isso também remove silenciosamente campos legados que poderiam bloquear a atualização.
+      // Perfil concluído usa apenas o schema público clássico, compatível inclusive
+      // com regras de produção anteriores à introdução do campo "completo".
       batch.set(perfilRef, perfilPublico);
       await batch.commit();
 
@@ -460,8 +457,7 @@ async function saveProfile() {
         String(savedPublic.cidade || "") === cidade &&
         String(savedPublic.uf || "") === uf &&
         String(savedPublic.categoria || "") === categoria &&
-        String(savedPublic.fotoUrl || "") === fotoUrl &&
-        savedPublic.completo === true
+        String(savedPublic.fotoUrl || "") === fotoUrl
       );
       if (!confirmed) throw new Error("PROFILE_WRITE_NOT_CONFIRMED");
     };
@@ -571,7 +567,7 @@ async function saveProfile() {
     if (requiredProfileSaved && finishRequiredProfile()) return;
     const code = error?.code || "";
     const detail = code === "permission-denied"
-      ? "O banco recusou a gravação dos dados."
+      ? "A gravação foi bloqueada pelas permissões do banco. O app preservou seus dados na tela e não marcou o perfil como salvo."
       : code === "unavailable"
         ? "O banco está temporariamente indisponível."
         : "O salvamento não foi confirmado pelo banco de dados.";
@@ -976,7 +972,7 @@ onAuthStateChanged(auth, async currentUser => {
           : (Array.isArray(legacy.historicoCampeonatos) ? legacy.historicoCampeonatos : []),
         handle: profile?.handle || profileHandle(nome, currentUser.uid),
         instagramUrl: profile?.instagramUrl || legacy.instagramUrl || "",
-        completo: complete
+        ...(complete ? {} : { completo: false })
       };
 
       const profileRef = doc(db, "perfis", currentUser.uid);
