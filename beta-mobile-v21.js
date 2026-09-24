@@ -13,7 +13,7 @@ document.documentElement.classList.add('beta-mobile-app');
 document.documentElement.dataset.betaPage=PAGE.replace('.html','');
 
 function cssLink(id,href){if(document.getElementById(id))return;const l=document.createElement('link');l.id=id;l.rel='stylesheet';l.href=href;document.head.appendChild(l)}
-function ensureCss(){cssLink('betaMobileV21Css','/beta-mobile-v21.css?v=20260924-65');cssLink('betaMobilePagesV21Css','/beta-mobile-pages-v21.css?v=20260924-65');cssLink('betaMobileActivityV28Css','/beta-mobile-activity-v28.css?v=20260907-28')}
+function ensureCss(){cssLink('betaMobileV21Css','/beta-mobile-v21.css?v=20260924-66');cssLink('betaMobilePagesV21Css','/beta-mobile-pages-v21.css?v=20260924-66');cssLink('betaMobileActivityV28Css','/beta-mobile-activity-v28.css?v=20260907-28')}
 ensureCss();
 
 const icons={
