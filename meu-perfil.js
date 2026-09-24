@@ -378,12 +378,8 @@ async function saveProfile() {
       getDoc(perfilRef)
     ]);
     const base = usuarioSnap.exists() ? usuarioSnap.data() : {};
-    const usuarioPayload = {
-      uid: user.uid,
+    const usuarioMutablePayload = {
       nome,
-      email: user.email || base.email || "",
-      papel: base.papel || "usuario",
-      status: base.status || "ativo",
       atualizadoEm: serverTimestamp(),
       nascimento,
       cidade,
@@ -401,7 +397,14 @@ async function saveProfile() {
       capaPath,
       instagramUrl
     };
-    if (!usuarioSnap.exists()) usuarioPayload.criadoEm = serverTimestamp();
+    const usuarioCreatePayload = {
+      uid: user.uid,
+      ...usuarioMutablePayload,
+      email: user.email || "",
+      papel: "usuario",
+      status: "ativo",
+      criadoEm: serverTimestamp()
+    };
 
     const antigoHandle = String(profile?.handle || "");
     const perfilPublico = {
@@ -426,23 +429,17 @@ async function saveProfile() {
 
     const persistProfile = async () => {
       const batch = writeBatch(db);
-      batch.set(usuarioRef, usuarioPayload, { merge: true });
-      if (perfilSnap.exists()) {
-        batch.set(perfilRef, {
-          ...perfilPublico,
-          plano: deleteField(),
-          planoId: deleteField(),
-          valorPlano: deleteField(),
-          planoStatus: deleteField(),
-          pagamentoConfirmado: deleteField(),
-          status: deleteField(),
-          nascimento: deleteField(),
-          contato: deleteField(),
-          email: deleteField()
-        }, { merge: true });
+      if (usuarioSnap.exists()) {
+        // Em contas antigas, campos imutáveis podem estar ausentes ou em formato legado.
+        // Atualizamos somente os campos que as regras permitem alterar.
+        batch.set(usuarioRef, usuarioMutablePayload, { merge: true });
       } else {
-        batch.set(perfilRef, perfilPublico);
+        batch.set(usuarioRef, usuarioCreatePayload);
       }
+
+      // Substitui o perfil público por uma estrutura limpa e compatível com as regras.
+      // Isso também remove silenciosamente campos legados que poderiam bloquear a atualização.
+      batch.set(perfilRef, perfilPublico);
       await batch.commit();
 
       const [usuarioCheck, perfilCheck] = await Promise.all([
@@ -983,22 +980,8 @@ onAuthStateChanged(auth, async currentUser => {
       };
 
       const profileRef = doc(db, "perfis", currentUser.uid);
-      if (profileSnap.exists()) {
-        await setDoc(profileRef, {
-          ...safePublicProfile,
-          plano: deleteField(),
-          planoId: deleteField(),
-          valorPlano: deleteField(),
-          planoStatus: deleteField(),
-          pagamentoConfirmado: deleteField(),
-          status: deleteField(),
-          nascimento: deleteField(),
-          contato: deleteField(),
-          email: deleteField()
-        }, { merge: true });
-      } else {
-        await setDoc(profileRef, safePublicProfile);
-      }
+      // Mantém o documento público estritamente dentro do schema permitido pelas regras.
+      await setDoc(profileRef, safePublicProfile);
 
       const updated = await getDoc(profileRef);
       profile = updated.exists()
