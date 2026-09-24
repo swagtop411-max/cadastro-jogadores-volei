@@ -100,7 +100,14 @@ requireText('profile-autosync-v13.js','ensureSocialProfile','sincronização aut
 requireText('profile-autosync-v13.js','completo:false','perfil automático nasce incompleto');
 requireText('site-v5.js?v=20260909-46','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado globalmente');
 requireText('conta.js','profile-autosync-v13.js?v=20260904-3','sincronizador V13 carregado no cadastro/login');
-requireText('meu-perfil.js','batch.set(perfilRef, perfilPublico)','perfil concluído salvo no schema público compatível');
+requireText('conta.html','id="registerBirthDay"','cadastro usa dia separado');
+requireText('conta.html','id="registerBirthMonth"','cadastro usa mês separado');
+requireText('conta.html','id="registerBirthYear"','cadastro usa ano separado');
+forbidText('conta.html','id="registerBirth" type="date"','seletor nativo de data removido');
+requireText('conta.js','function syncBirthValue()','data digitada é validada antes do cadastro');
+requireText('meu-perfil.js','perfil-publico','salvamento público isolado');
+requireText('meu-perfil.js','perfil-privado-legado','fallback para contas antigas');
+requireText('meu-perfil.js','await setDoc(perfilRef, perfilPublico)','perfil concluído salvo no schema público compatível');
 requireText('public.js','profiles=[...profileMap.values()].filter(a=>a.nome&&normal(a.status)!=="inativo")','diretório inclui perfil básico sem cidade');
 requireText('admin-profile-browser-v13.js?v=20260909-46','CRIAR E ABRIR PERFIL','ADM pode criar e abrir perfil ausente');
 requireText('admin-profile-browser-v13.js?v=20260909-46','ABRIR PERFIL','ADM pode abrir perfil existente');
