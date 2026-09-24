@@ -26,6 +26,8 @@ body.admin-private-v32 .command-v33-row strong{display:block;color:#173d53;font-
 body.admin-private-v32 .command-v33-row span,body.admin-private-v32 .command-v33-row small{display:block;margin-top:3px;color:#6f8796;font-size:9px;line-height:1.45;overflow-wrap:anywhere}
 body.admin-private-v32 .command-v33-row>button,body.admin-private-v32 .command-v33-actions button,body.admin-private-v32 .command-v33-actions a,body.admin-private-v32 .command-v33-modal-actions button,body.admin-private-v32 .command-v33-modal-actions a{border:1px solid #c9dce6;border-radius:9px;background:#fff;color:#176885;padding:8px 9px;font-size:8px;font-weight:900;text-decoration:none;cursor:pointer}
 body.admin-private-v32 .command-v33-actions .primary,body.admin-private-v32 .command-v33-modal-actions .primary,body.admin-private-v32 .command-v33-row .primary{background:#0b96bf;color:#fff;border-color:#0b96bf}
+body.admin-private-v32 .command-v33-actions .danger,body.admin-private-v32 .command-v33-modal-actions .danger{background:#fff2f2!important;color:#a52f2f!important;border-color:#e3a2a2!important}
+body.admin-private-v32 .command-v33-actions .danger:hover,body.admin-private-v32 .command-v33-modal-actions .danger:hover{background:#a52f2f!important;color:#fff!important;border-color:#a52f2f!important}
 body.admin-private-v32 .command-v33-actions{display:flex;flex-wrap:wrap;gap:5px;justify-content:flex-end}
 body.admin-private-v32 .command-v33-growth{min-height:190px;display:flex;align-items:end}
 body.admin-private-v32 .command-v33-bars{width:100%;height:180px;display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:5px;align-items:end;border-bottom:1px solid #dbe7ed;padding:0 2px 4px}
