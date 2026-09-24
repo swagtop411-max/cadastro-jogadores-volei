@@ -1,0 +1,30 @@
+/* Motion system V65: quiet, fast and consistent. */
+html{view-transition-name:root}
+@view-transition{navigation:auto}
+::view-transition-old(root){animation:appPageOutV65 105ms cubic-bezier(.4,0,1,1) both}
+::view-transition-new(root){animation:appPageInV65 190ms cubic-bezier(.16,.78,.22,1) both}
+@keyframes appPageOutV65{to{opacity:.12;transform:translateY(2px)}}
+@keyframes appPageInV65{from{opacity:.12;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes appPanelInV65{from{opacity:.58;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes appSoftPulseV65{0%{opacity:.72}100%{opacity:1}}
+
+:where(.account-tab,.pp-tab,.feed-v16-btn,.publisher-v50-target,.beta-mobile-nav a,.site-menu-nav a,.site-menu-nav button){
+  transition:color 150ms cubic-bezier(.2,.7,.2,1),background-color 150ms cubic-bezier(.2,.7,.2,1),border-color 150ms cubic-bezier(.2,.7,.2,1),box-shadow 150ms cubic-bezier(.2,.7,.2,1),transform 110ms ease-out!important
+}
+:where(.account-tab,.pp-tab,.feed-v16-btn,.publisher-v50-target,.beta-mobile-nav a):active{transform:scale(.975)}
+.app-tab-enter{animation:appPanelInV65 185ms cubic-bezier(.16,.78,.22,1) both}
+.app-nav-pending{filter:saturate(1.06) brightness(1.04)}
+html.beta-mobile-app .beta-mobile-nav{transform:translateX(-50%) translateZ(0);backface-visibility:hidden;will-change:transform}
+html.beta-mobile-app .social-post,
+html.beta-mobile-app .publish-card,
+html.beta-mobile-app .profile-card,
+html.beta-mobile-app .media-card,
+html.beta-mobile-app .account-card{contain:paint}
+html.beta-mobile-app body{background:#031424!important}
+html.beta-mobile-app main{isolation:isolate}
+
+@media(prefers-reduced-motion:reduce){
+  ::view-transition-old(root),::view-transition-new(root){animation:none!important}
+  .app-tab-enter{animation:none!important}
+  :where(.account-tab,.pp-tab,.feed-v16-btn,.publisher-v50-target,.beta-mobile-nav a,.site-menu-nav a,.site-menu-nav button){transition:none!important}
+}
