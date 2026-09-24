@@ -20,7 +20,8 @@ html.beta-mobile-app .publish-card,
 html.beta-mobile-app .profile-card,
 html.beta-mobile-app .media-card,
 html.beta-mobile-app .account-card{contain:paint}
-html.beta-mobile-app body{background:#031424!important}
+html.beta-mobile-app body{background:#031424!important;transform:none!important;will-change:auto!important}
+html.beta-mobile-app #betaMobileNav{position:fixed!important;display:grid!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;left:50%!important;bottom:0!important;transform:translateX(-50%) translateZ(0)!important;z-index:2147483640!important}
 html.beta-mobile-app main{isolation:isolate}
 
 @media(prefers-reduced-motion:reduce){
