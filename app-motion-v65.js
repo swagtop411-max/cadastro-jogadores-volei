@@ -3,6 +3,61 @@
   const root = document.documentElement;
   const running = new WeakMap();
 
+  async function ensureMobileShell() {
+    if (!root.classList.contains('beta-mobile-app')) return;
+
+    try {
+      await import('./public-beta-v19.js?v=20260924-66');
+    } catch (error) {
+      console.warn('Mobile shell bootstrap:', error);
+    }
+
+    const mountFallback = () => {
+      if (document.getElementById('betaMobileNav') || !document.body) return;
+
+      const page = location.pathname.split('/').pop() || 'index.html';
+      const icons = {
+        home:'<svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+        search:'<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg>',
+        plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+        trophy:'<svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0zM12 12v5M8 21h8M10 17h4M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4"/></svg>',
+        user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"/></svg>'
+      };
+      const item = (href, icon, label, key, extra='') => {
+        const active = page === key || (key === 'index.html' && page === '');
+        const profileAttr = key === 'meu-perfil.html' ? ' data-beta-profile-nav' : '';
+        return `<a class="${active?'active ':''}${extra}" href="${href}"${profileAttr}>${extra==='publish'?'<span class="beta-publish-circle">'+icon+'</span>':icon}<span>${label}</span></a>`;
+      };
+      const nav = document.createElement('nav');
+      nav.id = 'betaMobileNav';
+      nav.className = 'beta-mobile-nav';
+      nav.dataset.shellFallback = '1';
+      nav.setAttribute('aria-label', 'Navegação principal do app');
+      nav.innerHTML =
+        item('/index.html?beta=1',icons.home,'Feed','index.html')+
+        item('/explorar.html?beta=1',icons.search,'Explorar','explorar.html')+
+        item('/comunidade.html?beta=1#publicar',icons.plus,'Publicar','comunidade.html','publish')+
+        item('/proximos-campeonatos.html?beta=1',icons.trophy,'Torneios','proximos-campeonatos.html')+
+        item('/meu-perfil.html?beta=1',icons.user,'Perfil','meu-perfil.html');
+      document.body.appendChild(nav);
+    };
+
+    if (!document.getElementById('betaMobileNav')) {
+      try {
+        await import('./beta-mobile-v21.js?v=20260924-66');
+      } catch (error) {
+        console.warn('Mobile navigation:', error);
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(mountFallback, 350), {once:true});
+    } else {
+      setTimeout(mountFallback, 350);
+    }
+    setTimeout(mountFallback, 1000);
+  }
+
   function animateHost(host) {
     if (!host || reduced.matches) return;
     const previous = running.get(host);
@@ -81,6 +136,8 @@
     try { sessionStorage.setItem('bd_internal_nav_v65', '1'); } catch {}
     setTimeout(() => location.assign(url.href), reduced.matches ? 0 : 105);
   });
+
+  void ensureMobileShell();
 
   addEventListener('pageshow', () => {
     root.classList.remove('app-leaving');
