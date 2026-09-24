@@ -443,7 +443,22 @@ async function saveProfile() {
 
     // 1. Salva primeiro o perfil público. Ele é o núcleo do cadastro esportivo.
     await retryWrite("perfil-publico", async () => {
-      await setDoc(perfilRef, perfilPublico);
+      try {
+        // Schema clássico, aceito pelas regras antigas.
+        await setDoc(perfilRef, perfilPublico);
+      } catch (classicError) {
+        if (classicError?.code !== "permission-denied") throw classicError;
+        // Schema V13, usado quando a regra exige marcar explicitamente o perfil concluído.
+        await setDoc(perfilRef, { ...perfilPublico, completo: true });
+      }
+
+      // Se a regra moderna aceitar, marca como concluído. Em regras antigas esta etapa é ignorada.
+      try {
+        await setDoc(perfilRef, { ...perfilPublico, completo: true });
+      } catch (completeFlagError) {
+        if (completeFlagError?.code !== "permission-denied") console.warn("Não foi possível marcar completo=true:", completeFlagError);
+      }
+
       const check = await getDoc(perfilRef);
       const saved = check.exists() ? check.data() : null;
       const confirmed = Boolean(
