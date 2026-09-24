@@ -12,8 +12,8 @@
 <script src="theme-boot-v65.js?v=20260924-70"></script>
 <link id="siteThemeV5Runtime" rel="stylesheet" href="site-theme.css?v=20260924-65">
 <link id="siteThemeV8Runtime" rel="stylesheet" href="site-v8.css?v=20260924-65">
-<link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-65">
-<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-65">
+<link id="betaMobileV21Css" rel="stylesheet" href="/beta-mobile-v21.css?v=20260924-72">
+<link id="betaMobilePagesV21Css" rel="stylesheet" href="/beta-mobile-pages-v21.css?v=20260924-72">
 <link id="betaMobileActivityV28Css" rel="stylesheet" href="/beta-mobile-activity-v28.css?v=20260907-28">
 <link id="betaAccountV23Css" rel="stylesheet" href="/beta-account-v23.css?v=20260908-40">
 <link rel="stylesheet" href="app-motion-v65.css?v=20260924-70">
@@ -103,5 +103,5 @@ import{getAuth,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/12.1.0
 const firebaseConfig={apiKey:"AIzaSyBMsuR0320Nz3asVRj5axXFvKJ5Ftz9COQ",authDomain:"jogadores-de-volei.firebaseapp.com",projectId:"jogadores-de-volei",storageBucket:"jogadores-de-volei.firebasestorage.app",messagingSenderId:"48728914064",appId:"1:48728914064:web:1dd7aeb705319886f74015"};
 const app=getApps().length?getApp():initializeApp(firebaseConfig),auth=getAuth(app),admin=document.getElementById("adminPanelCta");
 onAuthStateChanged(auth,user=>{if(!admin)return;const isAdmin=!!user&&(user.email||"").toLowerCase()==="swagtop411@gmail.com";admin.hidden=!isAdmin;});
-</script><script type="module" src="analytics.js?v=20260904-2"></script><script type="module" src="public.js?v=20260904-2"></script><script type="module" src="ranking.js?v=20260904-2"></script><script type="module" src="apoio.js?v=20260904-2"></script><script type="module" src="cadastro-atleta.js?v=20260904-2"></script><script type="module" src="home-social.js?v=20260920-62"></script><script type="module" src="menu-perfil.js?v=20260904-2"></script>
+</script><script type="module" src="analytics.js?v=20260904-2"></script><script type="module" src="public.js?v=20260924-72"></script><script type="module" src="ranking.js?v=20260904-2"></script><script type="module" src="apoio.js?v=20260904-2"></script><script type="module" src="cadastro-atleta.js?v=20260904-2"></script><script type="module" src="home-social.js?v=20260920-62"></script><script type="module" src="menu-perfil.js?v=20260904-2"></script>
 </body></html>
