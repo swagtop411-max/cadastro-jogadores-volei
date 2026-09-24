@@ -40,6 +40,12 @@ function installStyles(){
 }
 
 function openView(){
+ const controlTab=document.getElementById("controlV10Tab");
+ if(controlTab){
+  controlTab.click();
+  setTimeout(()=>document.getElementById("controlDeletionV84")?.scrollIntoView({behavior:"smooth",block:"start"}),80);
+  return;
+ }
  document.querySelectorAll(".admin-tab").forEach(item=>item.classList.remove("active"));
  document.querySelectorAll(".admin-view").forEach(item=>item.classList.remove("active"));
  document.getElementById("deletionTabV80")?.classList.add("active");
@@ -49,6 +55,36 @@ function openView(){
 
 function ensureUi(){
  installStyles();
+
+ const controlView=document.getElementById("controleView");
+ const controlTab=document.getElementById("controlV10Tab");
+ if(controlView&&controlTab){
+  if(!document.getElementById("controlDeletionBadgeV84")){
+   const badge=document.createElement("span");
+   badge.id="controlDeletionBadgeV84";
+   badge.className="comments-badge";
+   badge.hidden=true;
+   controlTab.appendChild(badge);
+  }
+  if(!document.getElementById("controlDeletionV84")){
+   const section=document.createElement("section");
+   section.id="controlDeletionV84";
+   section.className="command-v33-panel delete-v80-control";
+   section.innerHTML=`
+    <div class="delete-v80-head"><div><h2>🗑️ Excluir perfis e contas</h2><p>Controle administrativo para solicitações de exclusão e remoção manual por e-mail ou UID.</p></div><button type="button" id="deletionRefreshV80">ATUALIZAR</button></div>
+    <div class="delete-v80-grid">
+     <section class="delete-v80-panel"><h3>Pedidos de exclusão</h3><p>Solicitações feitas pelo próprio usuário aparecem aqui para você analisar e excluir.</p><div id="deletionListV80" class="delete-v80-list"><div class="delete-v80-empty">Carregando pedidos...</div></div></section>
+     <section class="delete-v80-panel"><h3>Excluir manualmente</h3><p>Localize qualquer perfil pelo e-mail ou UID e faça a exclusão administrativa.</p><div class="delete-v80-manual"><input id="deletionLookupV80" type="text" placeholder="E-mail ou UID da conta"><button id="deletionFindV80" type="button">LOCALIZAR</button></div><div id="deletionLookupResultV80"></div><div id="deletionStatusV80" class="delete-v80-status"></div></section>
+    </div>`;
+   const anchor=document.getElementById("commandV33AccountsPanel")||document.getElementById("commandV33")||controlView.lastElementChild;
+   if(anchor?.parentNode===controlView) anchor.after(section);
+   else controlView.appendChild(section);
+   section.querySelector("#deletionRefreshV80").onclick=()=>subscribeRequests(true);
+   section.querySelector("#deletionFindV80").onclick=()=>void manualLookup();
+  }
+  return true;
+ }
+
  const tabs=document.querySelector(".admin-tabs"),panel=document.querySelector(".admin-panel")||document.querySelector("main.admin-page")||document.querySelector(".admin-page");
  if(!tabs||!panel)return false;
  if(!document.getElementById("deletionTabV80")){
@@ -72,14 +108,13 @@ function ensureUi(){
  }
  return true;
 }
-
 function setStatus(message,error=false){
  const el=document.getElementById("deletionStatusV80");if(!el)return;
  el.textContent=message||"";el.classList.toggle("error",!!error);
 }
 
 function renderRequests(){
- const list=document.getElementById("deletionListV80"),badge=document.getElementById("deletionBadgeV80");
+ const list=document.getElementById("deletionListV80"),badge=document.getElementById("controlDeletionBadgeV84")||document.getElementById("deletionBadgeV80");
  if(!list)return;
  const pending=requests.filter(item=>text(item.status||"pendente").toLowerCase()==="pendente");
  if(badge){badge.textContent=String(pending.length);badge.hidden=!pending.length}
@@ -201,6 +236,18 @@ async function deleteAccount(uid,requestId=""){
   busy=false;document.querySelectorAll("[data-del-account],#deletionManualDeleteV80").forEach(btn=>btn.disabled=false);
  }
 }
+
+window.AdminDeletionV80={
+ openView,
+ deleteAccount,
+ focusAccount(uid){
+  openView();
+  setTimeout(()=>{
+   const input=document.getElementById("deletionLookupV80");
+   if(input){input.value=uid||"";void manualLookup();}
+  },140);
+ }
+};
 
 function boot(user){
  if(!user||text(user.email).toLowerCase()!==ADMIN_EMAIL)return;
