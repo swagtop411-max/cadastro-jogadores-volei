@@ -44,7 +44,7 @@
 
     if (!document.getElementById('betaMobileNav')) {
       try {
-        await import('./beta-mobile-v21.js?v=20260924-68');
+        await import('./beta-mobile-v21.js?v=20260924-69');
       } catch (error) {
         console.warn('Mobile navigation:', error);
       }
