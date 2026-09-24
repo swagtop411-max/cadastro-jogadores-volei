@@ -10,8 +10,7 @@ import {
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile,
-  deleteUser
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   doc,
@@ -33,6 +32,29 @@ const firebaseConfig = {
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const PENDING_ACCOUNT_KEY = "bd_pending_account_v83";
+
+function savePendingAccount(user, data = {}) {
+  try {
+    localStorage.setItem(PENDING_ACCOUNT_KEY, JSON.stringify({
+      uid: user?.uid || "",
+      nome: String(data.nome || user?.displayName || "").trim(),
+      email: String(data.email || user?.email || "").trim().toLowerCase(),
+      nascimento: String(data.nascimento || "").trim(),
+      atualizadoEm: Date.now()
+    }));
+  } catch {}
+}
+
+function clearPendingAccount(uid = "") {
+  try {
+    const raw = localStorage.getItem(PENDING_ACCOUNT_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!uid || !saved?.uid || saved.uid === uid) localStorage.removeItem(PENDING_ACCOUNT_KEY);
+  } catch {}
+}
+
 
 const $ = (id) => document.getElementById(id);
 const status = $("accountStatus");
@@ -191,7 +213,7 @@ function friendlyError(error, operation = "generic") {
     "auth/invalid-api-key": "A configuração do Firebase está inválida. Verifique a chave da aplicação.",
     "auth/api-key-not-valid-please-pass-a-valid-api-key": "A chave da API do Firebase deste site está inválida ou foi revogada. Atualize o firebaseConfig do aplicativo Web no Firebase e publique novamente.",
     "auth/app-not-authorized": "Esta aplicação não está autorizada pelo Firebase. Verifique o domínio e a configuração do projeto.",
-    "permission-denied": "A conta foi criada, mas o perfil não pôde ser salvo. Avise a administração."
+    "permission-denied": "Sua conta está ativa. Complete o perfil para finalizar o cadastro."
   };
 
   if (messages[code]) return messages[code];
@@ -411,11 +433,14 @@ registerForm.addEventListener("submit", async (event) => {
         if (attempt < 3) await new Promise(resolve => setTimeout(resolve, 450 * attempt));
       }
     }
-    if (persistError) {
-      if (!accountWriteCommitted) {
-        try { await deleteUser(user); } catch (rollbackError) { console.warn("Não foi possível desfazer a conta incompleta:", rollbackError); }
-      }
-      throw Object.assign(new Error("Não foi possível confirmar o salvamento dos seus dados. Tente novamente."), { code: persistError?.code || "profile/save-not-confirmed" });
+    const accountStored = !persistError && accountWriteCommitted;
+    if (accountStored) {
+      clearPendingAccount(user.uid);
+    } else {
+      // A autenticação já foi criada com sucesso. Não destruímos a conta só porque
+      // o documento complementar ainda não pôde ser gravado nas regras atuais.
+      savePendingAccount(user, { nome: name, email, nascimento: birth });
+      console.warn("Conta autenticada criada; dados complementares serão concluídos no Meu Perfil:", persistError);
     }
 
     try {
@@ -430,12 +455,17 @@ registerForm.addEventListener("submit", async (event) => {
       console.warn("Cadastro salvo; auditoria será ignorada nesta tentativa:", auditError);
     }
     showLogged(user);
+    const onboardingMessage = accountStored
+      ? "Conta criada! Agora complete seu perfil para entrar na rede."
+      : "Conta criada com sucesso! Os dados complementares serão finalizados no seu perfil.";
     if (safeReturnDestination(returnTarget)) {
       setStatus("Conta criada! Voltando ao perfil para concluir sua reivindicação...", "success");
       await goAfterLogin(user);
     } else {
-      setStatus("Conta criada! Agora complete seu perfil para entrar na rede.", "success");
-      await redirectToProfileIfNeeded(user, true);
+      setStatus(onboardingMessage, "success");
+      setTimeout(() => {
+        location.replace("/meu-perfil.html?novo=1&obrigatorio=1&cadastro=concluir");
+      }, 250);
     }
   } catch (error) {
     console.error("Falha no cadastro da conta:", { code: error?.code, message: error?.message });
