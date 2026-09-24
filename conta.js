@@ -18,8 +18,7 @@ import {
   getDoc,
   getFirestore,
   serverTimestamp,
-  setDoc,
-  writeBatch
+  setDoc
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -104,15 +103,27 @@ function setupBirthSelectors() {
     months.map((name,index)=>`<option value="${index+1}">${name}</option>`).join("");
 
   const maxYear = new Date().getFullYear() - 18;
-  const minYear = 1900;
-  registerBirthYear.innerHTML = '<option value="">Ano</option>' +
-    Array.from({length:maxYear-minYear+1},(_,i)=>maxYear-i)
-      .map(year=>`<option value="${year}">${year}</option>`).join("");
+  registerBirthYear.min = "1900";
+  registerBirthYear.max = String(maxYear);
 
   rebuildBirthDays();
   registerBirthDay.addEventListener("change", syncBirthValue);
   registerBirthMonth.addEventListener("change", rebuildBirthDays);
-  registerBirthYear.addEventListener("change", rebuildBirthDays);
+  registerBirthYear.addEventListener("input", () => {
+    const year = Number(registerBirthYear.value || 0);
+    if (year && (year < 1900 || year > maxYear)) {
+      registerBirth.value = "";
+      return;
+    }
+    rebuildBirthDays();
+  });
+  registerBirthYear.addEventListener("blur", () => {
+    const year = Number(registerBirthYear.value || 0);
+    if (year && (year < 1900 || year > maxYear)) {
+      registerBirthYear.value = "";
+      registerBirth.value = "";
+    }
+  });
 }
 setupBirthSelectors();
 if (registerBirth) registerBirth.setAttribute("aria-describedby", "accountStatus");
