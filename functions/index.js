@@ -271,6 +271,139 @@ async function queryGroupDocs(groupName, field, operator, value) {
   return db.collectionGroup(groupName).where(field, operator, value).get();
 }
 
+async function purgeAccount(uid, actor = "self") {
+  const assets = { image: new Set(), video: new Set() };
+  const refs = new Map();
+  const addRef = (ref) => ref && refs.set(ref.path, ref);
+  const postIds = [];
+  const storyIds = [];
+  const athleteIds = [];
+
+  const exactPaths = [
+    `usuarios/${uid}`,
+    `perfis/${uid}`,
+    `config_perfis/${uid}`,
+    `solicitacoes_planos/${uid}`,
+    `solicitacoes_exclusao/${uid}`,
+    `bloqueios/${uid}`,
+    `seguidores/${uid}`,
+    `seguindo/${uid}`,
+    `notificacoes/${uid}`,
+    `salvos/${uid}`,
+    `destaques/${uid}`,
+    `upload_rate_limits/${uid}`,
+  ];
+
+  for (const itemPath of exactPaths) {
+    const ref = db.doc(itemPath);
+    addRef(ref);
+    if (itemPath === `perfis/${uid}` || itemPath === `usuarios/${uid}`) {
+      const snap = await ref.get().catch(() => null);
+      if (snap?.exists) collectMedia(snap.data(), assets);
+    }
+  }
+
+  const ownerQueries = [
+    ["publicacoes", "ownerUid"],
+    ["videos", "ownerUid"],
+    ["stories", "ownerUid"],
+    ["comentarios_publicacoes", "ownerUid"],
+    ["comentarios", "ownerUid"],
+    ["atletas", "ownerUid"],
+    ["atletas_pendentes", "ownerUid"],
+    ["equipes", "ownerUid"],
+    ["equipes_pendentes", "ownerUid"],
+    ["access_logs", "uid"],
+    ["handles", "uid"],
+    ["reivindicacoes_perfis", "solicitanteUid"],
+    ["denuncias", "reportadoPorUid"],
+  ];
+
+  for (const [collectionName, field] of ownerQueries) {
+    const snap = await queryDocs(collectionName, field, "==", uid).catch((error) => {
+      logger.warn("Falha ao localizar dados para exclusão", { uid, collectionName, error: error?.message });
+      return null;
+    });
+    for (const docSnap of snap?.docs || []) {
+      addRef(docSnap.ref);
+      collectMedia(docSnap.data(), assets);
+      if (collectionName === "publicacoes" || collectionName === "videos") postIds.push(docSnap.id);
+      if (collectionName === "stories") storyIds.push(docSnap.id);
+      if (collectionName === "atletas" || collectionName === "atletas_pendentes") athleteIds.push(docSnap.id);
+    }
+  }
+
+  const conversations = await queryDocs("conversas", "participants", "array-contains", uid).catch(() => null);
+  for (const docSnap of conversations?.docs || []) {
+    addRef(docSnap.ref);
+    const messages = await docSnap.ref.collection("mensagens").get().catch(() => null);
+    for (const message of messages?.docs || []) collectMedia(message.data(), assets);
+  }
+
+  for (const field of ["uid", "viewerUid", "userUid"]) {
+    const userGroup = await queryGroupDocs("usuarios", field, "==", uid).catch(() => null);
+    for (const docSnap of userGroup?.docs || []) addRef(docSnap.ref);
+  }
+
+  for (const field of ["actorUid", "targetUid", "ownerUid"]) {
+    const items = await queryGroupDocs("itens", field, "==", uid).catch(() => null);
+    for (const docSnap of items?.docs || []) addRef(docSnap.ref);
+  }
+
+  for (const group of chunks([...new Set(postIds)], 30)) {
+    if (!group.length) continue;
+    const comments = await db.collection("comentarios_publicacoes").where("publicacaoId", "in", group).get().catch(() => null);
+    for (const docSnap of comments?.docs || []) addRef(docSnap.ref);
+    const saved = await db.collectionGroup("publicacoes").where("postId", "in", group).get().catch(() => null);
+    for (const docSnap of saved?.docs || []) addRef(docSnap.ref);
+    for (const postId of group) addRef(db.doc(`curtidas_publicacoes/${postId}`));
+  }
+
+  for (const storyId of [...new Set(storyIds)]) addRef(db.doc(`story_views/${storyId}`));
+
+  for (const athleteId of [...new Set(athleteIds)]) {
+    const comments = await db.collection("comentarios").where("atletaId", "==", athleteId).get().catch(() => null);
+    for (const docSnap of comments?.docs || []) addRef(docSnap.ref);
+    const reports = await db.collection("denuncias").where("alvoId", "==", athleteId).get().catch(() => null);
+    for (const docSnap of reports?.docs || []) addRef(docSnap.ref);
+  }
+
+  const profileReports = await db.collection("denuncias").where("alvoId", "==", uid).get().catch(() => null);
+  for (const docSnap of profileReports?.docs || []) addRef(docSnap.ref);
+
+  try {
+    await deleteCloudinaryAssets(assets);
+  } catch (error) {
+    logger.error("Falha ao excluir mídia do Cloudinary", { uid, actor, error: error?.message });
+    throw new HttpsError("internal", "Não foi possível remover todas as mídias com segurança. Tente novamente mais tarde.");
+  }
+
+  try {
+    for (const ref of refs.values()) await safeRecursiveDelete(ref);
+    await storage.bucket().deleteFiles({ prefix: `usuarios/${uid}/` }).catch((error) => {
+      if (error?.code !== 404) throw error;
+    });
+    await auth.deleteUser(uid);
+    logger.info("Conta excluída", {
+      uid,
+      actor,
+      deletedRefs: refs.size,
+      images: assets.image.size,
+      videos: assets.video.size,
+    });
+    return {
+      ok: true,
+      deleted: true,
+      deletedRefs: refs.size,
+      deletedImages: assets.image.size,
+      deletedVideos: assets.video.size,
+    };
+  } catch (error) {
+    logger.error("Falha na exclusão da conta", { uid, actor, error: error?.message });
+    throw new HttpsError("internal", "A exclusão não foi concluída. A equipe técnica poderá finalizar a remoção com segurança.");
+  }
+}
+
 exports.deleteMyAccount = onCall(
   {
     enforceAppCheck: true,
@@ -288,122 +421,39 @@ exports.deleteMyAccount = onCall(
     if (String(request.data?.confirmation || "").trim().toUpperCase() !== "EXCLUIR") {
       throw new HttpsError("invalid-argument", "Confirme a exclusão digitando EXCLUIR.");
     }
-
-    const assets = { image: new Set(), video: new Set() };
-    const refs = new Map();
-    const addRef = (ref) => ref && refs.set(ref.path, ref);
-    const postIds = [];
-    const storyIds = [];
-    const athleteIds = [];
-
-    const exactPaths = [
-      `usuarios/${uid}`,
-      `perfis/${uid}`,
-      `config_perfis/${uid}`,
-      `solicitacoes_planos/${uid}`,
-      `bloqueios/${uid}`,
-      `seguidores/${uid}`,
-      `seguindo/${uid}`,
-      `notificacoes/${uid}`,
-      `salvos/${uid}`,
-      `destaques/${uid}`,
-      `upload_rate_limits/${uid}`,
-    ];
-
-    for (const path of exactPaths) {
-      const ref = db.doc(path);
-      addRef(ref);
-      if (path === `perfis/${uid}` || path === `usuarios/${uid}`) {
-        const snap = await ref.get().catch(() => null);
-        if (snap?.exists) collectMedia(snap.data(), assets);
-      }
-    }
-
-    const ownerQueries = [
-      ["publicacoes", "ownerUid"],
-      ["videos", "ownerUid"],
-      ["stories", "ownerUid"],
-      ["comentarios_publicacoes", "ownerUid"],
-      ["comentarios", "ownerUid"],
-      ["atletas", "ownerUid"],
-      ["atletas_pendentes", "ownerUid"],
-      ["equipes", "ownerUid"],
-      ["equipes_pendentes", "ownerUid"],
-      ["access_logs", "uid"],
-      ["handles", "uid"],
-      ["reivindicacoes_perfis", "solicitanteUid"],
-      ["denuncias", "reportadoPorUid"],
-    ];
-
-    for (const [collectionName, field] of ownerQueries) {
-      const snap = await queryDocs(collectionName, field, "==", uid).catch((error) => {
-        logger.warn("Falha ao localizar dados para exclusão", { uid, collectionName, error: error?.message });
-        return null;
-      });
-      for (const docSnap of snap?.docs || []) {
-        addRef(docSnap.ref);
-        collectMedia(docSnap.data(), assets);
-        if (collectionName === "publicacoes" || collectionName === "videos") postIds.push(docSnap.id);
-        if (collectionName === "stories") storyIds.push(docSnap.id);
-        if (collectionName === "atletas" || collectionName === "atletas_pendentes") athleteIds.push(docSnap.id);
-      }
-    }
-
-    const conversations = await queryDocs("conversas", "participants", "array-contains", uid).catch(() => null);
-    for (const docSnap of conversations?.docs || []) {
-      addRef(docSnap.ref);
-      const messages = await docSnap.ref.collection("mensagens").get().catch(() => null);
-      for (const message of messages?.docs || []) collectMedia(message.data(), assets);
-    }
-
-    for (const field of ["uid", "viewerUid", "userUid"]) {
-      const userGroup = await queryGroupDocs("usuarios", field, "==", uid).catch(() => null);
-      for (const docSnap of userGroup?.docs || []) addRef(docSnap.ref);
-    }
-
-    for (const field of ["actorUid", "targetUid", "ownerUid"]) {
-      const items = await queryGroupDocs("itens", field, "==", uid).catch(() => null);
-      for (const docSnap of items?.docs || []) addRef(docSnap.ref);
-    }
-
-    for (const group of chunks([...new Set(postIds)], 30)) {
-      if (!group.length) continue;
-      const comments = await db.collection("comentarios_publicacoes").where("publicacaoId", "in", group).get().catch(() => null);
-      for (const docSnap of comments?.docs || []) addRef(docSnap.ref);
-      const saved = await db.collectionGroup("publicacoes").where("postId", "in", group).get().catch(() => null);
-      for (const docSnap of saved?.docs || []) addRef(docSnap.ref);
-      for (const postId of group) addRef(db.doc(`curtidas_publicacoes/${postId}`));
-    }
-
-    for (const storyId of [...new Set(storyIds)]) addRef(db.doc(`story_views/${storyId}`));
-
-    for (const athleteId of [...new Set(athleteIds)]) {
-      const comments = await db.collection("comentarios").where("atletaId", "==", athleteId).get().catch(() => null);
-      for (const docSnap of comments?.docs || []) addRef(docSnap.ref);
-      const reports = await db.collection("denuncias").where("alvoId", "==", athleteId).get().catch(() => null);
-      for (const docSnap of reports?.docs || []) addRef(docSnap.ref);
-    }
-    const profileReports = await db.collection("denuncias").where("alvoId", "==", uid).get().catch(() => null);
-    for (const docSnap of profileReports?.docs || []) addRef(docSnap.ref);
-
-    try {
-      await deleteCloudinaryAssets(assets);
-    } catch (error) {
-      logger.error("Falha ao excluir mídia do Cloudinary", { uid, error: error?.message });
-      throw new HttpsError("internal", "Não foi possível remover todas as mídias com segurança. Tente novamente mais tarde.");
-    }
-
-    try {
-      for (const ref of refs.values()) await safeRecursiveDelete(ref);
-      await storage.bucket().deleteFiles({ prefix: `usuarios/${uid}/` }).catch((error) => {
-        if (error?.code !== 404) throw error;
-      });
-      await auth.deleteUser(uid);
-      logger.info("Conta excluída pelo próprio usuário", { uid, deletedRefs: refs.size, images: assets.image.size, videos: assets.video.size });
-      return { ok: true, deleted: true };
-    } catch (error) {
-      logger.error("Falha na exclusão da conta", { uid, error: error?.message });
-      throw new HttpsError("internal", "A exclusão não foi concluída. A equipe técnica poderá finalizar a remoção com segurança.");
-    }
+    return purgeAccount(uid, "self");
   }
 );
+
+exports.adminDeleteAccount = onCall(
+  {
+    enforceAppCheck: true,
+    consumeAppCheckToken: true,
+    secrets: [CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET],
+    timeoutSeconds: 300,
+    memory: "1GiB",
+  },
+  async (request) => {
+    requireUser(request);
+    const requesterEmail = String(request.auth.token?.email || "").trim().toLowerCase();
+    const isAdmin = request.auth.token?.admin === true || requesterEmail === OWNER_EMAIL;
+    if (!isAdmin) throw new HttpsError("permission-denied", "Apenas a administração pode concluir esta exclusão.");
+
+    const targetUid = String(request.data?.uid || "").trim();
+    if (!targetUid) throw new HttpsError("invalid-argument", "UID da conta não informado.");
+    if (String(request.data?.confirmation || "").trim().toUpperCase() !== "EXCLUIR") {
+      throw new HttpsError("invalid-argument", "Confirmação inválida.");
+    }
+
+    const target = await auth.getUser(targetUid).catch((error) => {
+      if (error?.code === "auth/user-not-found") return null;
+      throw error;
+    });
+    if (String(target?.email || "").trim().toLowerCase() === OWNER_EMAIL) {
+      throw new HttpsError("failed-precondition", "A conta administrativa principal não pode ser excluída.");
+    }
+
+    return purgeAccount(targetUid, `admin:${request.auth.uid}`);
+  }
+);
+
