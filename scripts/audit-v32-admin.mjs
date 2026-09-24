@@ -25,3 +25,7 @@ console.log('V32 private admin audit OK');
 if(!read("vault-7c3e91a6f4.html").includes("admin-account-deletion-v80.js"))throw new Error("Painel privado sem módulo de exclusão de contas");
 if(!read("admin-account-deletion-v80.js").includes("solicitacoes_exclusao"))throw new Error("Fila de exclusões ausente");
 if(!read("admin-account-deletion-v80.js").includes("adminDeleteAccount"))throw new Error("Ação administrativa de exclusão ausente");
+
+if(!read("admin-account-deletion-v80.js").includes("controlDeletionV84"))throw new Error("Exclusão não foi integrada à aba Controle");
+if(!read("admin-command-center-v33.js").includes("data-v33-delete"))throw new Error("Ações rápidas do Controle sem botão de exclusão");
+if(!read("admin.js").includes("admin-account-deletion-v80.js?v=20260924-84"))throw new Error("Painel não carrega o módulo de exclusão V84");
