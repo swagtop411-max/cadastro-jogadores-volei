@@ -24,6 +24,8 @@ const messaging=read("messaging-v50.js");
 const terms=read("termos-de-uso.html");
 const privacy=read("politica-privacidade.html");
 const deletion=read("exclusao-conta.html");
+const functionsSource=read("functions/index.js");
+const deletionAdmin=read("admin-account-deletion-v80.js");
 const rules=read("firestore.rules");
 const storage=read("storage.rules");
 const sw=read("sw.js");
@@ -76,10 +78,12 @@ fail("Firebase App Check inicializado",/initializeAppCheck/.test(appCheck));
 
 // Exclusão exigida pelo Google Play
 fail("Página pública de exclusão existe",/Excluir minha conta/i.test(deletion));
-fail("Exclusão pode ser iniciada sem login",/SOLICITAR EXCLUSÃO DA CONTA/.test(deletion)&&/wa\.me\//.test(deletion));
-fail("Exclusão não promete backend indisponível",!/firebase-functions/.test(deletion)&&!/deleteMyAccount/.test(deletion));
+fail("Exclusão autenticada usa backend automático",/httpsCallable/.test(deletion)&&/deleteMyAccount/.test(deletion)&&/EXCLUIR MINHA CONTA AGORA/.test(deletion));
+fail("Falha automática entra na fila administrativa",/solicitacoes_exclusao/.test(deletion)&&/status:"pendente"/.test(deletion));
+fail("Backend remove conta Auth e dados associados",/exports\.deleteMyAccount/.test(functionsSource)&&/auth\.deleteUser\(uid\)/.test(functionsSource)&&/purgeAccount/.test(functionsSource));
+fail("Admin possui exclusão completa por UID ou e-mail",/adminDeleteAccount/.test(functionsSource)&&/EXCLUIR CONTA E DADOS/.test(deletionAdmin)&&/deletionLookupV80/.test(deletionAdmin));
 fail("Política aponta para exclusão pública",/exclusao-conta\.html/.test(privacy));
-fail("Data Safety descreve solicitação, não exclusão automática",/solicitação de exclusão/i.test(dataSafety)&&!/utiliza a função backend `deleteMyAccount`/.test(dataSafety));
+fail("Data Safety descreve exclusão automática autenticada",/exclusão automática/i.test(dataSafety)&&/painel administrativo/i.test(dataSafety));
 
 // Pagamentos digitais no Play
 fail("Modo Play detecta app Android",/br\.com\.cadastrodeatletas\.app/.test(playMode)&&/app\"\)===\"1/.test(playMode));
