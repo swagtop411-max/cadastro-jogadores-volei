@@ -22,11 +22,49 @@
 <link id="betaAccountV23Css" rel="stylesheet" href="/beta-account-v23.css?v=20260908-40">
 <link rel="stylesheet" href="app-motion-v65.css?v=20260924-66">
 <script defer src="app-motion-v65.js?v=20260924-66"></script>
-</head>
+<style id="bottomNavRescueV67">
+#betaMobileNav.bottom-nav-v67{display:none!important}
+html.beta-mobile-app #betaMobileNav.bottom-nav-v67{
+ position:fixed!important;z-index:2147483000!important;left:50%!important;right:auto!important;bottom:0!important;
+ transform:translateX(-50%)!important;width:min(575px,100%)!important;height:94px!important;
+ padding:10px 15px max(8px,env(safe-area-inset-bottom))!important;
+ grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;
+ border:1px solid #123e58!important;border-bottom:0!important;border-radius:28px 28px 0 0!important;
+ background:rgba(8,36,58,.985)!important;box-shadow:0 -14px 36px rgba(0,0,0,.28)!important;
+ backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important
+}
+html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a{
+ display:grid!important;place-items:center!important;gap:5px!important;min-width:0!important;
+ color:#a8b9c6!important;text-decoration:none!important;font:700 10px/1 Montserrat,Arial,sans-serif!important;
+ visibility:visible!important;opacity:1!important;pointer-events:auto!important
+}
+html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a svg{
+ display:block!important;width:27px!important;height:27px!important;fill:none!important;stroke:currentColor!important;
+ stroke-width:2.4!important;stroke-linecap:round!important;stroke-linejoin:round!important
+}
+html.beta-mobile-app #betaMobileNav.bottom-nav-v67 a.publish{transform:translateY(-15px)!important}
+html.beta-mobile-app #betaMobileNav.bottom-nav-v67 .beta-publish-circle{
+ display:grid!important;place-items:center!important;width:58px!important;height:58px!important;border-radius:50%!important;
+ background:#f4c84d!important;color:#102333!important;border:4px solid #0b2940!important;box-shadow:0 7px 18px rgba(0,0,0,.26)!important
+}
+html.beta-mobile-app[data-beta-page="index"] #betaMobileNav [data-nav="feed"],
+html.beta-mobile-app[data-beta-page="explorar"] #betaMobileNav [data-nav="explorar"],
+html.beta-mobile-app[data-beta-page="comunidade"] #betaMobileNav [data-nav="publicar"],
+html.beta-mobile-app[data-beta-page="proximos-campeonatos"] #betaMobileNav [data-nav="torneios"],
+html.beta-mobile-app[data-beta-page="meu-perfil"] #betaMobileNav [data-nav="perfil"]{color:#f4c84d!important}
+html.beta-mobile-app body{padding-bottom:max(112px,calc(96px + env(safe-area-inset-bottom)))!important}
+</style></head>
 <body class="site-v5 site-v8">
 <header class="header"><button class="site-menu-trigger" id="siteMenuTrigger" type="button" aria-controls="siteMenuDrawer" aria-expanded="false">☰<span>MENU</span></button><a class="header-brand" href="index.html"><div><strong>BANCO DE DADOS DE ATLETAS</strong><span>MINHA COLEÇÃO</span></div></a></header>
 <main class="saved-page"><section class="saved-head"><div><span>PRIVADO • SÓ VOCÊ VÊ</span><h1>PUBLICAÇÕES SALVAS</h1><p>Fotos e vídeos que você guardou para rever depois.</p></div></section><section id="savedGrid" class="saved-grid"><div class="saved-empty"><strong>Carregando seus salvos...</strong></div></section></main>
 <script type="module" src="site-v5.js?v=20260909-46"></script>
 <script type="module" src="salvos.js?v=20260904-2"></script>
-</body>
+<nav id="betaMobileNav" class="beta-mobile-nav bottom-nav-v67" aria-label="Navegação principal do app">
+<a href="/index.html?beta=1" data-nav="feed"><svg viewBox="0 0 24 24"><path d="M3 10.8 12 3l9 7.8v9.2a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Feed</span></a>
+<a href="/explorar.html?beta=1" data-nav="explorar"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></svg><span>Explorar</span></a>
+<a class="publish" href="/comunidade.html?beta=1#publicar" data-nav="publicar"><span class="beta-publish-circle"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span>Publicar</span></a>
+<a href="/proximos-campeonatos.html?beta=1" data-nav="torneios"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0zM12 12v5M8 21h8M10 17h4M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4"/></svg><span>Torneios</span></a>
+<a href="/meu-perfil.html?beta=1" data-nav="perfil" data-beta-profile-nav><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c.8-4 3.2-6 7.5-6s6.7 2 7.5 6"/></svg><span>Perfil</span></a>
+</nav></body>
 </html>
