@@ -26,7 +26,16 @@ function profileComplete(data={},publicData={}){
   const nome=String(data.nome||publicData.nome||"").trim();
   const contato=String(data.contato||"").trim();
   const foto=String(data.fotoUrl||publicData.fotoUrl||"").trim();
-  return nome.length>=2&&contato.length>=8&&foto.length>0;
+  if(nome.length>=2&&contato.length>=8&&foto.length>0)return true;
+
+  // Compatibilidade: se as regras do banco impedirem temporariamente a gravação
+  // de dados privados, um perfil esportivo público completo continua liberando o app.
+  const cidade=String(publicData.cidade||"").trim();
+  const uf=String(publicData.uf||"").trim().toUpperCase();
+  const categoria=String(publicData.categoria||"").trim();
+  const validUf=["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"].includes(uf);
+  const validCategoria=["Iniciante","Intermediário","Avançado"].includes(categoria);
+  return nome.length>=2&&foto.length>0&&cidade.length>=2&&validUf&&validCategoria;
 }
 
 function showProfileGateError(){
