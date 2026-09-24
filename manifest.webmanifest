@@ -4,7 +4,7 @@
   "short_name": "Atletas",
   "description": "Rede esportiva 18+ para atletas, equipes, campeonatos e oportunidades do vôlei.",
   "lang": "pt-BR",
-  "start_url": "/?app=1&build=76",
+  "start_url": "/?app=1&build=77",
   "scope": "/",
   "display": "standalone",
   "background_color": "#020d4b",
@@ -44,17 +44,17 @@
     {
       "name": "Feed",
       "short_name": "Feed",
-      "url": "/?app=1&build=76#feed"
+      "url": "/?app=1&build=77#feed"
     },
     {
       "name": "Atletas",
       "short_name": "Atletas",
-      "url": "/atletas.html?app=1&build=76"
+      "url": "/atletas.html?app=1&build=77"
     },
     {
       "name": "Campeonatos",
       "short_name": "Campeonatos",
-      "url": "/proximos-campeonatos.html?app=1&build=76"
+      "url": "/proximos-campeonatos.html?app=1&build=77"
     }
   ]
 }
