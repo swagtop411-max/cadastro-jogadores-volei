@@ -1,7 +1,7 @@
 await import("./firebase-app-check-v11.js?v=20260909-46");
 
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 import {
   getFirestore,
   doc,
@@ -485,6 +485,13 @@ async function saveProfile() {
 
     requiredProfileSaved = true;
     profile = { ...(profile || {}), ...perfilPublico, nascimento, contato };
+
+    try {
+      await updateProfile(user, { displayName: nome, photoURL: fotoUrl || null });
+    } catch (authProfileError) {
+      console.warn("Perfil salvo no banco; não foi possível atualizar o espelho do Firebase Auth agora:", authProfileError);
+    }
+
     window.dispatchEvent(new CustomEvent("athlete-profile-saved", { detail: { fotoUrl } }));
 
     try {
